@@ -1,0 +1,20 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "chest" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "color" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "hip" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "imageBack" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "length" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "size" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "waist" INTEGER NOT NULL DEFAULT 0;
+
+-- CreateTable
+CREATE TABLE "Category" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");

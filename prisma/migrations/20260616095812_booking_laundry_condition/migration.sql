@@ -1,0 +1,32 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "acquired" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "note" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "value" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "Rental" ADD COLUMN     "code" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "condition" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "damage" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "deposit" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "fee" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "fine" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "inspector" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "phone" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "photoAfter" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "photoBefore" TEXT NOT NULL DEFAULT '';
+
+-- CreateTable
+CREATE TABLE "LaundryRepair" (
+    "id" TEXT NOT NULL,
+    "date" TEXT NOT NULL DEFAULT '',
+    "code" TEXT NOT NULL DEFAULT '',
+    "item" TEXT NOT NULL,
+    "type" TEXT NOT NULL DEFAULT 'ซัก',
+    "cost" INTEGER NOT NULL DEFAULT 0,
+    "owner" TEXT NOT NULL DEFAULT '',
+    "status" TEXT NOT NULL DEFAULT 'รอดำเนินการ',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "LaundryRepair_pkey" PRIMARY KEY ("id")
+);
