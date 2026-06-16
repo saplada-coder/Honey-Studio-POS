@@ -18,12 +18,31 @@ model Product {
   type      String // เช่า / ขาย / ทั้งคู่
   rent      Int      @default(0) // ค่าเช่า (บาท)
   sell      Int      @default(0) // ราคาขาย (บาท)
-  stock     Int      @default(0) // จำนวนคงเหลือ
+  stockRent Int      @default(0) // จำนวนคลังเช่า
+  stockSell Int      @default(0) // จำนวนคลังขาย
   loc       String   @default("") // ตำแหน่งเก็บ
   status    String   @default("ว่าง")
-  image     String   @default("") // URL รูปสินค้า (Vercel Blob)
+  image     String   @default("") // URL รูปด้านหน้า (Vercel Blob)
+  imageBack String   @default("") // URL รูปด้านหลัง
+  size      String   @default("") // ไซส์ เช่น S/M/L/Free
+  color     String   @default("") // สี
+  chest     Int      @default(0) // อก (นิ้ว)
+  waist     Int      @default(0) // เอว (นิ้ว)
+  hip       Int      @default(0) // สะโพก (นิ้ว)
+  length    Int      @default(0) // ความยาว (นิ้ว)
+  value     Int      @default(0) // มูลค่าชุด (บาท)
+  acquired  String   @default("") // วันที่ได้มา
+  note      String   @default("") // หมายเหตุ
+  defects   String   @default("") // รูปตำหนิ (เก็บเป็น JSON array ของ URL สูงสุด 10 รูป)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ===== หมวดหมู่สินค้า (จัดการแยก เลือกตอนเพิ่มสินค้า) =====
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 }
 
 // ===== ลูกค้า =====
@@ -45,21 +64,49 @@ model Order {
   cust      String // ชื่อลูกค้า
   type      String // เช่า / ขาย
   items     String // รายการสินค้า
+  code      String   @default("") // รหัสสินค้าที่อ้างอิง (สำหรับตัดสต็อกขายอัตโนมัติ)
   total     Int      @default(0)
   status    String   @default("รอชำระ")
   date      String   @default("")
+  stockApplied Boolean @default(false) // ตัดสต็อกขายไปแล้วหรือยัง (กันตัด/คืนซ้ำ)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 // ===== การเช่า =====
 model Rental {
-  id        String   @id // เช่น R-501
-  cust      String
-  item      String
-  start     String
-  end       String
-  status    String   @default("จองแล้ว")
+  id          String   @id // เช่น R-501
+  cust        String
+  phone       String   @default("")
+  item        String
+  code        String   @default("") // รหัสชุด (อ้างอิงสินค้า)
+  start       String
+  end         String
+  deposit     Int      @default(0) // มัดจำ
+  fee         Int      @default(0) // ค่าเช่า
+  fine        Int      @default(0) // ค่าปรับ
+  damage      Int      @default(0) // ค่าเสียหาย
+  photoBefore String   @default("") // รูปก่อนส่ง
+  photoAfter  String   @default("") // รูปหลังรับคืน
+  condition   String   @default("") // สภาพหลังรับคืน
+  inspector   String   @default("") // ผู้ตรวจ/ดูแล
+  status      String   @default("จองแล้ว")
+  stockApplied  Boolean @default(false) // ตัดสต็อกเช่าไปแล้วหรือยัง (กันตัดซ้ำ)
+  stockReturned Boolean @default(false) // คืนสต็อกเช่าแล้วหรือยัง (กันคืนซ้ำ)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ===== รายการซัก & ซ่อม =====
+model LaundryRepair {
+  id        String   @id // เช่น LR-001
+  date      String   @default("")
+  code      String   @default("") // รหัสชุด
+  item      String // รายการ เช่น ซักแห้ง / ซ่อมซิป
+  type      String   @default("ซัก") // ซัก / ซ่อม
+  cost      Int      @default(0) // ค่าใช้จ่าย
+  owner     String   @default("") // ผู้รับผิดชอบ
+  status    String   @default("รอดำเนินการ")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

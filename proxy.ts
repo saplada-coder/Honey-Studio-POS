@@ -36,12 +36,9 @@ export async function proxy(req: NextRequest) {
 // คืน true ถ้าบทบาทนี้เรียก API เส้นทาง/เมธอดนี้ได้
 function apiAllowed(role: string, pathname: string, method: string) {
   const isWrite = method !== "GET";
-  if (role === "เจ้าของ") return true;
-  if (role === "ผู้ดูแลระบบ") {
-    // ไม่เห็นบัญชีรับจ่าย
-    if (pathname.startsWith("/api/transactions")) return false;
-    return true;
-  }
+  // เจ้าของ + ผู้ดูแลระบบ = ทำได้ทุกอย่าง (ข้อจำกัด "ลบเจ้าของไม่ได้" ของผู้ดูแล
+  // บังคับใช้ในเส้นทาง DELETE /api/users/[id] อีกชั้น)
+  if (role === "เจ้าของ" || role === "ผู้ดูแลระบบ") return true;
   if (role === "พนักงานขาย") {
     if (pathname.startsWith("/api/transactions")) return false; // ไม่เห็นบัญชี
     if (pathname.startsWith("/api/users")) return false; // ไม่จัดการผู้ใช้
@@ -55,7 +52,7 @@ function apiAllowed(role: string, pathname: string, method: string) {
       pathname.startsWith("/api/products")
     );
   }
-  return true;
+  return false; // บทบาทแปลกปลอม/ไม่รู้จัก = ปฏิเสธ (ปลอดภัยไว้ก่อน)
 }
 
 export const config = {
