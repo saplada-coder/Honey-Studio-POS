@@ -320,6 +320,16 @@ const NAV = [
   { id: "userman", label: "จัดการผู้ใช้", icon: UserCog },
 ];
 
+// ===== สิทธิ์: บทบาทไหนเห็นเมนูอะไรบ้าง =====
+const ALL_PAGES = NAV.map((n) => n.id);
+const ROLE_PAGES = {
+  "เจ้าของ": ALL_PAGES,
+  "ผู้ดูแลระบบ": ["dash", "products", "inventory", "customers", "orders", "shipping", "rentals", "reports", "userman"],
+  "พนักงานขาย": ["dash", "products", "inventory", "customers", "orders", "shipping", "rentals"],
+  "ลูกค้า": ["dash", "orders", "rentals"],
+};
+const pagesForRole = (role) => ROLE_PAGES[role] || ALL_PAGES;
+
 /* ============ MAIN APP ============ */
 export default function App() {
   const [page, setPage] = useState("dash");
@@ -339,17 +349,29 @@ export default function App() {
   const [qrItem, setQrItem] = useState(null);
   const [receipt, setReceipt] = useState(null);
 
+  // ดึง JSON แบบปลอดภัย — ถ้าเข้าไม่ได้ (เช่น 403 ตามสิทธิ์) คืนค่า fallback
+  async function getJSON(url, fallback) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) return fallback;
+      const d = await r.json();
+      return Array.isArray(d) || typeof d === "object" ? d : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
   async function loadAll() {
     try {
       const [mr, p, c, o, r, t, s, u] = await Promise.all([
-        fetch("/api/auth/me").then((x) => x.json()).catch(() => ({ user: null })),
-        fetch("/api/products").then((x) => x.json()),
-        fetch("/api/customers").then((x) => x.json()),
-        fetch("/api/orders").then((x) => x.json()),
-        fetch("/api/rentals").then((x) => x.json()),
-        fetch("/api/transactions").then((x) => x.json()),
-        fetch("/api/shipments").then((x) => x.json()),
-        fetch("/api/users").then((x) => x.json()),
+        getJSON("/api/auth/me", { user: null }),
+        getJSON("/api/products", []),
+        getJSON("/api/customers", []),
+        getJSON("/api/orders", []),
+        getJSON("/api/rentals", []),
+        getJSON("/api/transactions", []),
+        getJSON("/api/shipments", []),
+        getJSON("/api/users", []),
       ]);
       setMe(mr.user);
       setProducts(p); setCustomers(c); setOrders(o); setRentals(r);
@@ -421,10 +443,21 @@ export default function App() {
     await fetch(`/api/shipments/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ track, status }) });
   };
 
+  // ===== สิทธิ์ตามบทบาท =====
+  const role = me?.role || "";
+  const allowed = pagesForRole(role);
+  const navItems = NAV.filter((n) => allowed.includes(n.id));
+  const canEdit = role !== "ลูกค้า"; // ลูกค้า = อ่านอย่างเดียว
+
+  // ถ้าหน้าปัจจุบันไม่อยู่ในสิทธิ์ ให้กลับไปหน้าแรกที่เข้าได้
+  useEffect(() => {
+    if (me && !allowed.includes(page)) setPage(allowed[0] || "dash");
+  }, [me, page, allowed]);
+
   const ctx = {
     products, customers, orders, rentals, txns, shipments, users,
     toggleStock, advanceRental, makeTrack, setQrItem, setReceipt, mobile,
-    saveEntity, deleteEntity,
+    saveEntity, deleteEntity, me, role, canEdit,
   };
 
   if (loading) {
@@ -442,7 +475,7 @@ export default function App() {
         <aside className="w-64 shrink-0 border-r flex flex-col sticky top-0 h-screen" style={{ background: "#fff", borderColor: C.line }}>
           <Brand />
           <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-            {NAV.map(n => <NavItem key={n.id} n={n} active={page === n.id} onClick={() => go(n.id)} />)}
+            {navItems.map(n => <NavItem key={n.id} n={n} active={page === n.id} onClick={() => go(n.id)} />)}
           </nav>
           <div className="p-3 border-t" style={{ borderColor: C.line }}>
             <div className="flex items-center gap-2 p-2 rounded-xl mb-2" style={{ background: C.cream }}>
@@ -485,7 +518,7 @@ export default function App() {
 
         {mobile && (
           <nav className="fixed bottom-0 left-0 right-0 z-30 border-t flex" style={{ background: "#fff", borderColor: C.line }}>
-            {[NAV[0], NAV[6], NAV[4], NAV[1]].map(n => (
+            {navItems.slice(0, 4).map(n => (
               <button key={n.id} onClick={() => go(n.id)} className="flex-1 flex flex-col items-center gap-0.5 py-2.5" style={{ color: page === n.id ? C.gold : C.taupe }}>
                 <n.icon size={20} /><span className="text-[10px]">{n.label}</span>
               </button>
@@ -504,7 +537,7 @@ export default function App() {
                 <button onClick={() => setMoreOpen(false)}><X size={22} /></button>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                {NAV.map(n => (
+                {navItems.map(n => (
                   <button key={n.id} onClick={() => go(n.id)} className="flex flex-col items-center gap-1.5 p-3 rounded-2xl" style={{ background: page === n.id ? C.goldBg : C.cream }}>
                     <n.icon size={22} style={{ color: page === n.id ? C.gold : C.charcoal }} />
                     <span className="text-[11px] text-center" style={{ color: C.charcoal }}>{n.label}</span>
@@ -833,17 +866,19 @@ function Customers({ customers, orders, saveEntity, deleteEntity }) {
 }
 
 /* ============ 5. ORDERS ============ */
-function Orders({ orders, setReceipt, saveEntity, deleteEntity }) {
+function Orders({ orders, setReceipt, saveEntity, deleteEntity, canEdit, me }) {
   const [tab, setTab] = useState("ทั้งหมด");
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const tabs = ["ทั้งหมด", "เช่า", "ขาย"];
-  const list = orders.filter(o => tab === "ทั้งหมด" || o.type === tab);
+  // ลูกค้าเห็นเฉพาะออเดอร์ของตัวเอง
+  const visible = canEdit ? orders : orders.filter(o => me && (o.cust.includes(me.name) || me.name.includes(o.cust)));
+  const list = visible.filter(o => tab === "ทั้งหมด" || o.type === tab);
   const openAdd = () => setForm({ mode: "add", data: { id: genId("ORD-"), type: "เช่า", status: "รอชำระ" } });
   const openEdit = (o) => setForm({ mode: "edit", data: o });
   return (
     <div>
-      <PageHead title="คำสั่งซื้อ" sub="รวมการเช่าและการขาย" action={<Btn icon={Plus} onClick={openAdd}>สร้างคำสั่งซื้อ</Btn>} />
+      <PageHead title="คำสั่งซื้อ" sub={canEdit ? "รวมการเช่าและการขาย" : "ออเดอร์ของคุณ"} action={canEdit ? <Btn icon={Plus} onClick={openAdd}>สร้างคำสั่งซื้อ</Btn> : null} />
       <div className="flex gap-2 mb-4">
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)} className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: tab === t ? C.gold : "#fff", color: tab === t ? "#fff" : C.charcoal, border: "1px solid " + (tab === t ? C.gold : C.line) }}>{t}</button>
@@ -865,8 +900,8 @@ function Orders({ orders, setReceipt, saveEntity, deleteEntity }) {
             </div>
             <div className="flex gap-1 shrink-0">
               <IconBtn icon={Printer} onClick={() => setReceipt(o)} />
-              <IconBtn icon={Pencil} onClick={() => openEdit(o)} />
-              <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(o)} />
+              {canEdit && <IconBtn icon={Pencil} onClick={() => openEdit(o)} />}
+              {canEdit && <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(o)} />}
             </div>
           </div>
         ))}
@@ -957,17 +992,19 @@ function Shipping({ shipments, makeTrack, saveEntity }) {
 }
 
 /* ============ 7. RENTALS ============ */
-function Rentals({ rentals, advanceRental, saveEntity, deleteEntity }) {
+function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, canEdit, me }) {
   const [view, setView] = useState("board");
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const statuses = RENTAL_STATUS;
   const views = [["board", "บอร์ด", LayoutGrid], ["calendar", "ปฏิทิน", CalIcon], ["list", "รายการ", List]];
+  // ลูกค้าเห็นเฉพาะการเช่าของตัวเอง
+  const visible = canEdit ? rentals : rentals.filter(r => me && (r.cust.includes(me.name) || me.name.includes(r.cust)));
   const openAdd = () => setForm({ mode: "add", data: { id: genId("R-"), status: "จองแล้ว" } });
   const openEdit = (r) => setForm({ mode: "edit", data: r });
   return (
     <div>
-      <PageHead title="การเช่า" sub={`${rentals.length} รายการเช่า`} action={<Btn icon={Plus} onClick={openAdd}>จองชุด</Btn>} />
+      <PageHead title="การเช่า" sub={`${visible.length} รายการเช่า`} action={canEdit ? <Btn icon={Plus} onClick={openAdd}>จองชุด</Btn> : null} />
       <div className="flex gap-2 mb-4">
         {views.map(([id, label, Icon]) => (
           <button key={id} onClick={() => setView(id)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium" style={{ background: view === id ? C.gold : "#fff", color: view === id ? "#fff" : C.charcoal, border: "1px solid " + (view === id ? C.gold : C.line) }}>
@@ -980,7 +1017,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity }) {
         <div className="flex gap-3 overflow-x-auto pb-2">
           {statuses.map(st => {
             const [fg, bg] = statusColor(st);
-            const items = rentals.filter(r => r.status === st);
+            const items = visible.filter(r => r.status === st);
             return (
               <div key={st} className="shrink-0 w-60">
                 <div className="flex items-center gap-2 mb-2 px-1">
@@ -993,14 +1030,16 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity }) {
                     <Card key={r.id} className="p-3">
                       <div className="flex items-start justify-between gap-1">
                         <div className="text-sm font-medium leading-snug">{r.item}</div>
-                        <div className="flex gap-1 shrink-0">
-                          <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
-                          <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
-                        </div>
+                        {canEdit && (
+                          <div className="flex gap-1 shrink-0">
+                            <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
+                            <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
+                          </div>
+                        )}
                       </div>
                       <div className="text-xs mt-1" style={{ color: C.taupe }}>{r.cust}</div>
                       <div className="flex items-center gap-1 text-xs mt-1.5" style={{ color: C.taupe }}><Clock size={11} />{r.start} → {r.end}</div>
-                      {!["คืนแล้ว", "เกินกำหนด"].includes(r.status) && (
+                      {canEdit && !["คืนแล้ว", "เกินกำหนด"].includes(r.status) && (
                         <button onClick={() => advanceRental(r.id)} className="mt-2 w-full text-xs py-1.5 rounded-lg font-medium" style={{ background: C.cream, color: C.charcoal }}>เลื่อนสถานะถัดไป →</button>
                       )}
                     </Card>
@@ -1017,15 +1056,17 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity }) {
 
       {view === "list" && (
         <Card className="overflow-hidden">
-          {rentals.map((r, i, arr) => (
+          {visible.map((r, i, arr) => (
             <div key={r.id} className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none" }}>
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: C.cream }}><Shirt size={16} style={{ color: C.taupe }} /></div>
               <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{r.item}</div><div className="text-xs" style={{ color: C.taupe }}>{r.id} · {r.cust} · {r.start}→{r.end}</div></div>
               <Badge s={r.status} />
-              <div className="flex gap-1 shrink-0">
-                <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
-                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
-              </div>
+              {canEdit && (
+                <div className="flex gap-1 shrink-0">
+                  <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
+                  <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
+                </div>
+              )}
             </div>
           ))}
         </Card>
