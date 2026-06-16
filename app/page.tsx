@@ -7,12 +7,23 @@ import {
   ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2,
   Clock, Package, ChevronRight, Filter, Download, LayoutGrid,
   List, Calendar as CalIcon, Crown, Shield, Tag, Phone,
-  MapPin, Eye, Coins, Pencil, Trash2, LogOut, ImagePlus, Loader2
+  MapPin, Eye, Coins, Pencil, Trash2, LogOut, ImagePlus, Loader2, Settings
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
+import * as XLSX from "xlsx";
+
+// ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
+function exportExcel(sheets, filename) {
+  const wb = XLSX.utils.book_new();
+  sheets.forEach((s) => {
+    const ws = XLSX.utils.json_to_sheet(s.rows);
+    XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 31));
+  });
+  XLSX.writeFile(wb, filename);
+}
 
 /* ============ THEME ============ */
 const C = {
@@ -247,6 +258,62 @@ function ConfirmDelete({ name, onClose, onConfirm }) {
   );
 }
 
+/* ============ โปรไฟล์ / เปลี่ยนรหัสผ่าน ============ */
+function ProfileModal({ me, onClose, onSaved }) {
+  const [name, setName] = useState(me?.name || "");
+  const [cur, setCur] = useState("");
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const inputCls = "w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none";
+
+  async function save(e) {
+    e.preventDefault();
+    setBusy(true); setErr(""); setMsg("");
+    const body: any = { name };
+    if (pw) { body.currentPassword = cur; body.newPassword = pw; }
+    try {
+      const res = await fetch("/api/auth/password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      setBusy(false);
+      if (!res.ok) { setErr(data.error || "บันทึกไม่สำเร็จ"); return; }
+      setMsg("บันทึกเรียบร้อยแล้ว ✓"); setCur(""); setPw("");
+      onSaved(data.user);
+    } catch {
+      setBusy(false); setErr("เกิดข้อผิดพลาด");
+    }
+  }
+
+  return (
+    <Modal onClose={onClose} title="โปรไฟล์ / ตั้งค่า" wide>
+      <form onSubmit={save} className="space-y-3">
+        <div className="flex items-center gap-3 pb-2">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style={{ background: C.gold }}>{(me?.name || "?")[0]}</div>
+          <div className="text-xs" style={{ color: C.taupe }}>{me?.email}<br />สิทธิ์: {me?.role}</div>
+        </div>
+        <div>
+          <label className="text-xs" style={{ color: C.taupe }}>ชื่อที่แสดง</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} style={{ borderColor: C.line }} />
+        </div>
+        <div className="pt-3 border-t" style={{ borderColor: C.line }}>
+          <div className="text-xs font-semibold mb-1">เปลี่ยนรหัสผ่าน <span style={{ color: C.taupe }}>(เว้นว่างถ้าไม่เปลี่ยน)</span></div>
+          <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} placeholder="รหัสผ่านเดิม" className={inputCls} style={{ borderColor: C.line }} />
+          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)" className={inputCls} style={{ borderColor: C.line }} />
+        </div>
+        {err && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: C.redBg, color: C.red }}>{err}</div>}
+        {msg && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: C.greenBg, color: C.green }}>{msg}</div>}
+        <div className="flex gap-2 pt-1">
+          <Btn variant="outline" onClick={onClose}>ปิด</Btn>
+          <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl font-medium text-sm text-white" style={{ background: C.gold, opacity: busy ? 0.7 : 1 }}>
+            {busy ? "กำลังบันทึก..." : "บันทึก"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 /* ============ FIELD CONFIGS ============ */
 const PROD_STATUS = ["ว่าง", "ถูกเช่า", "ซ่อม"];
 const ORDER_STATUS = ["รอชำระ", "เตรียมของ", "กำลังจัดส่ง", "สำเร็จ"];
@@ -348,6 +415,7 @@ export default function App() {
 
   const [qrItem, setQrItem] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // ดึง JSON แบบปลอดภัย — ถ้าเข้าไม่ได้ (เช่น 403 ตามสิทธิ์) คืนค่า fallback
   async function getJSON(url, fallback) {
@@ -480,10 +548,11 @@ export default function App() {
           <div className="p-3 border-t" style={{ borderColor: C.line }}>
             <div className="flex items-center gap-2 p-2 rounded-xl mb-2" style={{ background: C.cream }}>
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ background: C.gold }}>{(me?.name || "H")[0]}</div>
-              <div className="leading-tight min-w-0">
+              <div className="leading-tight min-w-0 flex-1">
                 <div className="text-sm font-semibold truncate">{me?.name || "ผู้ใช้"}</div>
                 <div className="text-xs" style={{ color: C.taupe }}>{me?.role || ""}</div>
               </div>
+              <button onClick={() => setProfileOpen(true)} title="โปรไฟล์ / ตั้งค่า" className="p-1.5 rounded-lg" style={{ background: "#fff" }}><Settings size={15} style={{ color: C.taupe }} /></button>
             </div>
             <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
               <LogOut size={15} />ออกจากระบบ
@@ -544,7 +613,10 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-4 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
+              <button onClick={() => { setMoreOpen(false); setProfileOpen(true); }} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-4 rounded-xl text-sm font-medium" style={{ background: C.cream, color: C.charcoal }}>
+                <Settings size={15} />โปรไฟล์ / เปลี่ยนรหัสผ่าน
+              </button>
+              <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-2 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
                 <LogOut size={15} />ออกจากระบบ ({me?.name})
               </button>
             </div>
@@ -570,6 +642,8 @@ export default function App() {
       )}
 
       {receipt && <Receipt o={receipt} onClose={() => setReceipt(null)} />}
+
+      {profileOpen && <ProfileModal me={me} onClose={() => setProfileOpen(false)} onSaved={(u) => setMe(u)} />}
     </div>
   );
 }
@@ -775,7 +849,9 @@ function Inventory({ products }) {
   const total = products.reduce((s, p) => s + p.stock, 0);
   return (
     <div>
-      <PageHead title="คลังสินค้า" sub={`รวม ${total} ชิ้น · ${cats.length} หมวดหมู่`} action={<Btn icon={Download} variant="outline">ส่งออก</Btn>} />
+      <PageHead title="คลังสินค้า" sub={`รวม ${total} ชิ้น · ${cats.length} หมวดหมู่`} action={
+        <Btn icon={Download} variant="outline" onClick={() => exportExcel([{ name: "สินค้า", rows: products.map(p => ({ รหัส: p.id, ชื่อ: p.name, หมวด: p.cat, ประเภท: p.type, "ค่าเช่า": p.rent, "ราคาขาย": p.sell, สตอก: p.stock, "ตำแหน่ง": p.loc, สถานะ: p.status })) }], "honey-studio-สินค้า.xlsx")}>ส่งออก Excel</Btn>
+      } />
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[["สินค้าทั้งหมด", products.length, C.gold], ["พร้อมให้เช่า", products.filter(p => p.status === "ว่าง").length, C.green], ["ต้องเติม", products.filter(p => p.stock <= 1).length, C.red]].map(([l, v, c]) => (
           <Card key={l} className="p-4 text-center">
@@ -1158,13 +1234,21 @@ function Accounting({ txns, saveEntity, deleteEntity }) {
 }
 
 /* ============ 9. REPORTS ============ */
-function Reports() {
+function Reports({ products = [], orders = [], rentals = [], txns = [] }) {
   const [tab, setTab] = useState("ยอดขาย");
   const tabs = [["ยอดขาย", BarChart3], ["สตอกสินค้า", Boxes], ["การเงิน", Wallet]];
   const finData = [{ m: "ม.ค.", in: 42000, out: 31000 }, { m: "ก.พ.", in: 51000, out: 33000 }, { m: "มี.ค.", in: 48000, out: 35000 }, { m: "เม.ย.", in: 67000, out: 38000 }, { m: "พ.ค.", in: 72000, out: 41000 }, { m: "มิ.ย.", in: 58000, out: 36000 }];
+
+  const exportAll = () => exportExcel([
+    { name: "สินค้า", rows: products.map(p => ({ รหัส: p.id, ชื่อ: p.name, หมวด: p.cat, ประเภท: p.type, "ค่าเช่า": p.rent, "ราคาขาย": p.sell, สตอก: p.stock, สถานะ: p.status })) },
+    { name: "คำสั่งซื้อ", rows: orders.map(o => ({ "เลขที่": o.id, "ลูกค้า": o.cust, ประเภท: o.type, รายการ: o.items, "ยอดรวม": o.total, สถานะ: o.status, "วันที่": o.date })) },
+    { name: "การเช่า", rows: rentals.map(r => ({ "เลขที่": r.id, "ลูกค้า": r.cust, รายการ: r.item, "วันรับ": r.start, "วันคืน": r.end, สถานะ: r.status })) },
+    { name: "บัญชี", rows: txns.map(t => ({ รหัส: t.id, "วันที่": t.date, รายละเอียด: t.desc, หมวด: t.cat, ประเภท: t.type === "in" ? "รายรับ" : "รายจ่าย", "จำนวนเงิน": t.amt })) },
+  ], "honey-studio-รายงาน.xlsx");
+
   return (
     <div>
-      <PageHead title="รายงาน" sub="วิเคราะห์ยอดขาย สตอก และการเงิน" action={<Btn icon={Download} variant="outline">ส่งออก Excel</Btn>} />
+      <PageHead title="รายงาน" sub="วิเคราะห์ยอดขาย สตอก และการเงิน" action={<Btn icon={Download} variant="outline" onClick={exportAll}>ส่งออก Excel</Btn>} />
       <div className="flex gap-2 mb-4">
         {tabs.map(([t, Icon]) => (
           <button key={t} onClick={() => setTab(t)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium" style={{ background: tab === t ? C.gold : "#fff", color: tab === t ? "#fff" : C.charcoal, border: "1px solid " + (tab === t ? C.gold : C.line) }}><Icon size={15} />{t}</button>
