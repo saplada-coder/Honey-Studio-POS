@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard, Shirt, Boxes, Users, ShoppingBag, Truck, CalendarDays,
   Wallet, BarChart3, UserCog, Menu, X, Search, Plus, Bell, QrCode, Printer,
   ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2,
-  Clock, Package, RotateCcw, ChevronRight, Filter, Download, LayoutGrid,
-  List, Calendar as CalIcon, CreditCard, Crown, Shield, Tag, Phone,
-  MapPin, MoreHorizontal, Eye, Coins, ArrowLeft
+  Clock, Package, ChevronRight, Filter, Download, LayoutGrid,
+  List, Calendar as CalIcon, Crown, Shield, Tag, Phone,
+  MapPin, Eye, Coins
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
@@ -22,7 +22,10 @@ const C = {
   bg: "#FBF9F4", line: "#EAE2D4", green: "#6FA66B", greenBg: "#E6F0E4",
   blue: "#7C93B8", blueBg: "#E6EBF3", red: "#C66B6B", redBg: "#F6E4E4",
 };
-const baht = (n) => "฿" + n.toLocaleString("th-TH");
+const baht = (n) => "฿" + Number(n || 0).toLocaleString("th-TH");
+
+// แผนที่ไอคอนของผู้ใช้ (ฐานข้อมูลเก็บเป็นชื่อ string)
+const ICONS = { Crown, Shield, UserCog, Users };
 
 /* ============ FAUX QR ============ */
 function QR({ value = "HS", size = 120 }) {
@@ -62,64 +65,7 @@ function QR({ value = "HS", size = 120 }) {
   );
 }
 
-/* ============ MOCK DATA ============ */
-const initProducts = [
-  { id: "HS-D001", name: "ชุดราตรียาว Champagne", cat: "ชุดราตรี", type: "ทั้งคู่", rent: 1200, sell: 8900, stock: 3, loc: "ราว A1", status: "ว่าง" },
-  { id: "HS-D002", name: "ชุดเพื่อนเจ้าสาว Dusty Rose", cat: "ชุดเพื่อนเจ้าสาว", type: "เช่า", rent: 900, sell: 0, stock: 6, loc: "ราว A2", status: "ถูกเช่า" },
-  { id: "HS-D003", name: "ชุดราตรี Navy Mermaid", cat: "ชุดราตรี", type: "เช่า", rent: 1500, sell: 0, stock: 2, loc: "ราว A1", status: "ว่าง" },
-  { id: "HS-S010", name: "รองเท้าส้นสูง Gold 3 นิ้ว", cat: "รองเท้า", type: "ทั้งคู่", rent: 300, sell: 1290, stock: 8, loc: "ชั้น B1", status: "ว่าง" },
-  { id: "HS-B020", name: "กระเป๋าคลัทช์ Pearl", cat: "กระเป๋า", type: "ทั้งคู่", rent: 250, sell: 990, stock: 1, loc: "ตู้ C1", status: "ว่าง" },
-  { id: "HS-D004", name: "ชุดราตรี Emerald Satin", cat: "ชุดราตรี", type: "ทั้งคู่", rent: 1300, sell: 7500, stock: 0, loc: "ราว A3", status: "ซ่อม" },
-  { id: "HS-D005", name: "ชุดไทยจักรพรรดิทอง", cat: "ชุดไทย", type: "เช่า", rent: 1800, sell: 0, stock: 4, loc: "ราว A4", status: "ว่าง" },
-  { id: "HS-A030", name: "เครื่องประดับมงกุฎ Crystal", cat: "เครื่องประดับ", type: "เช่า", rent: 400, sell: 0, stock: 2, loc: "ตู้ C2", status: "ว่าง" },
-];
-
-const initCustomers = [
-  { id: "C001", name: "คุณพิมพ์ชนก ศรีสุข", phone: "081-234-5678", line: "@pim_ploy", addr: "เขตสาทร กทม.", orders: 5, spent: 12400 },
-  { id: "C002", name: "คุณกานต์ธิดา วงศ์ทอง", phone: "089-876-5432", line: "@kanthida", addr: "อ.หาดใหญ่ สงขลา", orders: 3, spent: 6700 },
-  { id: "C003", name: "คุณภัสสร เจริญพร", phone: "082-555-7788", line: "@napat.j", addr: "อ.เมือง เชียงใหม่", orders: 8, spent: 23100 },
-  { id: "C004", name: "คุณวรินทร์ภิญญ์ ทีฆาม", phone: "086-111-2233", line: "@warin", addr: "เขตบางนา กทม.", orders: 1, spent: 1500 },
-];
-
-const initOrders = [
-  { id: "ORD-2401", cust: "คุณพิมพ์ชนก ศรีสุข", type: "เช่า", items: "ชุดราตรียาว Champagne", total: 1200, status: "รอชำระ", date: "16 มิ.ย. 68" },
-  { id: "ORD-2400", cust: "คุณภัสสร เจริญพร", type: "ขาย", items: "รองเท้าส้นสูง Gold ×1", total: 1290, status: "สำเร็จ", date: "15 มิ.ย. 68" },
-  { id: "ORD-2399", cust: "คุณกานต์ธิดา วงศ์ทอง", type: "เช่า", items: "ชุดเพื่อนเจ้าสาว ×3", total: 2700, status: "กำลังจัดส่ง", date: "15 มิ.ย. 68" },
-  { id: "ORD-2398", cust: "คุณวรินทร์ภิญญ์ ทีฆาม", type: "เช่า", items: "กระเป๋าคลัทช์ Pearl", total: 250, status: "สำเร็จ", date: "14 มิ.ย. 68" },
-  { id: "ORD-2397", cust: "คุณพิมพ์ชนก ศรีสุข", type: "ขาย", items: "กระเป๋าคลัทช์ Pearl", total: 990, status: "เตรียมของ", date: "14 มิ.ย. 68" },
-];
-
-const initRentals = [
-  { id: "R-501", cust: "คุณพิมพ์ชนก", item: "ชุดราตรียาว Champagne", start: "16 มิ.ย.", end: "18 มิ.ย.", status: "จองแล้ว" },
-  { id: "R-502", cust: "คุณกานต์ธิดา", item: "ชุดเพื่อนเจ้าสาว ×3", start: "15 มิ.ย.", end: "17 มิ.ย.", status: "รับ/ส่งแล้ว" },
-  { id: "R-503", cust: "คุณภัสสร", item: "ชุดไทยจักรพรรดิทอง", start: "13 มิ.ย.", end: "16 มิ.ย.", status: "กำลังใช้งาน" },
-  { id: "R-504", cust: "คุณวรินทร์ภิญญ์", item: "กระเป๋าคลัทช์ Pearl", start: "10 มิ.ย.", end: "13 มิ.ย.", status: "คืนแล้ว" },
-  { id: "R-505", cust: "คุณภัสสร", item: "ชุดราตรี Navy Mermaid", start: "08 มิ.ย.", end: "12 มิ.ย.", status: "เกินกำหนด" },
-  { id: "R-506", cust: "คุณกานต์ธิดา", item: "เครื่องประดับมงกุฎ", start: "17 มิ.ย.", end: "19 มิ.ย.", status: "จองแล้ว" },
-];
-
-const initTxns = [
-  { id: "T-9001", date: "16 มิ.ย.", desc: "ค่าเช่า ORD-2401", cat: "รายรับ-เช่า", type: "in", amt: 1200, auto: true },
-  { id: "T-9000", date: "15 มิ.ย.", desc: "ขายสินค้า ORD-2400", cat: "รายรับ-ขาย", type: "in", amt: 1290, auto: true },
-  { id: "T-8999", date: "15 มิ.ย.", desc: "ค่าเช่า ORD-2399", cat: "รายรับ-เช่า", type: "in", amt: 2700, auto: true },
-  { id: "T-8998", date: "14 มิ.ย.", desc: "ค่าซักรีดชุด", cat: "ค่าดูแลสินค้า", type: "out", amt: 850, auto: false },
-  { id: "T-8997", date: "13 มิ.ย.", desc: "ค่าเช่าหน้าร้าน (มิ.ย.)", cat: "ค่าเช่าที่", type: "out", amt: 18000, auto: false },
-  { id: "T-8996", date: "12 มิ.ย.", desc: "ซื้อชุดใหม่เข้าร้าน", cat: "ต้นทุนสินค้า", type: "out", amt: 12500, auto: false },
-];
-
-const initShip = [
-  { id: "SH-301", order: "ORD-2399", cust: "คุณกานต์ธิดา", carrier: "Kerry", track: "KEX9928374001", status: "กำลังจัดส่ง" },
-  { id: "SH-300", order: "ORD-2400", cust: "คุณภัสสร", carrier: "Flash", track: "TH880023451", status: "ส่งสำเร็จ" },
-  { id: "SH-299", order: "ORD-2397", cust: "คุณพิมพ์ชนก", carrier: "ไปรษณีย์ไทย", track: "—", status: "รอสร้างเลข" },
-];
-
-const users = [
-  { name: "คุณฮันนี่ (เจ้าของ)", role: "เจ้าของ", email: "honey@studio.co", icon: Crown, color: C.gold },
-  { name: "คุณแอดมิน", role: "ผู้ดูแลระบบ", email: "admin@studio.co", icon: Shield, color: C.blue },
-  { name: "พ่อค้ามาย", role: "พนักงานขาย", email: "may@studio.co", icon: UserCog, color: C.rose },
-  { name: "คุณพิมพ์ชนก", role: "ลูกค้า", email: "pim@line.com", icon: Users, color: C.taupe },
-];
-
+/* ============ ข้อมูลกราฟ (ภาพรวมเชิงสถิติ) ============ */
 const revData = [
   { d: "จ", เช่า: 4200, ขาย: 1200 }, { d: "อ", เช่า: 3800, ขาย: 2100 },
   { d: "พ", เช่า: 5100, ขาย: 990 }, { d: "พฤ", เช่า: 4700, ขาย: 3200 },
@@ -188,10 +134,39 @@ export default function App() {
   const [page, setPage] = useState("dash");
   const [mobile, setMobile] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [products, setProducts] = useState(initProducts);
-  const [rentals, setRentals] = useState(initRentals);
+  const [loading, setLoading] = useState(true);
+
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [rentals, setRentals] = useState([]);
+  const [txns, setTxns] = useState([]);
+  const [shipments, setShipments] = useState([]);
+  const [users, setUsers] = useState([]);
+
   const [qrItem, setQrItem] = useState(null);
   const [receipt, setReceipt] = useState(null);
+
+  // โหลดข้อมูลทั้งหมดจากฐานข้อมูล
+  async function loadAll() {
+    try {
+      const [p, c, o, r, t, s, u] = await Promise.all([
+        fetch("/api/products").then((x) => x.json()),
+        fetch("/api/customers").then((x) => x.json()),
+        fetch("/api/orders").then((x) => x.json()),
+        fetch("/api/rentals").then((x) => x.json()),
+        fetch("/api/transactions").then((x) => x.json()),
+        fetch("/api/shipments").then((x) => x.json()),
+        fetch("/api/users").then((x) => x.json()),
+      ]);
+      setProducts(p); setCustomers(c); setOrders(o); setRentals(r);
+      setTxns(t); setShipments(s); setUsers(u);
+    } catch (e) {
+      console.error("โหลดข้อมูลไม่สำเร็จ", e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     const f = () => setMobile(window.innerWidth < 768);
@@ -204,22 +179,67 @@ export default function App() {
     const st = document.createElement("style");
     st.textContent = `[style*="Georgia"]{font-family:'Playfair Display','Noto Sans Thai',Georgia,serif !important;letter-spacing:.005em;}`;
     document.head.appendChild(st);
+    loadAll();
     return () => window.removeEventListener("resize", f);
   }, []);
 
   const go = (id) => { setPage(id); setMoreOpen(false); window.scrollTo(0, 0); };
 
-  const toggleStock = (id, delta) => setProducts(p => p.map(x => x.id === id ? { ...x, stock: Math.max(0, x.stock + delta), status: (x.stock + delta) <= 0 ? "ถูกเช่า" : x.status } : x));
-  const advanceRental = (id) => {
-    const order = ["จองแล้ว", "รับ/ส่งแล้ว", "กำลังใช้งาน", "คืนแล้ว"];
-    setRentals(r => r.map(x => {
-      if (x.id !== id) return x;
-      const i = order.indexOf(x.status);
-      return { ...x, status: i >= 0 && i < order.length - 1 ? order[i + 1] : x.status };
-    }));
+  // ปรับสตอกสินค้า (บันทึกลงฐานข้อมูล)
+  const toggleStock = async (id, delta) => {
+    const cur = products.find((x) => x.id === id);
+    if (!cur) return;
+    const stock = Math.max(0, cur.stock + delta);
+    const status = stock <= 0 ? "ถูกเช่า" : cur.status;
+    setProducts((p) => p.map((x) => (x.id === id ? { ...x, stock, status } : x))); // อัปเดตจอทันที
+    await fetch(`/api/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stock, status }),
+    });
   };
 
-  const ctx = { products, setProducts, rentals, setRentals, toggleStock, advanceRental, setQrItem, setReceipt, mobile };
+  // เลื่อนสถานะการเช่า (บันทึกลงฐานข้อมูล)
+  const advanceRental = async (id) => {
+    const order = ["จองแล้ว", "รับ/ส่งแล้ว", "กำลังใช้งาน", "คืนแล้ว"];
+    const cur = rentals.find((x) => x.id === id);
+    if (!cur) return;
+    const i = order.indexOf(cur.status);
+    if (i < 0 || i >= order.length - 1) return;
+    const status = order[i + 1];
+    setRentals((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
+    await fetch(`/api/rentals/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+  };
+
+  // สร้างเลขแทร็กกิ้ง (บันทึกลงฐานข้อมูล)
+  const makeTrack = async (id) => {
+    const track = "TH" + Math.floor(Math.random() * 900000000 + 100000000);
+    const status = "กำลังจัดส่ง";
+    setShipments((s) => s.map((x) => (x.id === id ? { ...x, track, status } : x)));
+    await fetch(`/api/shipments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ track, status }),
+    });
+  };
+
+  const ctx = {
+    products, customers, orders, rentals, txns, shipments, users,
+    toggleStock, advanceRental, makeTrack, setQrItem, setReceipt, mobile,
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3" style={{ background: C.bg, color: C.taupe, fontFamily: "'Noto Sans Thai', sans-serif" }}>
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold animate-pulse" style={{ background: C.gold, fontFamily: "Georgia,serif" }}>HS</div>
+        <div className="text-sm">กำลังโหลดข้อมูลจากฐานข้อมูล...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex" style={{ background: C.bg, fontFamily: "'Noto Sans Thai', -apple-system, 'Segoe UI', sans-serif", color: C.charcoal }}>
@@ -368,12 +388,12 @@ function Modal({ children, onClose, title, wide }) {
 }
 
 /* ============ 1. DASHBOARD ============ */
-function Dashboard({ go }) {
+function Dashboard({ go, products, rentals }) {
   const kpis = [
     { label: "ยอดขายวันนี้", val: baht(2490), sub: "+12% จากเมื่อวาน", up: true, icon: Coins, color: C.gold, bg: C.goldBg },
     { label: "ยอดเช่าวันนี้", val: baht(3900), sub: "3 รายการ", up: true, icon: CalendarDays, color: C.rose, bg: C.roseBg },
     { label: "ออเดอร์ค้าง", val: "4", sub: "รอดำเนินการ", up: false, icon: ShoppingBag, color: C.blue, bg: C.blueBg },
-    { label: "เกินกำหนดคืน", val: "1", sub: "ต้องติดตาม", up: false, icon: AlertTriangle, color: C.red, bg: C.redBg },
+    { label: "เกินกำหนดคืน", val: String(rentals.filter(r => r.status === "เกินกำหนด").length), sub: "ต้องติดตาม", up: false, icon: AlertTriangle, color: C.red, bg: C.redBg },
   ];
   return (
     <div>
@@ -438,7 +458,7 @@ function Dashboard({ go }) {
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3"><span className="font-bold">คืนที่ต้องติดตาม</span><button onClick={() => go("rentals")} className="text-xs" style={{ color: C.gold }}>ดูทั้งหมด</button></div>
           <div className="space-y-2.5">
-            {initRentals.filter(r => ["กำลังใช้งาน", "เกินกำหนด", "รับ/ส่งแล้ว"].includes(r.status)).map(r => (
+            {rentals.filter(r => ["กำลังใช้งาน", "เกินกำหนด", "รับ/ส่งแล้ว"].includes(r.status)).map(r => (
               <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: C.cream }}>
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "#fff" }}><Shirt size={16} style={{ color: C.taupe }} /></div>
                 <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{r.item}</div><div className="text-xs" style={{ color: C.taupe }}>{r.cust} · ครบ {r.end}</div></div>
@@ -450,7 +470,7 @@ function Dashboard({ go }) {
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3"><span className="font-bold flex items-center gap-1.5"><AlertTriangle size={16} style={{ color: C.red }} />สตอกใกล้หมด</span><button onClick={() => go("inventory")} className="text-xs" style={{ color: C.gold }}>จัดการ</button></div>
           <div className="space-y-2.5">
-            {initProducts.filter(p => p.stock <= 1).map(p => (
+            {products.filter(p => p.stock <= 1).map(p => (
               <div key={p.id} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: p.stock === 0 ? C.redBg : C.cream }}>
                 <Package size={18} style={{ color: p.stock === 0 ? C.red : C.taupe }} />
                 <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{p.name}</div><div className="text-xs" style={{ color: C.taupe }}>{p.id} · {p.loc}</div></div>
@@ -549,13 +569,13 @@ function Inventory({ products }) {
 }
 
 /* ============ 4. CUSTOMERS ============ */
-function Customers() {
+function Customers({ customers, orders }) {
   const [sel, setSel] = useState(null);
   return (
     <div>
-      <PageHead title="ลูกค้า" sub={`${initCustomers.length} รายชื่อ`} action={<Btn icon={Plus}>เพิ่มลูกค้า</Btn>} />
+      <PageHead title="ลูกค้า" sub={`${customers.length} รายชื่อ`} action={<Btn icon={Plus}>เพิ่มลูกค้า</Btn>} />
       <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
-        {initCustomers.map(c => (
+        {customers.map(c => (
           <Card key={c.id} className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: C.rose }}>{c.name.replace("คุณ", "")[0]}</div>
@@ -582,7 +602,7 @@ function Customers() {
             <div className="flex justify-between"><span style={{ color: C.taupe }}>ยอดใช้จ่ายสะสม</span><span className="font-bold" style={{ color: C.gold }}>{baht(sel.spent)}</span></div>
             <div className="pt-2 border-t" style={{ borderColor: C.line }}>
               <div className="font-semibold mb-2">ประวัติล่าสุด</div>
-              {initOrders.filter(o => o.cust === sel.name).map(o => (
+              {orders.filter(o => o.cust === sel.name).map(o => (
                 <div key={o.id} className="flex justify-between items-center py-1.5"><span className="text-xs">{o.items}</span><Badge s={o.status} /></div>
               ))}
             </div>
@@ -594,10 +614,10 @@ function Customers() {
 }
 
 /* ============ 5. ORDERS ============ */
-function Orders({ setReceipt }) {
+function Orders({ orders, setReceipt }) {
   const [tab, setTab] = useState("ทั้งหมด");
   const tabs = ["ทั้งหมด", "เช่า", "ขาย"];
-  const list = initOrders.filter(o => tab === "ทั้งหมด" || o.type === tab);
+  const list = orders.filter(o => tab === "ทั้งหมด" || o.type === tab);
   return (
     <div>
       <PageHead title="คำสั่งซื้อ" sub="รวมการเช่าและการขาย" action={<Btn icon={Plus}>สร้างคำสั่งซื้อ</Btn>} />
@@ -654,15 +674,13 @@ function Receipt({ o, onClose }) {
 }
 
 /* ============ 6. SHIPPING ============ */
-function Shipping() {
-  const [ship, setShip] = useState(initShip);
+function Shipping({ shipments, makeTrack }) {
   const carriers = ["Kerry", "Flash", "ไปรษณีย์ไทย", "J&T"];
-  const makeTrack = (id) => setShip(s => s.map(x => x.id === id ? { ...x, track: "TH" + Math.floor(Math.random() * 900000000 + 100000000), status: "กำลังจัดส่ง" } : x));
   return (
     <div>
       <PageHead title="การจัดส่ง" sub="สร้างเลขแทร็กกิ้ง · ติดตามสถานะ" action={<Btn icon={Plus}>สร้างใบส่ง</Btn>} />
       <div className="space-y-3">
-        {ship.map(s => (
+        {shipments.map(s => (
           <Card key={s.id} className="p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: C.blueBg }}><Truck size={18} style={{ color: C.blue }} /></div>
@@ -756,7 +774,7 @@ function Rentals({ rentals, advanceRental }) {
 
 function RentalCalendar({ rentals }) {
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
-  const firstDow = 6; // มิ.ย. 2025 starts ~Sunday placeholder
+  const firstDow = 6;
   const evMap = { 16: ["จองแล้ว"], 15: ["รับ/ส่งแล้ว"], 13: ["กำลังใช้งาน"], 10: ["คืนแล้ว"], 8: ["เกินกำหนด"], 17: ["จองแล้ว"] };
   return (
     <Card className="p-4">
@@ -786,9 +804,9 @@ function RentalCalendar({ rentals }) {
 }
 
 /* ============ 8. ACCOUNTING ============ */
-function Accounting() {
-  const inSum = initTxns.filter(t => t.type === "in").reduce((s, t) => s + t.amt, 0);
-  const outSum = initTxns.filter(t => t.type === "out").reduce((s, t) => s + t.amt, 0);
+function Accounting({ txns }) {
+  const inSum = txns.filter(t => t.type === "in").reduce((s, t) => s + t.amt, 0);
+  const outSum = txns.filter(t => t.type === "out").reduce((s, t) => s + t.amt, 0);
   return (
     <div>
       <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกรายรับอัตโนมัติจากเช่า+ขาย" action={<Btn icon={Plus}>เพิ่มรายการ</Btn>} />
@@ -799,7 +817,7 @@ function Accounting() {
       </div>
       <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b font-bold text-sm" style={{ borderColor: C.line }}>รายการล่าสุด</div>
-        {initTxns.map((t, i, arr) => (
+        {txns.map((t, i, arr) => (
           <div key={t.id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none" }}>
             <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.type === "in" ? C.greenBg : C.redBg }}>
               {t.type === "in" ? <ArrowUpRight size={16} style={{ color: C.green }} /> : <ArrowDownRight size={16} style={{ color: C.red }} />}
@@ -880,7 +898,7 @@ function Reports() {
 }
 
 /* ============ 10. USER MANAGEMENT ============ */
-function UserMan() {
+function UserMan({ users }) {
   const perms = {
     "เจ้าของ": "เข้าถึงทุกอย่าง · ดูบัญชี+รายงานทั้งหมด",
     "ผู้ดูแลระบบ": "จัดการสินค้า ออเดอร์ ลูกค้า · ตั้งค่าระบบ",
@@ -891,19 +909,22 @@ function UserMan() {
     <div>
       <PageHead title="จัดการผู้ใช้งาน" sub="กำหนดสิทธิ์ตามบทบาท" action={<Btn icon={Plus}>เพิ่มผู้ใช้</Btn>} />
       <div className="grid sm:grid-cols-2 gap-3 md:gap-4 mb-5">
-        {users.map(u => (
-          <Card key={u.email} className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: u.color + "22" }}><u.icon size={22} style={{ color: u.color }} /></div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm">{u.name}</div>
-                <div className="text-xs" style={{ color: C.taupe }}>{u.email}</div>
+        {users.map(u => {
+          const Icon = ICONS[u.icon] || Users;
+          return (
+            <Card key={u.email} className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: u.color + "22" }}><Icon size={22} style={{ color: u.color }} /></div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">{u.name}</div>
+                  <div className="text-xs" style={{ color: C.taupe }}>{u.email}</div>
+                </div>
+                <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: u.color + "22", color: u.color }}>{u.role}</span>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: u.color + "22", color: u.color }}>{u.role}</span>
-            </div>
-            <div className="mt-3 pt-3 border-t text-xs" style={{ borderColor: C.line, color: C.taupe }}>{perms[u.role]}</div>
-          </Card>
-        ))}
+              <div className="mt-3 pt-3 border-t text-xs" style={{ borderColor: C.line, color: C.taupe }}>{perms[u.role]}</div>
+            </Card>
+          );
+        })}
       </div>
       <Card className="p-4">
         <div className="font-bold text-sm mb-3 flex items-center gap-1.5"><Shield size={15} style={{ color: C.gold }} />สิทธิ์การเข้าถึง</div>

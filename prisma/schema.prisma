@@ -1,0 +1,100 @@
+// โครงสร้างฐานข้อมูล HONEY STUDIO POS
+// เอกสาร: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===== สินค้า (ชุด/รองเท้า/กระเป๋า/เครื่องประดับ) =====
+model Product {
+  id        String   @id // รหัสสินค้า เช่น HS-D001
+  name      String
+  cat       String // หมวดหมู่
+  type      String // เช่า / ขาย / ทั้งคู่
+  rent      Int      @default(0) // ค่าเช่า (บาท)
+  sell      Int      @default(0) // ราคาขาย (บาท)
+  stock     Int      @default(0) // จำนวนคงเหลือ
+  loc       String   @default("") // ตำแหน่งเก็บ
+  status    String   @default("ว่าง")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===== ลูกค้า =====
+model Customer {
+  id        String   @id // เช่น C001
+  name      String
+  phone     String   @default("")
+  line      String   @default("")
+  addr      String   @default("")
+  orders    Int      @default(0) // จำนวนออเดอร์สะสม
+  spent     Int      @default(0) // ยอดใช้จ่ายสะสม
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===== คำสั่งซื้อ (เช่า/ขาย) =====
+model Order {
+  id        String   @id // เช่น ORD-2401
+  cust      String // ชื่อลูกค้า
+  type      String // เช่า / ขาย
+  items     String // รายการสินค้า
+  total     Int      @default(0)
+  status    String   @default("รอชำระ")
+  date      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===== การเช่า =====
+model Rental {
+  id        String   @id // เช่น R-501
+  cust      String
+  item      String
+  start     String
+  end       String
+  status    String   @default("จองแล้ว")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===== บัญชีรับจ่าย =====
+model Transaction {
+  id        String   @id // เช่น T-9001
+  date      String
+  desc      String
+  cat       String
+  type      String // in / out
+  amt       Int      @default(0)
+  auto      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ===== การจัดส่ง =====
+model Shipment {
+  id        String   @id // เช่น SH-301
+  order     String
+  cust      String
+  carrier   String   @default("")
+  track     String   @default("—")
+  status    String   @default("รอสร้างเลข")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===== ผู้ใช้งานระบบ =====
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  role         String // เจ้าของ / ผู้ดูแลระบบ / พนักงานขาย / ลูกค้า
+  email        String   @unique
+  passwordHash String   @default("")
+  icon         String   @default("Users") // ชื่อไอคอน (lucide)
+  color        String   @default("#A8978E")
+  createdAt    DateTime @default(now())
+}
