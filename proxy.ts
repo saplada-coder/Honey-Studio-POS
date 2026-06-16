@@ -25,7 +25,37 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // ===== จำกัดสิทธิ์การเรียก API ตามบทบาท =====
+  if (pathname.startsWith("/api") && !apiAllowed(session.role, pathname, req.method)) {
+    return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงส่วนนี้" }, { status: 403 });
+  }
+
   return NextResponse.next();
+}
+
+// คืน true ถ้าบทบาทนี้เรียก API เส้นทาง/เมธอดนี้ได้
+function apiAllowed(role: string, pathname: string, method: string) {
+  const isWrite = method !== "GET";
+  if (role === "เจ้าของ") return true;
+  if (role === "ผู้ดูแลระบบ") {
+    // ไม่เห็นบัญชีรับจ่าย
+    if (pathname.startsWith("/api/transactions")) return false;
+    return true;
+  }
+  if (role === "พนักงานขาย") {
+    if (pathname.startsWith("/api/transactions")) return false; // ไม่เห็นบัญชี
+    if (pathname.startsWith("/api/users")) return false; // ไม่จัดการผู้ใช้
+    return true;
+  }
+  if (role === "ลูกค้า") {
+    if (isWrite) return false; // อ่านอย่างเดียว
+    return (
+      pathname.startsWith("/api/orders") ||
+      pathname.startsWith("/api/rentals") ||
+      pathname.startsWith("/api/products")
+    );
+  }
+  return true;
 }
 
 export const config = {
