@@ -7,7 +7,7 @@ import {
   ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2,
   Clock, Package, ChevronRight, Filter, Download, LayoutGrid,
   List, Calendar as CalIcon, Crown, Shield, Tag, Phone,
-  MapPin, Eye, Coins
+  MapPin, Eye, Coins, Pencil, Trash2, LogOut, ImagePlus, Loader2
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
@@ -23,9 +23,8 @@ const C = {
   blue: "#7C93B8", blueBg: "#E6EBF3", red: "#C66B6B", redBg: "#F6E4E4",
 };
 const baht = (n) => "฿" + Number(n || 0).toLocaleString("th-TH");
-
-// แผนที่ไอคอนของผู้ใช้ (ฐานข้อมูลเก็บเป็นชื่อ string)
 const ICONS = { Crown, Shield, UserCog, Users };
+const genId = (prefix) => prefix + Math.floor(1000 + Math.random() * 9000);
 
 /* ============ FAUX QR ============ */
 function QR({ value = "HS", size = 120 }) {
@@ -105,15 +104,207 @@ const PageHead = ({ title, sub, action }) => (
     {action}
   </div>
 );
-const Btn = ({ children, onClick, variant = "solid", icon: Icon, size = "md" }) => {
+const Btn = ({ children, onClick, variant = "solid", icon: Icon, size = "md", type = "button" }) => {
   const base = "inline-flex items-center gap-1.5 rounded-xl font-medium transition active:scale-95 " + (size === "sm" ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm");
   const styles = variant === "solid"
     ? { background: C.gold, color: "#fff" }
     : variant === "ghost"
     ? { background: C.cream, color: C.charcoal }
+    : variant === "danger"
+    ? { background: C.redBg, color: C.red }
     : { background: "#fff", color: C.charcoal, border: "1px solid " + C.line };
-  return <button onClick={onClick} className={base} style={styles}>{Icon && <Icon size={16} />}{children}</button>;
+  return <button type={type} onClick={onClick} className={base} style={styles}>{Icon && <Icon size={16} />}{children}</button>;
 };
+
+/* ============ MODAL ============ */
+function Modal({ children, onClose, title, wide }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
+      <div className={"w-full rounded-2xl overflow-hidden " + (wide ? "max-w-lg" : "max-w-sm")} style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-5 py-4 border-b" style={{ borderColor: C.line }}>
+          <span className="font-bold">{title}</span>
+          <button onClick={onClose}><X size={20} style={{ color: C.taupe }} /></button>
+        </div>
+        <div className="p-5 max-h-[75vh] overflow-y-auto">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ ช่องอัปโหลดรูป ============ */
+function ImageField({ value, onChange }) {
+  const [up, setUp] = useState(false);
+  const [err, setErr] = useState("");
+  async function pick(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUp(true); setErr("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok) onChange(data.url);
+      else setErr(data.error || "อัปโหลดไม่สำเร็จ");
+    } catch {
+      setErr("อัปโหลดไม่สำเร็จ");
+    } finally {
+      setUp(false);
+    }
+  }
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        <div className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden shrink-0" style={{ background: C.cream }}>
+          {value ? <img src={value} alt="" className="w-full h-full object-cover" /> : <Shirt size={24} style={{ color: C.taupe }} />}
+        </div>
+        <label className="text-xs px-3 py-2 rounded-xl cursor-pointer inline-flex items-center gap-1.5" style={{ background: C.cream, color: C.charcoal }}>
+          {up ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+          {up ? "กำลังอัปโหลด..." : value ? "เปลี่ยนรูป" : "อัปโหลดรูป"}
+          <input type="file" accept="image/*" onChange={pick} className="hidden" disabled={up} />
+        </label>
+      </div>
+      {err && <div className="text-[11px] mt-1" style={{ color: C.red }}>{err}</div>}
+    </div>
+  );
+}
+
+/* ============ ฟอร์มทั่วไป (เพิ่ม/แก้ไข) ============ */
+function FormModal({ title, fields, initial, onClose, onSubmit }) {
+  const [form, setForm] = useState(() => {
+    const base = {};
+    fields.forEach((f) => { base[f.key] = initial?.[f.key] ?? (f.type === "number" ? 0 : ""); });
+    return base;
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+
+  async function handle(e) {
+    e.preventDefault();
+    setSaving(true); setErr("");
+    try {
+      await onSubmit(form);
+    } catch (e2) {
+      setErr("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal onClose={onClose} title={title} wide>
+      <form onSubmit={handle} className="space-y-3">
+        {fields.map((f) => (
+          <div key={f.key}>
+            <label className="text-xs" style={{ color: C.taupe }}>{f.label}{f.required && " *"}</label>
+            {f.type === "image" ? (
+              <div className="mt-1"><ImageField value={form[f.key]} onChange={(v) => set(f.key, v)} /></div>
+            ) : f.type === "select" ? (
+              <select value={form[f.key]} onChange={(e) => set(f.key, e.target.value)} required={f.required}
+                className="w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: C.line }}>
+                <option value="">— เลือก —</option>
+                {f.options.map((o) => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+              </select>
+            ) : (
+              <input
+                type={f.type === "number" ? "number" : "text"}
+                value={form[f.key]}
+                onChange={(e) => set(f.key, f.type === "number" ? Number(e.target.value) : e.target.value)}
+                placeholder={f.placeholder || ""}
+                required={f.required}
+                disabled={f.readOnly}
+                className="w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none" style={{ borderColor: C.line, background: f.readOnly ? C.cream : "#fff" }}
+              />
+            )}
+          </div>
+        ))}
+        {err && <div className="text-xs px-3 py-2 rounded-lg" style={{ background: C.redBg, color: C.red }}>{err}</div>}
+        <div className="flex gap-2 pt-1">
+          <Btn variant="outline" onClick={onClose}>ยกเลิก</Btn>
+          <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl font-medium text-sm text-white transition active:scale-95" style={{ background: C.gold, opacity: saving ? 0.7 : 1 }}>
+            {saving ? "กำลังบันทึก..." : "บันทึก"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/* ============ ยืนยันการลบ ============ */
+function ConfirmDelete({ name, onClose, onConfirm }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Modal onClose={onClose} title="ยืนยันการลบ">
+      <p className="text-sm mb-4">ต้องการลบ <b>{name}</b> ใช่ไหม? การลบนี้ย้อนกลับไม่ได้</p>
+      <div className="flex gap-2">
+        <Btn variant="outline" onClick={onClose}>ยกเลิก</Btn>
+        <button onClick={async () => { setBusy(true); await onConfirm(); }} disabled={busy}
+          className="flex-1 py-2.5 rounded-xl font-medium text-sm text-white" style={{ background: C.red, opacity: busy ? 0.7 : 1 }}>
+          {busy ? "กำลังลบ..." : "ลบ"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+/* ============ FIELD CONFIGS ============ */
+const PROD_STATUS = ["ว่าง", "ถูกเช่า", "ซ่อม"];
+const ORDER_STATUS = ["รอชำระ", "เตรียมของ", "กำลังจัดส่ง", "สำเร็จ"];
+const RENTAL_STATUS = ["จองแล้ว", "รับ/ส่งแล้ว", "กำลังใช้งาน", "คืนแล้ว", "เกินกำหนด"];
+const CARRIERS = ["Kerry", "Flash", "ไปรษณีย์ไทย", "J&T"];
+
+const productFields = (isEdit) => [
+  { key: "id", label: "รหัสสินค้า", required: true, readOnly: isEdit, placeholder: "เช่น HS-D001" },
+  { key: "name", label: "ชื่อสินค้า", required: true },
+  { key: "cat", label: "หมวดหมู่", required: true, placeholder: "เช่น ชุดราตรี" },
+  { key: "type", label: "ประเภท", type: "select", options: ["เช่า", "ขาย", "ทั้งคู่"], required: true },
+  { key: "rent", label: "ค่าเช่า (บาท)", type: "number" },
+  { key: "sell", label: "ราคาขาย (บาท)", type: "number" },
+  { key: "stock", label: "จำนวนสตอก", type: "number" },
+  { key: "loc", label: "ตำแหน่งเก็บ", placeholder: "เช่น ราว A1" },
+  { key: "status", label: "สถานะ", type: "select", options: PROD_STATUS },
+  { key: "image", label: "รูปสินค้า", type: "image" },
+];
+const customerFields = (isEdit) => [
+  { key: "id", label: "รหัสลูกค้า", required: true, readOnly: isEdit, placeholder: "เช่น C001" },
+  { key: "name", label: "ชื่อ-นามสกุล", required: true },
+  { key: "phone", label: "เบอร์โทร" },
+  { key: "line", label: "LINE ID" },
+  { key: "addr", label: "ที่อยู่" },
+  { key: "orders", label: "จำนวนออเดอร์สะสม", type: "number" },
+  { key: "spent", label: "ยอดใช้จ่ายสะสม", type: "number" },
+];
+const orderFields = (isEdit) => [
+  { key: "id", label: "เลขที่ออเดอร์", required: true, readOnly: isEdit, placeholder: "เช่น ORD-2401" },
+  { key: "cust", label: "ชื่อลูกค้า", required: true },
+  { key: "type", label: "ประเภท", type: "select", options: ["เช่า", "ขาย"], required: true },
+  { key: "items", label: "รายการสินค้า", required: true },
+  { key: "total", label: "ยอดรวม (บาท)", type: "number" },
+  { key: "status", label: "สถานะ", type: "select", options: ORDER_STATUS },
+  { key: "date", label: "วันที่", placeholder: "เช่น 16 มิ.ย. 68" },
+];
+const rentalFields = (isEdit) => [
+  { key: "id", label: "เลขที่การเช่า", required: true, readOnly: isEdit, placeholder: "เช่น R-501" },
+  { key: "cust", label: "ชื่อลูกค้า", required: true },
+  { key: "item", label: "รายการที่เช่า", required: true },
+  { key: "start", label: "วันรับ", placeholder: "เช่น 16 มิ.ย." },
+  { key: "end", label: "วันคืน", placeholder: "เช่น 18 มิ.ย." },
+  { key: "status", label: "สถานะ", type: "select", options: RENTAL_STATUS },
+];
+const txnFields = () => [
+  { key: "id", label: "รหัสรายการ", required: true, placeholder: "เช่น T-9001" },
+  { key: "date", label: "วันที่", placeholder: "เช่น 16 มิ.ย." },
+  { key: "desc", label: "รายละเอียด", required: true },
+  { key: "cat", label: "หมวด", placeholder: "เช่น รายรับ-เช่า" },
+  { key: "type", label: "ประเภท", type: "select", options: [{ value: "in", label: "รายรับ" }, { value: "out", label: "รายจ่าย" }], required: true },
+  { key: "amt", label: "จำนวนเงิน (บาท)", type: "number" },
+];
+const shipFields = (isEdit) => [
+  { key: "id", label: "รหัสใบส่ง", required: true, readOnly: isEdit, placeholder: "เช่น SH-301" },
+  { key: "order", label: "เลขที่ออเดอร์", required: true },
+  { key: "cust", label: "ชื่อลูกค้า", required: true },
+  { key: "carrier", label: "ขนส่ง", type: "select", options: CARRIERS },
+];
 
 /* ============ NAV CONFIG ============ */
 const NAV = [
@@ -136,6 +327,7 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [me, setMe] = useState(null);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -147,10 +339,10 @@ export default function App() {
   const [qrItem, setQrItem] = useState(null);
   const [receipt, setReceipt] = useState(null);
 
-  // โหลดข้อมูลทั้งหมดจากฐานข้อมูล
   async function loadAll() {
     try {
-      const [p, c, o, r, t, s, u] = await Promise.all([
+      const [mr, p, c, o, r, t, s, u] = await Promise.all([
+        fetch("/api/auth/me").then((x) => x.json()).catch(() => ({ user: null })),
         fetch("/api/products").then((x) => x.json()),
         fetch("/api/customers").then((x) => x.json()),
         fetch("/api/orders").then((x) => x.json()),
@@ -159,6 +351,7 @@ export default function App() {
         fetch("/api/shipments").then((x) => x.json()),
         fetch("/api/users").then((x) => x.json()),
       ]);
+      setMe(mr.user);
       setProducts(p); setCustomers(c); setOrders(o); setRentals(r);
       setTxns(t); setShipments(s); setUsers(u);
     } catch (e) {
@@ -171,7 +364,6 @@ export default function App() {
   useEffect(() => {
     const f = () => setMobile(window.innerWidth < 768);
     f(); window.addEventListener("resize", f);
-    // โหลดฟอนต์ไทย + เซอริฟ
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap";
@@ -185,21 +377,33 @@ export default function App() {
 
   const go = (id) => { setPage(id); setMoreOpen(false); window.scrollTo(0, 0); };
 
-  // ปรับสตอกสินค้า (บันทึกลงฐานข้อมูล)
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
+  // ===== ตัวช่วย CRUD (บันทึกลงฐานข้อมูล แล้วโหลดใหม่) =====
+  async function saveEntity(endpoint, data, id) {
+    const url = id ? `/api/${endpoint}/${id}` : `/api/${endpoint}`;
+    const method = id ? "PATCH" : "POST";
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    if (!res.ok) throw new Error("save failed");
+    await loadAll();
+  }
+  async function deleteEntity(endpoint, id) {
+    await fetch(`/api/${endpoint}/${id}`, { method: "DELETE" });
+    await loadAll();
+  }
+
+  // mutation เดิม (ปุ่มลัด)
   const toggleStock = async (id, delta) => {
     const cur = products.find((x) => x.id === id);
     if (!cur) return;
     const stock = Math.max(0, cur.stock + delta);
     const status = stock <= 0 ? "ถูกเช่า" : cur.status;
-    setProducts((p) => p.map((x) => (x.id === id ? { ...x, stock, status } : x))); // อัปเดตจอทันที
-    await fetch(`/api/products/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stock, status }),
-    });
+    setProducts((p) => p.map((x) => (x.id === id ? { ...x, stock, status } : x)));
+    await fetch(`/api/products/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stock, status }) });
   };
-
-  // เลื่อนสถานะการเช่า (บันทึกลงฐานข้อมูล)
   const advanceRental = async (id) => {
     const order = ["จองแล้ว", "รับ/ส่งแล้ว", "กำลังใช้งาน", "คืนแล้ว"];
     const cur = rentals.find((x) => x.id === id);
@@ -208,28 +412,19 @@ export default function App() {
     if (i < 0 || i >= order.length - 1) return;
     const status = order[i + 1];
     setRentals((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
-    await fetch(`/api/rentals/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+    await fetch(`/api/rentals/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
   };
-
-  // สร้างเลขแทร็กกิ้ง (บันทึกลงฐานข้อมูล)
   const makeTrack = async (id) => {
     const track = "TH" + Math.floor(Math.random() * 900000000 + 100000000);
     const status = "กำลังจัดส่ง";
     setShipments((s) => s.map((x) => (x.id === id ? { ...x, track, status } : x)));
-    await fetch(`/api/shipments/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ track, status }),
-    });
+    await fetch(`/api/shipments/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ track, status }) });
   };
 
   const ctx = {
     products, customers, orders, rentals, txns, shipments, users,
     toggleStock, advanceRental, makeTrack, setQrItem, setReceipt, mobile,
+    saveEntity, deleteEntity,
   };
 
   if (loading) {
@@ -243,7 +438,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex" style={{ background: C.bg, fontFamily: "'Noto Sans Thai', -apple-system, 'Segoe UI', sans-serif", color: C.charcoal }}>
-      {/* DESKTOP SIDEBAR */}
       {!mobile && (
         <aside className="w-64 shrink-0 border-r flex flex-col sticky top-0 h-screen" style={{ background: "#fff", borderColor: C.line }}>
           <Brand />
@@ -251,20 +445,21 @@ export default function App() {
             {NAV.map(n => <NavItem key={n.id} n={n} active={page === n.id} onClick={() => go(n.id)} />)}
           </nav>
           <div className="p-3 border-t" style={{ borderColor: C.line }}>
-            <div className="flex items-center gap-2 p-2 rounded-xl" style={{ background: C.cream }}>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ background: C.gold }}>H</div>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold">คุณฮันนี่</div>
-                <div className="text-xs" style={{ color: C.taupe }}>เจ้าของร้าน</div>
+            <div className="flex items-center gap-2 p-2 rounded-xl mb-2" style={{ background: C.cream }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold" style={{ background: C.gold }}>{(me?.name || "H")[0]}</div>
+              <div className="leading-tight min-w-0">
+                <div className="text-sm font-semibold truncate">{me?.name || "ผู้ใช้"}</div>
+                <div className="text-xs" style={{ color: C.taupe }}>{me?.role || ""}</div>
               </div>
             </div>
+            <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
+              <LogOut size={15} />ออกจากระบบ
+            </button>
           </div>
         </aside>
       )}
 
-      {/* MAIN */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* MOBILE TOP */}
         {mobile && (
           <header className="sticky top-0 z-20 flex items-center justify-between px-4 h-14 border-b" style={{ background: "#fff", borderColor: C.line }}>
             <div className="flex items-center gap-2">
@@ -288,7 +483,6 @@ export default function App() {
           {page === "userman" && <UserMan {...ctx} />}
         </main>
 
-        {/* MOBILE BOTTOM NAV */}
         {mobile && (
           <nav className="fixed bottom-0 left-0 right-0 z-30 border-t flex" style={{ background: "#fff", borderColor: C.line }}>
             {[NAV[0], NAV[6], NAV[4], NAV[1]].map(n => (
@@ -302,7 +496,6 @@ export default function App() {
           </nav>
         )}
 
-        {/* MOBILE MORE SHEET */}
         {mobile && moreOpen && (
           <div className="fixed inset-0 z-40 flex items-end" style={{ background: "rgba(0,0,0,.4)" }} onClick={() => setMoreOpen(false)}>
             <div className="w-full rounded-t-3xl p-5 pb-8" style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
@@ -318,12 +511,14 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-4 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
+                <LogOut size={15} />ออกจากระบบ ({me?.name})
+              </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* QR MODAL */}
       {qrItem && (
         <Modal onClose={() => setQrItem(null)} title="QR สินค้า">
           <div className="flex flex-col items-center gap-3 py-2">
@@ -341,7 +536,6 @@ export default function App() {
         </Modal>
       )}
 
-      {/* RECEIPT MODAL */}
       {receipt && <Receipt o={receipt} onClose={() => setReceipt(null)} />}
     </div>
   );
@@ -372,20 +566,10 @@ function NavItem({ n, active, onClick }) {
   );
 }
 
-/* ============ MODAL ============ */
-function Modal({ children, onClose, title, wide }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div className={"w-full rounded-2xl overflow-hidden " + (wide ? "max-w-lg" : "max-w-sm")} style={{ background: "#fff" }} onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center px-5 py-4 border-b" style={{ borderColor: C.line }}>
-          <span className="font-bold">{title}</span>
-          <button onClick={onClose}><X size={20} style={{ color: C.taupe }} /></button>
-        </div>
-        <div className="p-5 max-h-[75vh] overflow-y-auto">{children}</div>
-      </div>
-    </div>
-  );
-}
+/* ============ ปุ่มแก้ไข/ลบ เล็ก ============ */
+const IconBtn = ({ icon: Icon, onClick, color }) => (
+  <button onClick={onClick} className="p-1.5 rounded-lg" style={{ background: C.cream }}><Icon size={15} style={{ color: color || C.charcoal }} /></button>
+);
 
 /* ============ 1. DASHBOARD ============ */
 function Dashboard({ go, products, rentals }) {
@@ -485,12 +669,18 @@ function Dashboard({ go, products, rentals }) {
 }
 
 /* ============ 2. PRODUCTS ============ */
-function Products({ products, toggleStock, setQrItem }) {
+function Products({ products, toggleStock, setQrItem, saveEntity, deleteEntity }) {
   const [q, setQ] = useState("");
+  const [form, setForm] = useState(null); // {mode, data}
+  const [del, setDel] = useState(null);
   const list = products.filter(p => p.name.includes(q) || p.id.includes(q));
+
+  const openAdd = () => setForm({ mode: "add", data: { id: genId("HS-"), type: "ทั้งคู่", status: "ว่าง" } });
+  const openEdit = (p) => setForm({ mode: "edit", data: p });
+
   return (
     <div>
-      <PageHead title="สินค้า" sub={`ทั้งหมด ${products.length} รายการ · มี QR ติดทุกตัว`} action={<Btn icon={Plus}>เพิ่มสินค้า</Btn>} />
+      <PageHead title="สินค้า" sub={`ทั้งหมด ${products.length} รายการ · มี QR ติดทุกตัว`} action={<Btn icon={Plus} onClick={openAdd}>เพิ่มสินค้า</Btn>} />
       <div className="flex gap-2 mb-4">
         <div className="flex-1 flex items-center gap-2 px-3 rounded-xl border" style={{ background: "#fff", borderColor: C.line }}>
           <Search size={18} style={{ color: C.taupe }} />
@@ -502,8 +692,8 @@ function Products({ products, toggleStock, setQrItem }) {
         {list.map(p => (
           <Card key={p.id} className="p-4">
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: C.cream }}>
-                <Shirt size={24} style={{ color: C.taupe }} />
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden" style={{ background: C.cream }}>
+                {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <Shirt size={24} style={{ color: C.taupe }} />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm leading-snug">{p.name}</div>
@@ -522,13 +712,26 @@ function Products({ products, toggleStock, setQrItem }) {
                 <span className="text-xs" style={{ color: C.taupe }}>สตอก {p.stock}</span>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => toggleStock(p.id, -1)} className="px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: C.roseBg, color: C.charcoal }}>เบิก</button>
-                <button onClick={() => toggleStock(p.id, 1)} className="px-2.5 py-1.5 rounded-lg text-xs font-medium" style={{ background: C.greenBg, color: C.charcoal }}>คืน</button>
+                <button onClick={() => toggleStock(p.id, -1)} className="px-2 py-1.5 rounded-lg text-xs font-medium" style={{ background: C.roseBg, color: C.charcoal }}>เบิก</button>
+                <button onClick={() => toggleStock(p.id, 1)} className="px-2 py-1.5 rounded-lg text-xs font-medium" style={{ background: C.greenBg, color: C.charcoal }}>คืน</button>
+                <IconBtn icon={Pencil} onClick={() => openEdit(p)} />
+                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(p)} />
               </div>
             </div>
           </Card>
         ))}
       </div>
+
+      {form && (
+        <FormModal
+          title={form.mode === "add" ? "เพิ่มสินค้า" : "แก้ไขสินค้า"}
+          fields={productFields(form.mode === "edit")}
+          initial={form.data}
+          onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("products", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
+        />
+      )}
+      {del && <ConfirmDelete name={del.name} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("products", del.id); setDel(null); }} />}
     </div>
   );
 }
@@ -569,18 +772,24 @@ function Inventory({ products }) {
 }
 
 /* ============ 4. CUSTOMERS ============ */
-function Customers({ customers, orders }) {
+function Customers({ customers, orders, saveEntity, deleteEntity }) {
   const [sel, setSel] = useState(null);
+  const [form, setForm] = useState(null);
+  const [del, setDel] = useState(null);
+  const openAdd = () => setForm({ mode: "add", data: { id: genId("C") } });
+  const openEdit = (c) => setForm({ mode: "edit", data: c });
   return (
     <div>
-      <PageHead title="ลูกค้า" sub={`${customers.length} รายชื่อ`} action={<Btn icon={Plus}>เพิ่มลูกค้า</Btn>} />
+      <PageHead title="ลูกค้า" sub={`${customers.length} รายชื่อ`} action={<Btn icon={Plus} onClick={openAdd}>เพิ่มลูกค้า</Btn>} />
       <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
         {customers.map(c => (
           <Card key={c.id} className="p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: C.rose }}>{c.name.replace("คุณ", "")[0]}</div>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: C.rose }}>{(c.name.replace("คุณ", "") || "?")[0]}</div>
               <div className="flex-1 min-w-0"><div className="font-semibold text-sm">{c.name}</div><div className="text-xs" style={{ color: C.taupe }}>{c.id}</div></div>
-              <button onClick={() => setSel(c)} className="p-1.5 rounded-lg" style={{ background: C.cream }}><Eye size={16} /></button>
+              <IconBtn icon={Eye} onClick={() => setSel(c)} />
+              <IconBtn icon={Pencil} onClick={() => openEdit(c)} />
+              <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(c)} />
             </div>
             <div className="space-y-1.5 text-xs" style={{ color: C.charcoal }}>
               <div className="flex items-center gap-2"><Phone size={13} style={{ color: C.taupe }} />{c.phone}</div>
@@ -609,18 +818,32 @@ function Customers({ customers, orders }) {
           </div>
         </Modal>
       )}
+      {form && (
+        <FormModal
+          title={form.mode === "add" ? "เพิ่มลูกค้า" : "แก้ไขลูกค้า"}
+          fields={customerFields(form.mode === "edit")}
+          initial={form.data}
+          onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("customers", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
+        />
+      )}
+      {del && <ConfirmDelete name={del.name} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("customers", del.id); setDel(null); }} />}
     </div>
   );
 }
 
 /* ============ 5. ORDERS ============ */
-function Orders({ orders, setReceipt }) {
+function Orders({ orders, setReceipt, saveEntity, deleteEntity }) {
   const [tab, setTab] = useState("ทั้งหมด");
+  const [form, setForm] = useState(null);
+  const [del, setDel] = useState(null);
   const tabs = ["ทั้งหมด", "เช่า", "ขาย"];
   const list = orders.filter(o => tab === "ทั้งหมด" || o.type === tab);
+  const openAdd = () => setForm({ mode: "add", data: { id: genId("ORD-"), type: "เช่า", status: "รอชำระ" } });
+  const openEdit = (o) => setForm({ mode: "edit", data: o });
   return (
     <div>
-      <PageHead title="คำสั่งซื้อ" sub="รวมการเช่าและการขาย" action={<Btn icon={Plus}>สร้างคำสั่งซื้อ</Btn>} />
+      <PageHead title="คำสั่งซื้อ" sub="รวมการเช่าและการขาย" action={<Btn icon={Plus} onClick={openAdd}>สร้างคำสั่งซื้อ</Btn>} />
       <div className="flex gap-2 mb-4">
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)} className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: tab === t ? C.gold : "#fff", color: tab === t ? "#fff" : C.charcoal, border: "1px solid " + (tab === t ? C.gold : C.line) }}>{t}</button>
@@ -640,10 +863,24 @@ function Orders({ orders, setReceipt }) {
               <div className="font-bold text-sm">{baht(o.total)}</div>
               <Badge s={o.status} />
             </div>
-            <button onClick={() => setReceipt(o)} className="p-2 rounded-lg shrink-0" style={{ background: C.cream }}><Printer size={16} /></button>
+            <div className="flex gap-1 shrink-0">
+              <IconBtn icon={Printer} onClick={() => setReceipt(o)} />
+              <IconBtn icon={Pencil} onClick={() => openEdit(o)} />
+              <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(o)} />
+            </div>
           </div>
         ))}
       </Card>
+      {form && (
+        <FormModal
+          title={form.mode === "add" ? "สร้างคำสั่งซื้อ" : "แก้ไขคำสั่งซื้อ"}
+          fields={orderFields(form.mode === "edit")}
+          initial={form.data}
+          onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("orders", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
+        />
+      )}
+      {del && <ConfirmDelete name={del.id} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("orders", del.id); setDel(null); }} />}
     </div>
   );
 }
@@ -674,11 +911,13 @@ function Receipt({ o, onClose }) {
 }
 
 /* ============ 6. SHIPPING ============ */
-function Shipping({ shipments, makeTrack }) {
-  const carriers = ["Kerry", "Flash", "ไปรษณีย์ไทย", "J&T"];
+function Shipping({ shipments, makeTrack, saveEntity }) {
+  const [form, setForm] = useState(null);
+  const carriers = CARRIERS;
+  const openAdd = () => setForm({ id: genId("SH-"), carrier: "Kerry" });
   return (
     <div>
-      <PageHead title="การจัดส่ง" sub="สร้างเลขแทร็กกิ้ง · ติดตามสถานะ" action={<Btn icon={Plus}>สร้างใบส่ง</Btn>} />
+      <PageHead title="การจัดส่ง" sub="สร้างเลขแทร็กกิ้ง · ติดตามสถานะ" action={<Btn icon={Plus} onClick={openAdd}>สร้างใบส่ง</Btn>} />
       <div className="space-y-3">
         {shipments.map(s => (
           <Card key={s.id} className="p-4">
@@ -704,18 +943,31 @@ function Shipping({ shipments, makeTrack }) {
         <div className="font-bold text-sm mb-2">ขนส่งที่รองรับ</div>
         <div className="flex gap-2 flex-wrap">{carriers.map(c => <span key={c} className="text-xs px-3 py-1.5 rounded-lg" style={{ background: C.cream }}>{c}</span>)}</div>
       </Card>
+      {form && (
+        <FormModal
+          title="สร้างใบส่ง"
+          fields={shipFields(false)}
+          initial={form}
+          onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("shipments", { ...data, track: "—", status: "รอสร้างเลข" }, null); setForm(null); }}
+        />
+      )}
     </div>
   );
 }
 
 /* ============ 7. RENTALS ============ */
-function Rentals({ rentals, advanceRental }) {
+function Rentals({ rentals, advanceRental, saveEntity, deleteEntity }) {
   const [view, setView] = useState("board");
-  const statuses = ["จองแล้ว", "รับ/ส่งแล้ว", "กำลังใช้งาน", "คืนแล้ว", "เกินกำหนด"];
+  const [form, setForm] = useState(null);
+  const [del, setDel] = useState(null);
+  const statuses = RENTAL_STATUS;
   const views = [["board", "บอร์ด", LayoutGrid], ["calendar", "ปฏิทิน", CalIcon], ["list", "รายการ", List]];
+  const openAdd = () => setForm({ mode: "add", data: { id: genId("R-"), status: "จองแล้ว" } });
+  const openEdit = (r) => setForm({ mode: "edit", data: r });
   return (
     <div>
-      <PageHead title="การเช่า" sub={`${rentals.length} รายการเช่า`} action={<Btn icon={Plus}>จองชุด</Btn>} />
+      <PageHead title="การเช่า" sub={`${rentals.length} รายการเช่า`} action={<Btn icon={Plus} onClick={openAdd}>จองชุด</Btn>} />
       <div className="flex gap-2 mb-4">
         {views.map(([id, label, Icon]) => (
           <button key={id} onClick={() => setView(id)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium" style={{ background: view === id ? C.gold : "#fff", color: view === id ? "#fff" : C.charcoal, border: "1px solid " + (view === id ? C.gold : C.line) }}>
@@ -739,7 +991,13 @@ function Rentals({ rentals, advanceRental }) {
                 <div className="space-y-2">
                   {items.map(r => (
                     <Card key={r.id} className="p-3">
-                      <div className="text-sm font-medium leading-snug">{r.item}</div>
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="text-sm font-medium leading-snug">{r.item}</div>
+                        <div className="flex gap-1 shrink-0">
+                          <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
+                          <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
+                        </div>
+                      </div>
                       <div className="text-xs mt-1" style={{ color: C.taupe }}>{r.cust}</div>
                       <div className="flex items-center gap-1 text-xs mt-1.5" style={{ color: C.taupe }}><Clock size={11} />{r.start} → {r.end}</div>
                       {!["คืนแล้ว", "เกินกำหนด"].includes(r.status) && (
@@ -764,10 +1022,25 @@ function Rentals({ rentals, advanceRental }) {
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: C.cream }}><Shirt size={16} style={{ color: C.taupe }} /></div>
               <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{r.item}</div><div className="text-xs" style={{ color: C.taupe }}>{r.id} · {r.cust} · {r.start}→{r.end}</div></div>
               <Badge s={r.status} />
+              <div className="flex gap-1 shrink-0">
+                <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
+                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
+              </div>
             </div>
           ))}
         </Card>
       )}
+
+      {form && (
+        <FormModal
+          title={form.mode === "add" ? "จองชุด/เพิ่มการเช่า" : "แก้ไขการเช่า"}
+          fields={rentalFields(form.mode === "edit")}
+          initial={form.data}
+          onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("rentals", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
+        />
+      )}
+      {del && <ConfirmDelete name={del.item} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("rentals", del.id); setDel(null); }} />}
     </div>
   );
 }
@@ -804,12 +1077,15 @@ function RentalCalendar({ rentals }) {
 }
 
 /* ============ 8. ACCOUNTING ============ */
-function Accounting({ txns }) {
+function Accounting({ txns, saveEntity, deleteEntity }) {
+  const [form, setForm] = useState(null);
+  const [del, setDel] = useState(null);
   const inSum = txns.filter(t => t.type === "in").reduce((s, t) => s + t.amt, 0);
   const outSum = txns.filter(t => t.type === "out").reduce((s, t) => s + t.amt, 0);
+  const openAdd = () => setForm({ id: genId("T-"), type: "in" });
   return (
     <div>
-      <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกรายรับอัตโนมัติจากเช่า+ขาย" action={<Btn icon={Plus}>เพิ่มรายการ</Btn>} />
+      <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกรายรับอัตโนมัติจากเช่า+ขาย" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
       <div className="grid grid-cols-3 gap-3 mb-5">
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowUpRight size={14} style={{ color: C.green }} />รายรับ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.green }}>{baht(inSum)}</div></Card>
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowDownRight size={14} style={{ color: C.red }} />รายจ่าย</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.red }}>{baht(outSum)}</div></Card>
@@ -827,9 +1103,15 @@ function Accounting({ txns }) {
               <div className="text-xs" style={{ color: C.taupe }}>{t.date} · {t.cat}</div>
             </div>
             <div className="font-bold text-sm shrink-0" style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</div>
+            <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
           </div>
         ))}
       </Card>
+      {form && (
+        <FormModal title="เพิ่มรายการบัญชี" fields={txnFields()} initial={form} onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("transactions", data, null); setForm(null); }} />
+      )}
+      {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}
     </div>
   );
 }
