@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { currentUser, isOwnRecord } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const orders = await prisma.order.findMany({ orderBy: { id: "desc" } });
+  // role "ลูกค้า" ต้องเห็นเฉพาะออเดอร์ของตัวเอง — กรองที่เซิร์ฟเวอร์
+  // (เดิมกรองที่หน้าเว็บอย่างเดียว ลูกค้าเปิด DevTools ยิง API ตรงจะเห็นของทุกคน)
+  const me = await currentUser();
+  if (me?.role === "ลูกค้า") {
+    return NextResponse.json(orders.filter((o) => isOwnRecord(o.cust, me.name)));
+  }
   return NextResponse.json(orders);
 }
 

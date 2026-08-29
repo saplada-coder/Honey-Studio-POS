@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { currentUser, isOwnRecord } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const rentals = await prisma.rental.findMany({ orderBy: { id: "asc" } });
+  // role "ลูกค้า" ต้องเห็นเฉพาะการเช่าของตัวเอง — กรองที่เซิร์ฟเวอร์ (ดูคำอธิบายใน /api/orders)
+  const me = await currentUser();
+  if (me?.role === "ลูกค้า") {
+    return NextResponse.json(rentals.filter((r) => isOwnRecord(r.cust, me.name)));
+  }
   return NextResponse.json(rentals);
 }
 

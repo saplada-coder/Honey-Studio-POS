@@ -995,7 +995,7 @@ function Dashboard({ go, products, rentals }) {
           </div>
         </Card>
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3"><span className="font-bold flex items-center gap-1.5"><AlertTriangle size={16} style={{ color: C.red }} />สตอกใกล้หมด</span><button onClick={() => go("inventory")} className="text-xs" style={{ color: C.gold }}>จัดการ</button></div>
+          <div className="flex items-center justify-between mb-3"><span className="font-bold flex items-center gap-1.5"><AlertTriangle size={16} style={{ color: C.red }} />สตอกใกล้หมด</span><button onClick={() => go("products")} className="text-xs" style={{ color: C.gold }}>จัดการ</button></div>
           <div className="space-y-2.5">
             {products.filter(p => {
               const lowRent = (p.type === "เช่า" || p.type === "ทั้งคู่") && p.stockRent <= 1;
@@ -1266,67 +1266,6 @@ function StockAdjustModal({ info, adjustStock, onClose }) {
         </div>
       </div>
     </Modal>
-  );
-}
-
-/* ============ 3. INVENTORY (แยกคลังเช่า/ขาย) ============ */
-function Inventory({ products }) {
-  const [tab, setTab] = useState("rent"); // rent | sell
-  const isRent = tab === "rent";
-  const field = isRent ? "stockRent" : "stockSell";
-  // สินค้าที่อยู่ในคลังนี้ (เช่า = type เช่า/ทั้งคู่, ขาย = type ขาย/ทั้งคู่)
-  const inThisStore = (p) => isRent ? (p.type === "เช่า" || p.type === "ทั้งคู่") : (p.type === "ขาย" || p.type === "ทั้งคู่");
-  const items = products.filter(inThisStore);
-  const cats = [...new Set(items.map(p => p.cat))];
-  const totalRent = products.filter(p => p.type === "เช่า" || p.type === "ทั้งคู่").reduce((s, p) => s + (p.stockRent || 0), 0);
-  const totalSell = products.filter(p => p.type === "ขาย" || p.type === "ทั้งคู่").reduce((s, p) => s + (p.stockSell || 0), 0);
-  const low = items.filter(p => (p[field] || 0) <= 1).length;
-
-  const exportRows = (list, f) => list.map(p => ({ รหัส: p.id, ชื่อ: p.name, หมวด: p.cat, "สต็อก": p[f], "ตำแหน่ง": p.loc, สถานะ: p.status }));
-
-  return (
-    <div>
-      <PageHead title="คลังสินค้า" sub="แยกคลังเช่า / คลังขาย ชัดเจน" action={
-        <Btn icon={Download} variant="outline" onClick={() => exportExcel([
-          { name: "คลังเช่า", rows: exportRows(products.filter(p => p.type === "เช่า" || p.type === "ทั้งคู่"), "stockRent") },
-          { name: "คลังขาย", rows: exportRows(products.filter(p => p.type === "ขาย" || p.type === "ทั้งคู่"), "stockSell") },
-        ], "honey-studio-คลังสินค้า.xlsx")}>ส่งออก Excel</Btn>
-      } />
-
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {[["📦 รวมคลังเช่า", totalRent, C.gold], ["🛍️ รวมคลังขาย", totalSell, C.rose], [`⚠️ ใกล้หมด (${isRent ? "เช่า" : "ขาย"})`, low, C.red]].map(([l, v, c]) => (
-          <Card key={l} className="p-4 text-center">
-            <div className="text-2xl font-bold" style={{ color: c, fontFamily: "Georgia,serif" }}>{v}</div>
-            <div className="text-xs mt-1" style={{ color: C.taupe }}>{l}</div>
-          </Card>
-        ))}
-      </div>
-
-      {/* สลับคลัง */}
-      <div className="flex gap-2 mb-4">
-        {[["rent", "📦 คลังเช่า"], ["sell", "🛍️ คลังขาย"]].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ background: tab === id ? C.gold : "#fff", color: tab === id ? "#fff" : C.charcoal, border: "1px solid " + (tab === id ? C.gold : C.line) }}>{label}</button>
-        ))}
-      </div>
-
-      {cats.length === 0 && <div className="text-sm text-center py-8" style={{ color: C.taupe }}>ยังไม่มีสินค้าในคลังนี้</div>}
-      {cats.map(cat => (
-        <div key={cat} className="mb-5">
-          <div className="flex items-center gap-2 mb-2"><Tag size={15} style={{ color: C.gold }} /><span className="font-bold text-sm">{cat}</span></div>
-          <Card className="overflow-hidden">
-            {items.filter(p => p.cat === cat).map((p, i, arr) => (
-              <div key={p.id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none" }}>
-                <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{p.name}</div><div className="text-xs flex items-center gap-1" style={{ color: C.taupe }}><MapPin size={11} />{p.loc} · {p.id}</div></div>
-                <div className="text-right">
-                  <div className="text-sm font-bold" style={{ color: (p[field] || 0) <= 1 ? C.red : C.charcoal }}>{p[field] || 0} ชิ้น</div>
-                  {(p[field] || 0) <= 1 && <div className="text-[10px]" style={{ color: C.red }}>ใกล้หมด</div>}
-                </div>
-              </div>
-            ))}
-          </Card>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -1781,7 +1720,9 @@ function Reports({ products = [], orders = [], rentals = [], txns = [] }) {
   const tabs = [["ยอดขาย", BarChart3], ["สตอกสินค้า", Boxes], ["การเงิน", Wallet]];
 
   // ===== คำนวณจากข้อมูลจริง =====
-  const rentRevenue = orders.filter(o => o.type === "เช่า").reduce((s, o) => s + (o.total || 0), 0);
+  // ยอดเช่า = คิดจากรายการ "จองชุดเช่า" จริง (ค่าเช่า + ค่าปรับล่าช้า + ค่าเสียหาย)
+  // ไม่ใช้ออเดอร์ type="เช่า" เพราะหน้าคำสั่งซื้อสร้างได้แค่ type="ขาย" → เคยทำให้ตัวเลข 2 หน้าไม่ตรงกัน
+  const rentRevenue = rentals.reduce((s, r) => s + (r.fee || 0) + (r.fine || 0) + (r.damage || 0), 0);
   const sellRevenue = orders.filter(o => o.type === "ขาย").reduce((s, o) => s + (o.total || 0), 0);
   const salesData = [{ name: "เช่า", ยอดขาย: rentRevenue }, { name: "ขาย", ยอดขาย: sellRevenue }];
   const catReal = Object.entries(products.reduce((m, p) => { m[p.cat] = (m[p.cat] || 0) + 1; return m; }, {})).map(([name, value]) => ({ name, value }));
@@ -1807,7 +1748,7 @@ function Reports({ products = [], orders = [], rentals = [], txns = [] }) {
 
       {tab === "ยอดขาย" && (
         <Card className="p-4">
-          <div className="font-bold text-sm mb-3">รายได้ เช่า vs ขาย (จากออเดอร์จริง)</div>
+          <div className="font-bold text-sm mb-3">รายได้ เช่า vs ขาย (เช่า=จากรายการจองชุดเช่า · ขาย=จากคำสั่งซื้อ)</div>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" stroke={C.line} vertical={false} />
