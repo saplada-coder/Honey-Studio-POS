@@ -8,7 +8,8 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // เส้นทางที่เข้าได้โดยไม่ต้องล็อกอิน
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
+  // /p/<รหัสสินค้า> = หน้าสินค้าสาธารณะ (ปลายทางของ QR บนสติกเกอร์ ลูกค้าสแกนแล้วต้องเปิดได้เลย)
+  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/")) {
     return NextResponse.next();
   }
 

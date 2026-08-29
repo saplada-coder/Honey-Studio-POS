@@ -10,3 +10,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const updated = await prisma.shipment.update({ where: { id }, data: body });
   return NextResponse.json(updated);
 }
+
+// ลบใบส่ง
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  await prisma.shipment.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

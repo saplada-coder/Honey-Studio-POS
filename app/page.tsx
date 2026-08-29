@@ -15,6 +15,7 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import * as XLSX from "xlsx";
+import QRCode from "qrcode";
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
 function exportExcel(sheets, filename) {
@@ -35,65 +36,75 @@ const C = {
   blue: "#7C93B8", blueBg: "#E6EBF3", red: "#C66B6B", redBg: "#F6E4E4",
 };
 const baht = (n) => "฿" + Number(n || 0).toLocaleString("th-TH");
+// ที่อยู่เว็บจริง — ใช้ทำลิงก์ใน QR บนสติกเกอร์ (ต้องเป็นเว็บจริงเสมอ ไม่ใช่ localhost ไม่งั้นสติกเกอร์ที่พิมพ์ไปใช้ไม่ได้)
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://honey-studio-opal.vercel.app";
+// ลิงก์หน้าสินค้าสาธารณะ (ไม่ต้องล็อกอิน) — ปลายทางของ QR
+const productUrl = (id) => `${SITE_URL}/p/${encodeURIComponent(id)}`;
 const ICONS = { Crown, Shield, UserCog, Users };
 const genId = (prefix) => prefix + Math.floor(1000 + Math.random() * 9000);
 // วันที่วันนี้แบบไทยย่อ เช่น "16 มิ.ย." (ใช้ตอนกดเพิ่มรายการ — รันใน event handler ปลอดภัยจาก hydration)
-const todayTH = () => {
+const TH_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+const TH_WEEKDAYS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+const thShort = (d) => `${d.getDate()} ${TH_MONTHS[d.getMonth()]}`;
+const todayTH = () => thShort(new Date());
+// วันที่ในฐานข้อมูลเก็บเป็นข้อความไทย ("16 มิ.ย. 68" บ้าง "16 มิ.ย." บ้าง) จึงเทียบแบบ "มีคำนี้อยู่ในข้อความ"
+const sameDayTH = (value, key) => String(value || "").includes(key);
+// วันที่ไทยแบบเต็ม ใช้โชว์บนหัวหน้าแดชบอร์ด
+const todayFullTH = () => {
   const d = new Date();
-  const m = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-  return `${d.getDate()} ${m[d.getMonth()]}`;
+  const wd = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"][d.getDay()];
+  const mn = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"][d.getMonth()];
+  return `วัน${wd}ที่ ${d.getDate()} ${mn} ${d.getFullYear() + 543}`;
 };
 
-/* ============ FAUX QR ============ */
-function QR({ value = "HS", size = 120 }) {
-  const n = 25;
-  let seed = 7;
-  for (let i = 0; i < value.length; i++) seed = (seed * 31 + value.charCodeAt(i)) >>> 0;
-  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-  const cell = size / n;
-  const isFinder = (r, c) => {
-    const inBox = (R, Cc) => r >= R && r < R + 7 && c >= Cc && c < Cc + 7;
-    return inBox(0, 0) || inBox(0, n - 7) || inBox(n - 7, 0);
-  };
-  const finderFill = (r, c) => {
-    const box = (R, Cc) => {
-      const rr = r - R, cc = c - Cc;
-      if (rr === 0 || rr === 6 || cc === 0 || cc === 6) return true;
-      if (rr >= 2 && rr <= 4 && cc >= 2 && cc <= 4) return true;
-      return false;
-    };
-    if (r < 7 && c < 7) return box(0, 0);
-    if (r < 7 && c >= n - 7) return box(0, n - 7);
-    if (r >= n - 7 && c < 7) return box(n - 7, 0);
-    return false;
-  };
-  const rects = [];
-  for (let r = 0; r < n; r++)
-    for (let c = 0; c < n; c++) {
-      let fill = false;
-      if (isFinder(r, c)) fill = finderFill(r, c);
-      else fill = rnd() > 0.55;
-      if (fill) rects.push(<rect key={r + "-" + c} x={c * cell} y={r * cell} width={cell} height={cell} fill={C.charcoal} />);
-    }
-  return (
-    <svg width={size} height={size} style={{ background: "#fff", borderRadius: 8, padding: 6 }} viewBox={`0 0 ${size} ${size}`}>
-      {rects}
-    </svg>
-  );
+/* ============ QR CODE (ของจริง สแกนได้ ใช้ไลบรารี qrcode) ============ */
+function QR({ value = "HS", size = 120, onData }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    let alive = true;
+    QRCode.toDataURL(String(value || "HS"), {
+      width: 640,                  // ความละเอียดสูงพอสำหรับพิมพ์สติกเกอร์
+      margin: 1,
+      errorCorrectionLevel: "M",   // ทนรอยเปื้อน/ยับได้ระดับกลาง
+      color: { dark: C.charcoal, light: "#FFFFFF" },
+    })
+      .then((url) => { if (!alive) return; setSrc(url); if (onData) onData(url); })
+      .catch((e) => console.error("สร้าง QR ไม่สำเร็จ", e));
+    return () => { alive = false; };
+  }, [value]);
+
+  if (!src) return <div style={{ width: size, height: size, background: C.cream, borderRadius: 8 }} />;
+  return <img src={src} alt={"QR " + value} width={size} height={size} style={{ background: "#fff", borderRadius: 8, padding: 6 }} />;
 }
 
-/* ============ ข้อมูลกราฟ (ภาพรวมเชิงสถิติ) ============ */
-const revData = [
-  { d: "จ", เช่า: 4200, ขาย: 1200 }, { d: "อ", เช่า: 3800, ขาย: 2100 },
-  { d: "พ", เช่า: 5100, ขาย: 990 }, { d: "พฤ", เช่า: 4700, ขาย: 3200 },
-  { d: "ศ", เช่า: 6800, ขาย: 2400 }, { d: "ส", เช่า: 9200, ขาย: 4100 },
-  { d: "อา", เช่า: 8100, ขาย: 1800 },
-];
-const catData = [
-  { name: "ชุดราตรี", value: 45 }, { name: "ชุดเพื่อนเจ้าสาว", value: 25 },
-  { name: "ชุดไทย", value: 15 }, { name: "รองเท้า/กระเป๋า", value: 15 },
-];
-const PIE_COLORS = [C.gold, C.rose, C.taupe, C.blue];
+/* ============ พิมพ์ (สติกเกอร์ / ใบเสร็จ) ============ */
+// กันอักขระพิเศษไม่ให้ทำ HTML พัง
+const esc = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// เปิดหน้าต่างใหม่แล้วสั่งพิมพ์ — ผู้ใช้เลือก "บันทึกเป็น PDF" ในหน้าต่างพิมพ์ได้
+function openPrintWindow(title, bodyHtml) {
+  const w = window.open("", "_blank", "width=520,height=700");
+  if (!w) { alert("เบราว์เซอร์บล็อกหน้าต่างใหม่ — กรุณาอนุญาต popup ของเว็บนี้แล้วลองอีกครั้ง"); return null; }
+  w.document.open();
+  w.document.write(
+    '<!doctype html><html lang="th"><head><meta charset="utf-8"><title>' + esc(title) + '</title>' +
+    '<style>' +
+    '*{box-sizing:border-box}' +
+    'body{font-family:"Noto Sans Thai","Sarabun",Tahoma,sans-serif;color:#333;margin:0;padding:16px;}' +
+    '.wrap{max-width:340px;margin:0 auto}' +
+    '.center{text-align:center}.muted{color:#8b8078}' +
+    '.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px}' +
+    '.line{border-top:1px solid #EAE2D4;margin:10px 0}' +
+    '.box{border:1px solid #EAE2D4;border-radius:10px;padding:14px}' +
+    '.big{font-size:18px;font-weight:700}' +
+    'img{display:block;margin:0 auto}' +
+    '@media print{body{padding:0}@page{margin:8mm}}' +
+    '</style></head><body onload="window.focus();window.print();">' + bodyHtml + '</body></html>'
+  );
+  w.document.close();
+  return w;
+}
+
+const PIE_COLORS = [C.gold, C.rose, C.taupe, C.blue, C.green, C.red];
 
 /* ============ STATUS COLORS ============ */
 const statusColor = (s) => ({
@@ -530,8 +541,8 @@ const laundryFields = (isEdit) => [
   { key: "owner", label: "ผู้รับผิดชอบ/ร้าน", placeholder: "เช่น ร้านซักพี่หมี" },
   { key: "status", label: "สถานะ", type: "select", options: LAUNDRY_STATUS },
 ];
-const txnFields = () => [
-  { key: "id", label: "รหัสรายการ", required: true, placeholder: "เช่น T-9001" },
+const txnFields = (isEdit) => [
+  { key: "id", label: "รหัสรายการ", required: true, readOnly: isEdit, placeholder: "เช่น T-9001" },
   { key: "date", label: "วันที่", placeholder: "เช่น 16 มิ.ย." },
   { key: "desc", label: "รายละเอียด", required: true },
   { key: "cat", label: "หมวด", placeholder: "เช่น รายรับ-เช่า" },
@@ -599,6 +610,7 @@ export default function App() {
   const [categories, setCategories] = useState([]);
 
   const [qrItem, setQrItem] = useState(null);
+  const [qrPng, setQrPng] = useState(""); // รูป QR (PNG data URL) ไว้ดาวน์โหลด/พิมพ์สติกเกอร์
   const [receipt, setReceipt] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -671,8 +683,15 @@ export default function App() {
     await loadAll();
   }
   async function deleteEntity(endpoint, id) {
-    await fetch(`/api/${endpoint}/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/${endpoint}/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      // เดิมไม่เช็คผลลัพธ์ → ลบไม่สำเร็จ (เช่น 403 ไม่มีสิทธิ์) แล้วหน้าจอเงียบ
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || (res.status === 403 ? "ไม่มีสิทธิ์ลบรายการนี้" : "ลบไม่สำเร็จ"));
+      return false;
+    }
     await loadAll();
+    return true;
   }
 
   // mutation เดิม (ปุ่มลัด)
@@ -699,6 +718,40 @@ export default function App() {
     const status = "กำลังจัดส่ง";
     setShipments((s) => s.map((x) => (x.id === id ? { ...x, track, status } : x)));
     await fetch(`/api/shipments/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ track, status }) });
+  };
+
+  // ===== QR: ดาวน์โหลดรูป / พิมพ์สติกเกอร์ =====
+  // เคลียร์รูปเก่าเมื่อเปิดสินค้าชิ้นใหม่ กันดาวน์โหลดรูปของชิ้นก่อนหน้า
+  useEffect(() => { setQrPng(""); }, [qrItem?.id]);
+
+  const downloadQR = () => {
+    if (!qrItem || !qrPng) return;
+    const a = document.createElement("a");
+    a.href = qrPng;
+    a.download = `QR-${qrItem.id}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
+  const printSticker = () => {
+    if (!qrItem || !qrPng) return;
+    const p = qrItem;
+    const specs = [["ไซส์", p.size], ["สี", p.color], ["ค่าเช่า", p.rent ? baht(p.rent) : ""], ["ราคาขาย", p.sell ? baht(p.sell) : ""], ["ตำแหน่งเก็บ", p.loc]]
+      .filter(([, v]) => v)
+      .map(([k, v]) => `<div class="row"><span class="muted">${esc(k)}</span><span>${esc(v)}</span></div>`)
+      .join("");
+    openPrintWindow(`สติกเกอร์ ${p.id}`,
+      `<div class="wrap box center">
+        <div class="big">${esc(p.name)}</div>
+        <div class="muted" style="font-size:12px;margin-bottom:10px">${esc(p.cat || "")}</div>
+        <img src="${qrPng}" width="180" height="180" alt="QR" />
+        <div style="font-family:monospace;font-size:16px;letter-spacing:1px;margin-top:8px">${esc(p.id)}</div>
+        <div class="muted" style="font-size:9px;word-break:break-all;margin-top:2px">${esc(productUrl(p.id))}</div>
+        <div class="line"></div>
+        <div style="text-align:left">${specs}</div>
+        <div class="muted" style="font-size:11px;margin-top:10px">HONEY STUDIO</div>
+      </div>`);
   };
 
   // ===== สิทธิ์ตามบทบาท =====
@@ -867,12 +920,15 @@ export default function App() {
                   ))}
               </div>
             )}
-            <QR value={qrItem.id} size={140} />
+            <QR value={productUrl(qrItem.id)} size={140} onData={setQrPng} />
             <div className="flex gap-2 w-full">
-              <Btn icon={Printer} variant="outline">พิมพ์สติกเกอร์</Btn>
-              <Btn icon={Download}>ดาวน์โหลด QR</Btn>
+              <Btn icon={Printer} variant="outline" onClick={printSticker}>พิมพ์สติกเกอร์</Btn>
+              <Btn icon={Download} onClick={downloadQR}>ดาวน์โหลด QR</Btn>
             </div>
-            <p className="text-xs text-center" style={{ color: C.taupe }}>สแกน QR เพื่อเช็ก / คืน / เช็กสถานะเช่า</p>
+            <p className="text-xs text-center" style={{ color: C.taupe }}>
+              สแกนด้วยกล้องมือถือแล้ว<b>เปิดหน้าสินค้าได้ทันที</b> (ไม่ต้องล็อกอิน)
+              <br /><a href={productUrl(qrItem.id)} target="_blank" rel="noreferrer" className="underline break-all" style={{ color: C.gold }}>{productUrl(qrItem.id)}</a>
+            </p>
           </div>
         </Modal>
       )}
@@ -915,16 +971,44 @@ const IconBtn = ({ icon: Icon, onClick, color }) => (
 );
 
 /* ============ 1. DASHBOARD ============ */
-function Dashboard({ go, products, rentals }) {
+function Dashboard({ go, products = [], rentals = [], orders = [] }) {
+  // ===== ตัวเลขทั้งหมดคิดจากข้อมูลจริง (เดิมเป็นค่าฮาร์ดโค้ด) =====
+  const today = todayTH();
+  const sellToday = orders.filter(o => o.type === "ขาย" && sameDayTH(o.date, today));
+  const rentToday = rentals.filter(r => sameDayTH(r.start, today));
+  const pending = orders.filter(o => o.type === "ขาย" && o.status !== "สำเร็จ").length;
+  const overdue = rentals.filter(r => r.status === "เกินกำหนด").length;
+  const sum = (list, f) => list.reduce((s, x) => s + (Number(x[f]) || 0), 0);
+
   const kpis = [
-    { label: "ยอดขายวันนี้", val: baht(2490), sub: "+12% จากเมื่อวาน", up: true, icon: Coins, color: C.gold, bg: C.goldBg },
-    { label: "ยอดเช่าวันนี้", val: baht(3900), sub: "3 รายการ", up: true, icon: CalendarDays, color: C.rose, bg: C.roseBg },
-    { label: "ออเดอร์ค้าง", val: "4", sub: "รอดำเนินการ", up: false, icon: ShoppingBag, color: C.blue, bg: C.blueBg },
-    { label: "เกินกำหนดคืน", val: String(rentals.filter(r => r.status === "เกินกำหนด").length), sub: "ต้องติดตาม", up: false, icon: AlertTriangle, color: C.red, bg: C.redBg },
+    { label: "ยอดขายวันนี้", val: baht(sum(sellToday, "total")), sub: `${sellToday.length} ออเดอร์`, up: null, icon: Coins, color: C.gold, bg: C.goldBg },
+    { label: "ยอดเช่าวันนี้", val: baht(sum(rentToday, "fee")), sub: `${rentToday.length} รายการ`, up: null, icon: CalendarDays, color: C.rose, bg: C.roseBg },
+    { label: "ออเดอร์ค้าง", val: String(pending), sub: "ยังไม่สำเร็จ", up: null, icon: ShoppingBag, color: C.blue, bg: C.blueBg },
+    { label: "เกินกำหนดคืน", val: String(overdue), sub: "ต้องติดตาม", up: null, icon: AlertTriangle, color: C.red, bg: C.redBg },
   ];
+
+  // กราฟรายรับ 7 วันล่าสุด — ไล่วันย้อนหลังแล้วจับคู่กับวันที่ (ข้อความไทย) ในข้อมูลจริง
+  const revData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const key = thShort(d);
+    return {
+      d: TH_WEEKDAYS[d.getDay()],
+      เช่า: sum(rentals.filter(r => sameDayTH(r.start, key)), "fee"),
+      ขาย: sum(orders.filter(o => o.type === "ขาย" && sameDayTH(o.date, key)), "total"),
+    };
+  });
+
+  // สัดส่วนหมวดสินค้า — นับจากสินค้าจริงในคลัง แล้วคิดเป็น %
+  const catCount = products.reduce((m, p) => { const k = p.cat || "ไม่ระบุหมวด"; m[k] = (m[k] || 0) + 1; return m; }, {});
+  const catTotal = products.length || 1;
+  const catData = Object.entries(catCount)
+    .map(([name, n]) => ({ name, count: n, value: Math.round((n / catTotal) * 100) }))
+    .sort((a, b) => b.count - a.count);
+
   return (
     <div>
-      <PageHead title="แดชบอร์ด" sub="ภาพรวมร้าน วันอังคารที่ 16 มิถุนายน 2568" action={<Btn icon={Plus} onClick={() => go("orders")}>สร้างออเดอร์</Btn>} />
+      <PageHead title="แดชบอร์ด" sub={`ภาพรวมร้าน ${todayFullTH()}`} action={<Btn icon={Plus} onClick={() => go("orders")}>สร้างออเดอร์</Btn>} />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5">
         {kpis.map(k => (
           <Card key={k.label} className="p-4">
@@ -962,19 +1046,23 @@ function Dashboard({ go, products, rentals }) {
         </Card>
         <Card className="p-4">
           <span className="font-bold">สัดส่วนหมวดสินค้า</span>
+          {catData.length === 0 ? (
+            <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีสินค้าในคลัง</div>
+          ) : (
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={catData} dataKey="value" innerRadius={45} outerRadius={75} paddingAngle={3}>
-                {catData.map((e, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+              <Pie data={catData} dataKey="count" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={3}>
+                {catData.map((e, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
+          )}
           <div className="space-y-1.5 mt-1">
             {catData.map((c, i) => (
               <div key={c.name} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: PIE_COLORS[i] }} />{c.name}</span>
-                <span style={{ color: C.taupe }}>{c.value}%</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />{c.name}</span>
+                <span style={{ color: C.taupe }}>{c.count} ชิ้น · {c.value}%</span>
               </div>
             ))}
           </div>
@@ -1352,7 +1440,7 @@ function Orders({ orders, setReceipt, saveEntity, deleteEntity, canEdit, me, shi
 
   // โหมดการจัดส่ง
   if (canEdit && section === "shipping") {
-    return (<div>{sectionToggle}<Shipping shipments={shipments} makeTrack={makeTrack} saveEntity={saveEntity} /></div>);
+    return (<div>{sectionToggle}<Shipping shipments={shipments} makeTrack={makeTrack} saveEntity={saveEntity} deleteEntity={deleteEntity} canEdit={canEdit} /></div>);
   }
 
   return (
@@ -1400,6 +1488,28 @@ function Orders({ orders, setReceipt, saveEntity, deleteEntity, canEdit, me, shi
 
 /* ============ RECEIPT ============ */
 function Receipt({ o, onClose }) {
+  // ปุ่ม "พิมพ์" และ "บันทึก PDF" ใช้หน้าต่างพิมพ์ของเบราว์เซอร์ตัวเดียวกัน
+  // (เลือกเครื่องพิมพ์เป็น "บันทึกเป็น PDF" ก็ได้ไฟล์ PDF)
+  const printReceipt = () => {
+    openPrintWindow(`ใบเสร็จ ${o.id}`,
+      `<div class="wrap box">
+        <div class="center" style="border-bottom:1px solid #EAE2D4;padding-bottom:12px;margin-bottom:12px">
+          <div style="font-size:20px;font-weight:700;letter-spacing:2px">HONEY STUDIO</div>
+          <div class="muted" style="font-size:12px">ร้านเช่า–ขาย ชุด รองเท้า กระเป๋า</div>
+          <div class="muted" style="font-size:12px">โทร 074-000-000 · LINE @honeystudio</div>
+        </div>
+        <div class="row"><span class="muted">เลขที่</span><span>${esc(o.id)}</span></div>
+        <div class="row"><span class="muted">วันที่</span><span>${esc(o.date)}</span></div>
+        <div class="row"><span class="muted">ลูกค้า</span><span>${esc(o.cust)}</span></div>
+        <div class="line"></div>
+        <div class="row"><span>${esc(o.items)}</span><span>${esc(baht(o.total))}</span></div>
+        <div class="muted" style="font-size:12px">ประเภท: ${esc(o.type)}</div>
+        <div class="line"></div>
+        <div class="row" style="font-size:16px;font-weight:700"><span>ยอดสุทธิ</span><span>${esc(baht(o.total))}</span></div>
+        <div class="center muted" style="font-size:12px;margin-top:12px">ขอบคุณที่ใช้บริการ</div>
+      </div>`);
+  };
+
   return (
     <Modal onClose={onClose} title="ใบเสร็จรับเงิน" wide>
       <div className="border rounded-xl p-5" style={{ borderColor: C.line }}>
@@ -1418,14 +1528,19 @@ function Receipt({ o, onClose }) {
         <div className="flex justify-between font-bold text-base mb-4"><span>ยอดสุทธิ</span><span style={{ color: C.gold }}>{baht(o.total)}</span></div>
         <div className="text-center text-xs" style={{ color: C.taupe }}>ขอบคุณที่ใช้บริการ 🍯</div>
       </div>
-      <div className="flex gap-2 mt-4"><Btn icon={Printer} variant="outline">พิมพ์</Btn><Btn icon={Download}>บันทึก PDF</Btn></div>
+      <div className="flex gap-2 mt-4">
+        <Btn icon={Printer} variant="outline" onClick={printReceipt}>พิมพ์</Btn>
+        <Btn icon={Download} onClick={printReceipt}>บันทึก PDF</Btn>
+      </div>
+      <p className="text-xs text-center mt-2" style={{ color: C.taupe }}>บันทึก PDF: ในหน้าต่างพิมพ์ ให้เลือกเครื่องพิมพ์เป็น “บันทึกเป็น PDF”</p>
     </Modal>
   );
 }
 
 /* ============ 6. SHIPPING ============ */
-function Shipping({ shipments, makeTrack, saveEntity }) {
+function Shipping({ shipments, makeTrack, saveEntity, deleteEntity, canEdit }) {
   const [form, setForm] = useState(null);
+  const [del, setDel] = useState(null);
   const carriers = CARRIERS;
   const openAdd = () => setForm({ id: genId("SH-"), carrier: "Kerry" });
   return (
@@ -1448,9 +1563,11 @@ function Shipping({ shipments, makeTrack, saveEntity }) {
                   )}
                 </div>
               </div>
+              {canEdit && <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(s)} />}
             </div>
           </Card>
         ))}
+        {shipments.length === 0 && <div className="text-sm text-center py-8" style={{ color: C.taupe }}>ยังไม่มีใบส่ง</div>}
       </div>
       <Card className="p-4 mt-4">
         <div className="font-bold text-sm mb-2">ขนส่งที่รองรับ</div>
@@ -1465,6 +1582,7 @@ function Shipping({ shipments, makeTrack, saveEntity }) {
           onSubmit={async (data) => { await saveEntity("shipments", { ...data, track: "—", status: "รอสร้างเลข" }, null); setForm(null); }}
         />
       )}
+      {del && <ConfirmDelete name={`ใบส่ง ${del.id}`} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("shipments", del.id); setDel(null); }} />}
     </div>
   );
 }
@@ -1680,10 +1798,11 @@ function Accounting({ txns, saveEntity, deleteEntity }) {
   const [del, setDel] = useState(null);
   const inSum = txns.filter(t => t.type === "in").reduce((s, t) => s + t.amt, 0);
   const outSum = txns.filter(t => t.type === "out").reduce((s, t) => s + t.amt, 0);
-  const openAdd = () => setForm({ id: genId("T-"), type: "in" });
+  const openAdd = () => setForm({ mode: "add", data: { id: genId("T-"), type: "in" } });
+  const openEdit = (t) => setForm({ mode: "edit", data: t });
   return (
     <div>
-      <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกรายรับอัตโนมัติจากเช่า+ขาย" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
+      <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกด้วยมือ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
       <div className="grid grid-cols-3 gap-3 mb-5">
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowUpRight size={14} style={{ color: C.green }} />รายรับ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.green }}>{baht(inSum)}</div></Card>
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowDownRight size={14} style={{ color: C.red }} />รายจ่าย</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.red }}>{baht(outSum)}</div></Card>
@@ -1701,13 +1820,14 @@ function Accounting({ txns, saveEntity, deleteEntity }) {
               <div className="text-xs" style={{ color: C.taupe }}>{t.date} · {t.cat}</div>
             </div>
             <div className="font-bold text-sm shrink-0" style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</div>
+            <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
             <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
           </div>
         ))}
       </Card>
       {form && (
-        <FormModal title="เพิ่มรายการบัญชี" fields={txnFields()} initial={form} onClose={() => setForm(null)}
-          onSubmit={async (data) => { await saveEntity("transactions", data, null); setForm(null); }} />
+        <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit")} initial={form.data} onClose={() => setForm(null)}
+          onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
       )}
       {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}
     </div>
