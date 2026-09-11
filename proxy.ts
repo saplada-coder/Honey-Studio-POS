@@ -10,8 +10,10 @@ export async function proxy(req: NextRequest) {
   // เส้นทางที่เข้าได้โดยไม่ต้องล็อกอิน
   // /p/<รหัสสินค้า> = หน้าสินค้าสาธารณะ (ปลายทางของ QR บนสติกเกอร์ ลูกค้าสแกนแล้วต้องเปิดได้เลย)
   // โลโก้/ไอคอน = ไฟล์รูปสาธารณะ ต้องโหลดได้แม้ยังไม่ล็อกอิน (หน้า login + หน้าสินค้าสาธารณะใช้)
+  // manifest + sw.js = ไฟล์ PWA สำหรับติดตั้งเป็นแอปมือถือ ต้องเปิดสาธารณะเช่นกัน
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/") ||
-      pathname === "/logo.png" || pathname.startsWith("/icon") || pathname.startsWith("/apple-icon")) {
+      pathname === "/logo.png" || pathname.startsWith("/icon") || pathname.startsWith("/apple-icon") ||
+      pathname === "/manifest.webmanifest" || pathname === "/sw.js") {
     return NextResponse.next();
   }
 
@@ -44,7 +46,6 @@ function apiAllowed(role: string, pathname: string, method: string) {
   if (role === "เจ้าของ" || role === "ผู้ดูแลระบบ") return true;
   if (role === "พนักงานขาย") {
     if (pathname.startsWith("/api/transactions")) return false; // ไม่เห็นบัญชี
-    if (pathname.startsWith("/api/office-expenses")) return false; // ไม่เห็นค่าใช้จ่ายสำนักงาน
     if (pathname.startsWith("/api/users")) return false; // ไม่จัดการผู้ใช้
     return true;
   }

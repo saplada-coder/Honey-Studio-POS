@@ -8,8 +8,9 @@ import {
   Clock, Package, ChevronRight, Filter, Download, LayoutGrid,
   List, Calendar as CalIcon, Crown, Shield, Tag, Phone,
   MapPin, Eye, Coins, Pencil, Trash2, LogOut, ImagePlus, Loader2, Settings,
-  Droplets, Wrench, Building2, Receipt as ReceiptIcon // ชื่อ Receipt ชนกับ component ใบเสร็จด้านล่าง
+  Droplets, Wrench
 } from "lucide-react";
+import InstallApp from "./install-app";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList
@@ -49,23 +50,6 @@ const thShort = (d) => `${d.getDate()} ${TH_MONTHS[d.getMonth()]}`;
 const todayTH = () => thShort(new Date());
 // วันที่ในฐานข้อมูลเก็บเป็นข้อความไทย ("16 มิ.ย. 68" บ้าง "16 มิ.ย." บ้าง) จึงเทียบแบบ "มีคำนี้อยู่ในข้อความ"
 const sameDayTH = (value, key) => String(value || "").includes(key);
-// ===== วันที่แบบ ISO (ใช้ในหน้าค่าใช้จ่ายสำนักงาน) =====
-// เก็บเป็น "2026-09-07" เพื่อกรองรายเดือน/เรียงลำดับได้ตรง แล้วค่อยแปลงเป็นข้อความไทยตอนแสดงผล
-const todayISO = () => {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-};
-const isoToTH = (iso) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
-  if (!m) return iso || "—"; // ข้อมูลรูปแบบอื่น แสดงตามที่เก็บไว้
-  return `${Number(m[3])} ${TH_MONTHS[Number(m[2]) - 1]} ${String((Number(m[1]) + 543) % 100).padStart(2, "0")}`;
-};
-const isoMonthTH = (ym) => {
-  const m = /^(\d{4})-(\d{2})$/.exec(String(ym || ""));
-  if (!m) return ym;
-  return `${TH_MONTHS[Number(m[2]) - 1]} ${Number(m[1]) + 543}`;
-};
 // วันที่ไทยแบบเต็ม ใช้โชว์บนหัวหน้าแดชบอร์ด
 const todayFullTH = () => {
   const d = new Date();
@@ -137,8 +121,6 @@ const statusColor = (s) => ({
   "สำเร็จ": [C.green, C.greenBg], "ส่งสำเร็จ": [C.green, C.greenBg], "รอสร้างเลข": [C.taupe, C.taupeBg],
   // สถานะซัก-ซ่อม
   "รอดำเนินการ": [C.gold, C.goldBg], "กำลังดำเนินการ": [C.gold, C.goldBg], "รอซ่อม": [C.taupe, C.taupeBg], "เสร็จแล้ว": [C.green, C.greenBg],
-  // สถานะอนุมัติค่าใช้จ่ายสำนักงาน
-  "รออนุมัติ": [C.gold, C.goldBg], "อนุมัติแล้ว": [C.green, C.greenBg],
 }[s] || [C.taupe, C.taupeBg]);
 
 const Badge = ({ s }) => {
@@ -597,27 +579,6 @@ const txnFields = (isEdit, names = []) => [
   { key: "payee", label: "ชื่อบัญชี/ร้านที่รับเงิน", placeholder: "เช่น ดวงแข เติมประยูร" },
   { key: "slips", label: "แนบรูปบิล/สลิปโอนเงิน (สูงสุด 5 รูป)", type: "images", max: 5 },
 ];
-// ===== ค่าใช้จ่ายสำนักงาน =====
-const OFFICE_CATS = ["เงินเดือน / ค่าจ้าง", "ค่าเช่า", "น้ำ / ไฟ / เน็ต / โทรศัพท์", "อุปกรณ์ / ของใช้สำนักงาน", "อื่นๆ"];
-const OFFICE_STATUS = ["รออนุมัติ", "อนุมัติแล้ว"];
-// สีประจำหมวด — ตายตัว เพื่อให้กราฟไม่สลับสีเวลาเปลี่ยนฟิลเตอร์
-const OFFICE_CAT_COLOR = {
-  "เงินเดือน / ค่าจ้าง": C.gold,
-  "ค่าเช่า": C.rose,
-  "น้ำ / ไฟ / เน็ต / โทรศัพท์": C.blue,
-  "อุปกรณ์ / ของใช้สำนักงาน": C.green,
-  "อื่นๆ": C.taupe,
-};
-const officeFields = (isEdit) => [
-  { key: "id", label: "รหัสรายการ", required: true, readOnly: isEdit, placeholder: "เช่น OE-1001" },
-  { key: "date", label: "วันที่จ่าย", type: "date", required: true },
-  { key: "cat", label: "หมวดค่าใช้จ่าย", type: "select", options: OFFICE_CATS, required: true },
-  { key: "desc", label: "รายละเอียด", required: true, placeholder: "เช่น ค่าไฟฟ้าเดือน ก.ย." },
-  { key: "payee", label: "จ่ายให้ (ร้าน/บุคคล)", placeholder: "เช่น การไฟฟ้านครหลวง" },
-  { key: "amt", label: "จำนวนเงิน (บาท)", type: "number", required: true },
-  { key: "status", label: "สถานะอนุมัติ", type: "select", options: OFFICE_STATUS, required: true },
-  { key: "note", label: "หมายเหตุ", placeholder: "รายละเอียดเพิ่มเติม (ไม่บังคับ)" },
-];
 const shipFields = (isEdit) => [
   { key: "id", label: "รหัสใบส่ง", required: true, readOnly: isEdit, placeholder: "เช่น SH-301" },
   { key: "order", label: "เลขที่ออเดอร์", required: true },
@@ -643,7 +604,6 @@ const NAV = [
   { id: "rentals", label: "จองชุดเช่า", icon: CalendarDays },
   { id: "laundry", label: "ซัก-ซ่อม", icon: Droplets },
   { id: "accounting", label: "บัญชีรับจ่าย", icon: Wallet },
-  { id: "office", label: "ค่าใช้จ่ายสำนักงาน", icon: Building2 },
   { id: "reports", label: "รายงาน", icon: BarChart3 },
   { id: "userman", label: "จัดการผู้ใช้", icon: UserCog },
 ];
@@ -675,7 +635,6 @@ export default function App() {
   const [rentals, setRentals] = useState([]);
   const [laundry, setLaundry] = useState([]);
   const [txns, setTxns] = useState([]);
-  const [office, setOffice] = useState([]); // ค่าใช้จ่ายสำนักงาน
   const [shipments, setShipments] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -699,7 +658,7 @@ export default function App() {
 
   async function loadAll() {
     try {
-      const [mr, p, c, o, r, l, t, s, u, cat, oe] = await Promise.all([
+      const [mr, p, c, o, r, l, t, s, u, cat] = await Promise.all([
         getJSON("/api/auth/me", { user: null }),
         getJSON("/api/products", []),
         getJSON("/api/customers", []),
@@ -710,11 +669,10 @@ export default function App() {
         getJSON("/api/shipments", []),
         getJSON("/api/users", []),
         getJSON("/api/categories", []),
-        getJSON("/api/office-expenses", []),
       ]);
       setMe(mr.user);
       setProducts(p); setCustomers(c); setOrders(o); setRentals(r); setLaundry(l);
-      setTxns(t); setShipments(s); setUsers(u); setCategories(cat); setOffice(oe);
+      setTxns(t); setShipments(s); setUsers(u); setCategories(cat);
     } catch (e) {
       console.error("โหลดข้อมูลไม่สำเร็จ", e);
     } finally {
@@ -838,7 +796,7 @@ export default function App() {
   }, [me, page, allowed]);
 
   const ctx = {
-    products, customers, orders, rentals, laundry, txns, office, shipments, users, categories,
+    products, customers, orders, rentals, laundry, txns, shipments, users, categories,
     adjustStock, advanceRental, makeTrack, setQrItem, setReceipt, mobile,
     saveEntity, deleteEntity, me, role, canEdit,
   };
@@ -888,6 +846,7 @@ export default function App() {
               </div>
               <button onClick={() => setProfileOpen(true)} title="โปรไฟล์ / ตั้งค่า" className="p-1.5 rounded-lg" style={{ background: "#fff" }}><Settings size={15} style={{ color: C.taupe }} /></button>
             </div>
+            <div className="mb-2"><InstallApp compact /></div>
             <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
               <LogOut size={15} />ออกจากระบบ
             </button>
@@ -914,7 +873,6 @@ export default function App() {
           {page === "rentals" && <Rentals {...ctx} />}
           {page === "laundry" && <Laundry {...ctx} />}
           {page === "accounting" && <Accounting {...ctx} />}
-          {page === "office" && <OfficeExpenses {...ctx} />}
           {page === "reports" && <Reports {...ctx} />}
           {page === "userman" && <UserMan {...ctx} />}
         </main>
@@ -947,7 +905,8 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => { setMoreOpen(false); setProfileOpen(true); }} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-4 rounded-xl text-sm font-medium" style={{ background: C.cream, color: C.charcoal }}>
+              <div className="mt-4"><InstallApp /></div>
+              <button onClick={() => { setMoreOpen(false); setProfileOpen(true); }} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-2 rounded-xl text-sm font-medium" style={{ background: C.cream, color: C.charcoal }}>
                 <Settings size={15} />โปรไฟล์ / เปลี่ยนรหัสผ่าน
               </button>
               <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-2 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
@@ -1979,18 +1938,38 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
   const openEdit = (t) => setForm({ mode: "edit", data: t });
   const pickMonth = (k) => setMonth((cur) => (cur === k ? "" : k));
 
+  // ===== ส่งออก Excel — เฉพาะเดือนที่เลือก (หรือทั้งหมด) =====
+  const exportMonth = () => {
+    const label = month || "ทั้งหมด";
+    const rows = visible.map((t) => ({
+      "รหัส": t.id, "วันที่": t.date, "รายละเอียด": t.desc, "หมวด": t.cat,
+      "ประเภท": t.type === "in" ? "รายรับ" : "รายจ่าย",
+      "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
+      "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "",
+      "สลิป (ลิงก์)": parseUrls(t.slips).join("\n"),
+    }));
+    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inSum, "รายจ่าย": outSum, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inSum - outSum}`, "สลิป (ลิงก์)": "" });
+    const summary = monthRows.map((r) => ({ "เดือน": r.key, "รายรับ": r.in, "รายจ่าย": r.out, "คงเหลือ": r.in - r.out, "จำนวนรายการ": r.n }));
+    exportExcel([{ name: `บัญชี ${label}`, rows }, { name: "สรุปรายเดือน", rows: summary }], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
+  };
+
   return (
     <div>
       <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกด้วยมือ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
 
-      {/* ตัวกรองเดือนที่เลือกอยู่ (กดที่ตารางสรุปด้านล่างเพื่อเลือก) */}
-      {month && (
-        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
-          <span style={{ color: C.taupe }}>กำลังดู:</span>
-          <span className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.goldBg, color: "#8a6d1f" }}>เดือน {month}</span>
-          <button onClick={() => setMonth("")} className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.cream, color: C.charcoal }}>ล้างตัวกรอง</button>
+      {/* เลือกเดือน + ส่งออก */}
+      <Card className="p-3 mb-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium" style={{ color: C.taupe }}>ดูเดือน</span>
+          <select value={month} onChange={(e) => setMonth(e.target.value)} className="py-2 px-3 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: C.line }}>
+            <option value="">ทุกเดือน</option>
+            {monthRows.map((r) => <option key={r.key} value={r.key}>{r.key} ({r.n} รายการ)</option>)}
+          </select>
+          {month && <button onClick={() => setMonth("")} className="px-2.5 py-2 rounded-xl text-xs font-medium" style={{ background: C.cream, color: C.charcoal }}>ดูทุกเดือน</button>}
+          <span className="text-xs ml-auto" style={{ color: C.taupe }}>{visible.length} รายการ</span>
+          <Btn icon={Download} variant="outline" size="sm" onClick={exportMonth}>Export Excel{month ? ` (${month})` : " (ทั้งหมด)"}</Btn>
         </div>
-      )}
+      </Card>
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowUpRight size={14} style={{ color: C.green }} />รายรับ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.green }}>{baht(inSum)}</div></Card>
@@ -2088,167 +2067,6 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
           onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
       )}
       {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}
-    </div>
-  );
-}
-
-/* ============ 8.5 ค่าใช้จ่ายสำนักงาน ============ */
-function OfficeExpenses({ office = [], saveEntity, deleteEntity, canEdit }) {
-  const [form, setForm] = useState(null);
-  const [del, setDel] = useState(null);
-  // ===== ฟิลเตอร์ =====
-  const [month, setMonth] = useState("ทั้งหมด");
-  const [cat, setCat] = useState("ทั้งหมด");
-  const [status, setStatus] = useState("ทั้งหมด");
-  const [q, setQ] = useState("");
-
-  // เดือนที่มีข้อมูลจริง (ใหม่ → เก่า) — date เก็บเป็น ISO จึงตัด 7 ตัวแรกได้เลย
-  const months = [...new Set(office.map((e) => String(e.date || "").slice(0, 7)))]
-    .filter((m) => /^\d{4}-\d{2}$/.test(m))
-    .sort()
-    .reverse();
-
-  const kw = q.trim().toLowerCase();
-  const visible = office.filter((e) =>
-    (month === "ทั้งหมด" || String(e.date || "").startsWith(month)) &&
-    (cat === "ทั้งหมด" || e.cat === cat) &&
-    (status === "ทั้งหมด" || e.status === status) &&
-    (!kw || [e.id, e.desc, e.payee, e.note, e.cat].some((v) => String(v || "").toLowerCase().includes(kw)))
-  );
-
-  const sum = (arr) => arr.reduce((s, e) => s + (e.amt || 0), 0);
-  const approved = visible.filter((e) => e.status === "อนุมัติแล้ว");
-  const waiting = visible.filter((e) => e.status === "รออนุมัติ");
-  const approvedTotal = sum(approved);
-
-  // สัดส่วนรายหมวด — นับเฉพาะรายการที่ "อนุมัติแล้ว" และอยู่ในฟิลเตอร์ที่เลือกอยู่
-  const catData = OFFICE_CATS
-    .map((name) => ({ name, value: sum(approved.filter((e) => e.cat === name)) }))
-    .filter((d) => d.value > 0)
-    .map((d) => ({ ...d, pct: Math.round((d.value / (approvedTotal || 1)) * 100) }))
-    .sort((a, b) => b.value - a.value);
-
-  const filtered = month !== "ทั้งหมด" || cat !== "ทั้งหมด" || status !== "ทั้งหมด" || !!kw;
-  const clearFilters = () => { setMonth("ทั้งหมด"); setCat("ทั้งหมด"); setStatus("ทั้งหมด"); setQ(""); };
-
-  const openAdd = () => setForm({ mode: "add", data: { id: genId("OE-"), date: todayISO(), cat: "อื่นๆ", status: "รออนุมัติ" } });
-  const openEdit = (e) => setForm({ mode: "edit", data: e });
-  // อนุมัติเร็ว — เซิร์ฟเวอร์เป็นคนบันทึกชื่อผู้อนุมัติ/วันที่ให้เอง
-  const approve = async (e) => { await saveEntity("office-expenses", { status: "อนุมัติแล้ว" }, e.id); };
-
-  const selCls = "py-2 px-3 text-sm rounded-xl border outline-none bg-white";
-
-  return (
-    <div>
-      <PageHead
-        title="ค่าใช้จ่ายสำนักงาน"
-        sub={`${office.length} รายการทั้งหมด · รออนุมัติ ${office.filter((e) => e.status === "รออนุมัติ").length}`}
-        action={canEdit ? <Btn icon={Plus} onClick={openAdd}>เพิ่มค่าใช้จ่าย</Btn> : null}
-      />
-
-      {/* การ์ดสรุป — คิดตามฟิลเตอร์ที่เลือกอยู่ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ReceiptIcon size={14} style={{ color: C.charcoal }} />รวมตามฟิลเตอร์</div><div className="text-lg md:text-xl font-bold mt-1">{baht(sum(visible))}</div></Card>
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><CheckCircle2 size={14} style={{ color: C.green }} />อนุมัติแล้ว</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.green }}>{baht(approvedTotal)}</div><div className="text-[11px]" style={{ color: C.taupe }}>{approved.length} รายการ</div></Card>
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><Clock size={14} style={{ color: C.gold }} />รออนุมัติ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.gold }}>{baht(sum(waiting))}</div><div className="text-[11px]" style={{ color: C.taupe }}>{waiting.length} รายการ</div></Card>
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><Filter size={14} style={{ color: C.blue }} />รายการที่แสดง</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.blue }}>{visible.length}</div></Card>
-      </div>
-
-      {/* ฟิลเตอร์ */}
-      <Card className="p-3 mb-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 flex-1 min-w-[180px] px-3 rounded-xl border" style={{ borderColor: C.line }}>
-            <Search size={15} style={{ color: C.taupe }} />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา รายละเอียด / ผู้รับเงิน / รหัส" className="flex-1 py-2 text-sm outline-none bg-transparent" />
-          </div>
-          <select value={month} onChange={(e) => setMonth(e.target.value)} className={selCls} style={{ borderColor: C.line }}>
-            <option value="ทั้งหมด">ทุกเดือน</option>
-            {months.map((m) => <option key={m} value={m}>{isoMonthTH(m)}</option>)}
-          </select>
-          <select value={cat} onChange={(e) => setCat(e.target.value)} className={selCls} style={{ borderColor: C.line }}>
-            <option value="ทั้งหมด">ทุกหมวด</option>
-            {OFFICE_CATS.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className={selCls} style={{ borderColor: C.line }}>
-            <option value="ทั้งหมด">ทุกสถานะ</option>
-            {OFFICE_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          {filtered && <button onClick={clearFilters} className="px-3 py-2 rounded-xl text-xs font-medium" style={{ background: C.cream, color: C.charcoal }}>ล้างฟิลเตอร์</button>}
-        </div>
-      </Card>
-
-      <div className="grid lg:grid-cols-3 gap-4">
-        {/* รายการ */}
-        <Card className="overflow-hidden lg:col-span-2">
-          <div className="px-4 py-3 border-b font-bold text-sm" style={{ borderColor: C.line }}>รายการค่าใช้จ่าย</div>
-          {visible.length === 0 && <div className="text-sm text-center py-10" style={{ color: C.taupe }}>{office.length === 0 ? "ยังไม่มีรายการค่าใช้จ่าย" : "ไม่พบรายการตามฟิลเตอร์ที่เลือก"}</div>}
-          {visible.map((e, i, arr) => (
-            <div key={e.id} className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none" }}>
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: C.cream }}>
-                <span className="w-3 h-3 rounded-full" style={{ background: OFFICE_CAT_COLOR[e.cat] || C.taupe }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{e.desc}</div>
-                <div className="text-xs truncate" style={{ color: C.taupe }}>
-                  {isoToTH(e.date)} · {e.cat}{e.payee ? " · " + e.payee : ""}
-                  {e.status === "อนุมัติแล้ว" && e.approvedBy ? ` · อนุมัติโดย ${e.approvedBy}` : ""}
-                </div>
-              </div>
-              <div className="font-bold text-sm shrink-0">{baht(e.amt)}</div>
-              <Badge s={e.status} />
-              {canEdit && e.status === "รออนุมัติ" && (
-                <button onClick={() => approve(e)} title="อนุมัติรายการนี้" className="text-xs px-2 py-1.5 rounded-lg font-medium shrink-0" style={{ background: C.greenBg, color: C.green }}>อนุมัติ</button>
-              )}
-              {canEdit && (
-                <div className="flex gap-1 shrink-0">
-                  <IconBtn icon={Pencil} onClick={() => openEdit(e)} />
-                  <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(e)} />
-                </div>
-              )}
-            </div>
-          ))}
-        </Card>
-
-        {/* สัดส่วนรายหมวด */}
-        <Card className="p-4">
-          <div className="font-bold">สัดส่วนรายหมวด</div>
-          <div className="text-xs mb-2" style={{ color: C.taupe }}>เฉพาะอนุมัติแล้ว · ตามฟิลเตอร์</div>
-          {catData.length === 0 ? (
-            <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีรายการที่อนุมัติแล้วในช่วงที่เลือก</div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={catData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={3}>
-                    {catData.map((d) => <Cell key={d.name} fill={OFFICE_CAT_COLOR[d.name] || C.taupe} />)}
-                  </Pie>
-                  <Tooltip formatter={(v) => baht(v)} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="text-center text-sm font-bold -mt-1 mb-2">รวม {baht(approvedTotal)}</div>
-              <div className="space-y-1.5">
-                {catData.map((d) => (
-                  <div key={d.name} className="flex items-center justify-between text-xs gap-2">
-                    <span className="flex items-center gap-1.5 min-w-0"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: OFFICE_CAT_COLOR[d.name] || C.taupe }} /><span className="truncate">{d.name}</span></span>
-                    <span className="shrink-0" style={{ color: C.taupe }}>{baht(d.value)} · {d.pct}%</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </Card>
-      </div>
-
-      {form && (
-        <FormModal
-          title={form.mode === "add" ? "เพิ่มค่าใช้จ่ายสำนักงาน" : "แก้ไขค่าใช้จ่ายสำนักงาน"}
-          fields={officeFields(form.mode === "edit")}
-          initial={form.data}
-          onClose={() => setForm(null)}
-          onSubmit={async (data) => { await saveEntity("office-expenses", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
-        />
-      )}
-      {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("office-expenses", del.id); setDel(null); }} />}
     </div>
   );
 }

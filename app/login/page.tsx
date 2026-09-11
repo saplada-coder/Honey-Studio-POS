@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Crown, Lock, Mail, User } from "lucide-react";
+import InstallApp from "../install-app";
 
 const C = {
   gold: "#D4AF37", goldBg: "#F3E9CC", cream: "#F5F1E8",
@@ -108,6 +109,8 @@ export default function LoginPage() {
             </div>
           )}
         </form>
+        {/* ปุ่มติดตั้งเป็นแอปมือถือ — โชว์ก่อนล็อกอิน พนักงานจะได้ติดตั้งจากหน้านี้ได้เลย */}
+        <div className="mt-4"><InstallApp /></div>
       </div>
     </div>
   );

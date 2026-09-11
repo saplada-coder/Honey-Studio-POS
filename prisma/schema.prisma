@@ -127,22 +127,6 @@ model Transaction {
   createdAt DateTime @default(now())
 }
 
-// ===== ค่าใช้จ่ายสำนักงาน (มีขั้นตอนอนุมัติ) =====
-model OfficeExpense {
-  id         String   @id // เช่น OE-1001
-  date       String   @default("") // วันที่จ่าย เก็บเป็น ISO "2026-09-07" เพื่อกรองรายเดือนได้
-  cat        String   @default("อื่นๆ") // หมวดค่าใช้จ่าย (5 หมวดตายตัว)
-  desc       String // รายละเอียด
-  payee      String   @default("") // จ่ายให้ใคร/ร้านไหน
-  amt        Int      @default(0) // จำนวนเงิน (บาท)
-  status     String   @default("รออนุมัติ") // รออนุมัติ / อนุมัติแล้ว
-  approvedBy String   @default("") // ชื่อผู้อนุมัติ
-  approvedAt String   @default("") // วันที่อนุมัติ (ISO)
-  note       String   @default("")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
 // ===== การจัดส่ง =====
 model Shipment {
   id        String   @id // เช่น SH-301
