@@ -333,6 +333,29 @@ function CustomerSelect({ value, onChange, customers = [] }) {
   );
 }
 
+/* ============ ช่องเลือกจากรายชื่อ + พิมพ์ชื่อใหม่ได้ (ใช้กับ ผู้เบิก/ผู้โอน) ============ */
+function ComboField({ value, onChange, options = [], placeholder }) {
+  // ถ้าค่าที่มีอยู่ไม่อยู่ในรายชื่อ (เช่น ข้อมูลเก่า) เปิดโหมดพิมพ์เองให้เลย
+  const [custom, setCustom] = useState(() => !!value && !options.includes(value));
+  const cls = "w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none";
+  if (custom) {
+    return (
+      <div className="flex gap-2 items-center">
+        <input value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || "พิมพ์ชื่อ"} autoFocus className={cls + " flex-1"} style={{ borderColor: C.line, background: "#fff" }} />
+        <button type="button" onClick={() => { setCustom(false); onChange(""); }} className="text-xs px-2.5 py-2 mt-1 rounded-xl whitespace-nowrap" style={{ background: C.cream, color: C.charcoal }}>เลือกจากรายชื่อ</button>
+      </div>
+    );
+  }
+  return (
+    <select value={value || ""} onChange={(e) => (e.target.value === "__new__" ? (setCustom(true), onChange("")) : onChange(e.target.value))}
+      className={cls + " bg-white"} style={{ borderColor: C.line }}>
+      <option value="">— ไม่ระบุ —</option>
+      {options.map((n) => <option key={n} value={n}>{n}</option>)}
+      <option value="__new__">+ พิมพ์ชื่อใหม่...</option>
+    </select>
+  );
+}
+
 function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], products = [] }) {
   const [form, setForm] = useState(() => {
     const base = {};
@@ -366,6 +389,8 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
               <div className="mt-1"><MultiImageField value={form[f.key]} onChange={(v) => set(f.key, v)} max={f.max || 10} /></div>
             ) : f.type === "customer" ? (
               <CustomerSelect value={form[f.key]} onChange={(v) => set(f.key, v)} customers={customers} />
+            ) : f.type === "combo" ? (
+              <ComboField value={form[f.key]} onChange={(v) => set(f.key, v)} options={f.options || []} placeholder={f.placeholder} />
             ) : f.type === "product" ? (
               <select value={form[f.key]} required={f.required}
                 onChange={(e) => {
@@ -560,15 +585,15 @@ const laundryFields = (isEdit) => [
   { key: "owner", label: "ผู้รับผิดชอบ/ร้าน", placeholder: "เช่น ร้านซักพี่หมี" },
   { key: "status", label: "สถานะ", type: "select", options: LAUNDRY_STATUS },
 ];
-const txnFields = (isEdit) => [
+const txnFields = (isEdit, names = []) => [
   { key: "id", label: "รหัสรายการ", required: true, readOnly: isEdit, placeholder: "เช่น T-9001" },
   { key: "date", label: "วันที่", placeholder: "เช่น 16 มิ.ย." },
   { key: "desc", label: "รายละเอียด", required: true },
   { key: "cat", label: "หมวด", placeholder: "เช่น รายรับ-เช่า" },
   { key: "type", label: "ประเภท", type: "select", options: [{ value: "in", label: "รายรับ" }, { value: "out", label: "รายจ่าย" }], required: true },
   { key: "amt", label: "จำนวนเงิน (บาท)", type: "number" },
-  { key: "payer", label: "ผู้เบิก (พนักงานที่รับเงินไปซื้อ)", placeholder: "เช่น Mook" },
-  { key: "sender", label: "ผู้โอนเงิน", placeholder: "เช่น NamTan" },
+  { key: "payer", label: "ผู้เบิก (พนักงานที่รับเงินไปซื้อ)", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
+  { key: "sender", label: "ผู้โอนเงิน", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
   { key: "payee", label: "ชื่อบัญชี/ร้านที่รับเงิน", placeholder: "เช่น ดวงแข เติมประยูร" },
   { key: "slips", label: "แนบรูปบิล/สลิปโอนเงิน (สูงสุด 5 รูป)", type: "images", max: 5 },
 ];
@@ -821,7 +846,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3" style={{ background: C.bg, color: C.taupe, fontFamily: "'Noto Sans Thai', sans-serif" }}>
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold animate-pulse" style={{ background: C.gold, fontFamily: "Georgia,serif" }}>HS</div>
+        <img src="/logo.png" alt="HONEY STUDIO" className="w-24 h-24 object-contain animate-pulse" />
         <div className="text-sm">กำลังโหลดข้อมูลจากฐานข้อมูล...</div>
       </div>
     );
@@ -874,7 +899,7 @@ export default function App() {
         {mobile && (
           <header className="sticky top-0 z-20 flex items-center justify-between px-4 h-14 border-b" style={{ background: "#fff", borderColor: C.line }}>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ background: C.gold, fontFamily: "Georgia,serif" }}>HS</div>
+              <img src="/logo.png" alt="HONEY STUDIO" className="w-9 h-9 object-contain" />
               <span className="font-bold text-sm" style={{ fontFamily: "Georgia,serif", letterSpacing: 1 }}>HONEY STUDIO</span>
             </div>
             <button className="relative"><Bell size={20} style={{ color: C.taupe }} /><span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: C.red }} /></button>
@@ -993,7 +1018,7 @@ function Brand() {
   return (
     <div className="px-5 py-5 border-b" style={{ borderColor: C.line }}>
       <div className="flex items-center gap-2.5">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold" style={{ background: C.gold, fontFamily: "Georgia,serif", fontSize: 16 }}>HS</div>
+        <img src="/logo.png" alt="HONEY STUDIO" className="w-12 h-12 object-contain shrink-0" />
         <div className="leading-tight">
           <div className="font-bold tracking-wide" style={{ fontFamily: "Georgia,serif", letterSpacing: 1.5 }}>HONEY STUDIO</div>
           <div className="text-[10px]" style={{ color: C.taupe, letterSpacing: 1 }}>ระบบจัดการออเดอร์</div>
@@ -1919,56 +1944,51 @@ function Laundry({ laundry = [], saveEntity, deleteEntity, products = [] }) {
 }
 
 /* ============ 8. ACCOUNTING ============ */
-const NO_PAYER = "ไม่ระบุผู้เบิก";
+
+// รายชื่อพนักงานที่เบิก/โอนเงินได้ (ผู้ใช้กำหนดเอง) — เพิ่มชื่อใหม่ที่นี่
+const PAYER_NAMES = ["Eupeve", "Namtan", "Mook"];
 
 function Accounting({ txns = [], saveEntity, deleteEntity }) {
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const [month, setMonth] = useState(""); // "" = ทุกเดือน
-  const [payer, setPayer] = useState(""); // "" = ทุกคน
 
   const monthKey = (t) => thMonthOf(t.date)?.key || NO_MONTH;
-  const payerKey = (t) => String(t.payer || "").trim() || NO_PAYER;
   const byMonth = (t) => !month || monthKey(t) === month;
-  const byPayer = (t) => !payer || payerKey(t) === payer;
 
-  const visible = txns.filter((t) => byMonth(t) && byPayer(t));
+  const visible = txns.filter(byMonth);
   const sum = (arr, kind) => arr.filter((t) => t.type === kind).reduce((s, t) => s + t.amt, 0);
   const inSum = sum(visible, "in");
   const outSum = sum(visible, "out");
 
-  // ===== สรุปรายเดือน — ถ้าเลือกคนเบิกอยู่ จะสรุปเฉพาะของคนนั้น =====
-  const monthAsc = monthlyRows(txns.filter(byPayer)); // เก่า→ใหม่ สำหรับกราฟ
-  const monthRows = [...monthAsc].reverse();           // ใหม่→เก่า สำหรับตาราง
+  // ===== สรุปรายเดือน =====
+  const monthAsc = monthlyRows(txns);        // เก่า→ใหม่ สำหรับกราฟ
+  const monthRows = [...monthAsc].reverse(); // ใหม่→เก่า สำหรับตาราง
 
-  // ===== สรุปตามผู้เบิก (เฉพาะรายจ่าย) — ถ้าเลือกเดือนอยู่ จะสรุปเฉพาะเดือนนั้น =====
-  const payerRows = Object.values(
-    txns.filter((t) => t.type === "out" && byMonth(t)).reduce((m, t) => {
-      const k = payerKey(t);
-      m[k] = m[k] || { key: k, amt: 0, n: 0 };
-      m[k].amt += t.amt;
-      m[k].n++;
-      return m;
-    }, {})
-  ).sort((a, b) => b.amt - a.amt);
-  const payerTotal = payerRows.reduce((s, r) => s + r.amt, 0);
+  // ===== รายชื่อให้เลือกในช่อง ผู้เบิก/ผู้โอน =====
+  // รายชื่อหลักตายตัว (PAYER_NAMES) + ชื่ออื่นที่เคยกรอกไว้ในบัญชี (เผื่อข้อมูลเก่า) → สะกดตรงกันทุกครั้ง
+  // กันซ้ำแบบไม่สนตัวพิมพ์เล็ก/ใหญ่ (เช่น "NamTan" กับ "Namtan" ถือเป็นคนเดียวกัน ไม่โชว์ซ้ำ)
+  const seen = new Set(PAYER_NAMES.map((n) => n.toLowerCase()));
+  const extraNames = [];
+  txns.flatMap((t) => [t.payer, t.sender]).map((n) => String(n || "").trim()).forEach((n) => {
+    if (n && !seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); extraNames.push(n); }
+  });
+  const nameOptions = [...PAYER_NAMES, ...extraNames];
 
   const openAdd = () => setForm({ mode: "add", data: { id: genId("T-"), type: "in", date: todayTH() } });
   const openEdit = (t) => setForm({ mode: "edit", data: t });
   const pickMonth = (k) => setMonth((cur) => (cur === k ? "" : k));
-  const pickPayer = (k) => setPayer((cur) => (cur === k ? "" : k));
 
   return (
     <div>
       <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกด้วยมือ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
 
-      {/* ตัวกรองที่เลือกอยู่ (กดที่ตารางสรุปด้านล่างเพื่อเลือก) */}
-      {(month || payer) && (
+      {/* ตัวกรองเดือนที่เลือกอยู่ (กดที่ตารางสรุปด้านล่างเพื่อเลือก) */}
+      {month && (
         <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
           <span style={{ color: C.taupe }}>กำลังดู:</span>
-          {month && <span className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.goldBg, color: "#8a6d1f" }}>เดือน {month}</span>}
-          {payer && <span className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.blueBg, color: C.blue }}>ผู้เบิก {payer}</span>}
-          <button onClick={() => { setMonth(""); setPayer(""); }} className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.cream, color: C.charcoal }}>ล้างตัวกรอง</button>
+          <span className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.goldBg, color: "#8a6d1f" }}>เดือน {month}</span>
+          <button onClick={() => setMonth("")} className="px-2.5 py-1 rounded-full font-medium" style={{ background: C.cream, color: C.charcoal }}>ล้างตัวกรอง</button>
         </div>
       )}
 
@@ -1978,12 +1998,12 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><TrendingUp size={14} style={{ color: C.gold }} />คงเหลือ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.gold }}>{baht(inSum - outSum)}</div></Card>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 mb-5">
-        {/* สรุปเดือนต่อเดือน */}
-        <Card className="p-4 lg:col-span-2">
+      {/* สรุปเดือนต่อเดือน */}
+      <div className="mb-5">
+        <Card className="p-4">
           <div className="flex items-baseline justify-between gap-2 mb-1">
             <span className="font-bold">สรุปเดือนต่อเดือน</span>
-            <span className="text-xs" style={{ color: C.taupe }}>{payer ? `เฉพาะ ${payer}` : "ทุกคน"} · กดที่เดือนเพื่อดูเฉพาะเดือนนั้น</span>
+            <span className="text-xs" style={{ color: C.taupe }}>กดที่เดือนเพื่อดูเฉพาะเดือนนั้น</span>
           </div>
           {monthRows.length === 0 ? (
             <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีข้อมูล</div>
@@ -2025,34 +2045,6 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
             </>
           )}
         </Card>
-
-        {/* คนเบิกเงิน */}
-        <Card className="p-4">
-          <div className="font-bold">คนเบิกเงิน</div>
-          <div className="text-xs mb-3" style={{ color: C.taupe }}>เฉพาะรายจ่าย{month ? ` · เดือน ${month}` : ""} · กดชื่อเพื่อดูเฉพาะคนนั้น</div>
-          {payerRows.length === 0 ? (
-            <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีรายจ่าย</div>
-          ) : (
-            <div className="space-y-2">
-              {payerRows.map((r) => (
-                <button key={r.key} onClick={() => pickPayer(r.key)} className="w-full text-left p-2.5 rounded-xl transition"
-                  style={{ background: payer === r.key ? C.blueBg : C.cream }}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: r.key === NO_PAYER ? C.taupe : C.blue }}>{r.key[0]}</span>
-                      <span className="text-sm font-medium truncate">{r.key}</span>
-                    </span>
-                    <span className="text-sm font-bold shrink-0" style={{ color: C.red }}>{baht(r.amt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mt-1 text-[11px]" style={{ color: C.taupe }}>
-                    <span>{r.n} รายการ</span>
-                    <span>{Math.round((r.amt / (payerTotal || 1)) * 100)}% ของรายจ่าย</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </Card>
       </div>
 
       <Card className="overflow-hidden">
@@ -2092,7 +2084,7 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         ))}
       </Card>
       {form && (
-        <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit")} initial={form.data} onClose={() => setForm(null)}
+        <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit", nameOptions)} initial={form.data} onClose={() => setForm(null)}
           onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
       )}
       {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}

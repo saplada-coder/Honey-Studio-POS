@@ -47,6 +47,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
     <div style={{ minHeight: "100vh", background: C.bg, color: C.charcoal, fontFamily: "'Noto Sans Thai', -apple-system, 'Segoe UI', sans-serif" }}>
       <div style={{ maxWidth: 460, margin: "0 auto", padding: "20px 16px 40px" }}>
         <div style={{ textAlign: "center", marginBottom: 18 }}>
+          <img src="/logo.png" alt="HONEY STUDIO" width={110} height={110} style={{ display: "block", margin: "0 auto 4px", objectFit: "contain" }} />
           <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: 2, fontFamily: "Georgia, serif" }}>HONEY STUDIO</div>
           <div style={{ fontSize: 12, color: C.taupe }}>ร้านเช่า–ขาย ชุด รองเท้า กระเป๋า</div>
         </div>

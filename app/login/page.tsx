@@ -45,7 +45,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: C.bg, fontFamily: "'Noto Sans Thai', -apple-system, sans-serif", color: C.charcoal }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold mx-auto mb-3" style={{ background: C.gold, fontFamily: "Georgia,serif", fontSize: 22 }}>HS</div>
+          <img src="/logo.png" alt="HONEY STUDIO" className="w-32 h-32 object-contain mx-auto mb-2" />
           <div className="text-2xl font-bold" style={{ fontFamily: "Georgia,serif", letterSpacing: 1 }}>HONEY STUDIO</div>
           <div className="text-sm mt-1" style={{ color: C.taupe }}>ระบบจัดการร้านเช่า–ขายชุด</div>
         </div>

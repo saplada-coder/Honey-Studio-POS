@@ -9,7 +9,9 @@ export async function proxy(req: NextRequest) {
 
   // เส้นทางที่เข้าได้โดยไม่ต้องล็อกอิน
   // /p/<รหัสสินค้า> = หน้าสินค้าสาธารณะ (ปลายทางของ QR บนสติกเกอร์ ลูกค้าสแกนแล้วต้องเปิดได้เลย)
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/")) {
+  // โลโก้/ไอคอน = ไฟล์รูปสาธารณะ ต้องโหลดได้แม้ยังไม่ล็อกอิน (หน้า login + หน้าสินค้าสาธารณะใช้)
+  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/") ||
+      pathname === "/logo.png" || pathname.startsWith("/icon") || pathname.startsWith("/apple-icon")) {
     return NextResponse.next();
   }
 
