@@ -109,8 +109,8 @@ export default function LoginPage() {
             </div>
           )}
         </form>
-        {/* ปุ่มติดตั้งเป็นแอปมือถือ — โชว์ก่อนล็อกอิน พนักงานจะได้ติดตั้งจากหน้านี้ได้เลย */}
-        <div className="mt-4"><InstallApp /></div>
+        {/* วิธีติดตั้งเป็นแอปมือถือ — โชว์ขั้นตอนไว้เลยก่อนเข้าเว็บ พนักงานทำตามได้ทันที */}
+        <div className="mt-4"><InstallApp inline /></div>
       </div>
     </div>
   );

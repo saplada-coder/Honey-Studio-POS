@@ -1030,9 +1030,13 @@ const monthlyRows = (txns) =>
 
 // กราฟแท่งรายรับ/รายจ่ายรายเดือน — โชว์ตัวเลขบนหัวแท่งเลย ไม่ต้องเอาเมาส์ชี้
 // ⚠️ ต้องปิด animation ของ Bar ไม่งั้น LabelList อาจไม่ถูกวาด (Chrome ไม่ repaint <g> ที่ mount ตอนว่าง)
-function MonthlyChart({ rows, height = 240 }) {
+// onPick(เดือน) = ถูกเรียกตอนกดแท่งกราฟ (ถ้าไม่ส่งมา = กดไม่ได้)
+function MonthlyChart({ rows, height = 240, onPick }) {
   const data = rows.map((r) => ({ name: r.key, "รายรับ": r.in, "รายจ่าย": r.out }));
   const fmt = (v) => (v ? Number(v).toLocaleString("th-TH") : "");
+  // recharts ส่ง (ข้อมูลแท่ง, index) มาให้ — เอาชื่อเดือนจาก payload
+  const click = onPick ? (d) => onPick(d?.payload?.name ?? d?.name) : undefined;
+  const cur = onPick ? { cursor: "pointer" } : undefined;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 20, right: 8, left: 0, bottom: 0 }} barCategoryGap="25%">
@@ -1041,10 +1045,10 @@ function MonthlyChart({ rows, height = 240 }) {
         <YAxis tick={{ fontSize: 11, fill: C.taupe }} axisLine={false} tickLine={false} width={56} tickFormatter={(v) => Number(v).toLocaleString("th-TH")} />
         <Tooltip formatter={(v) => baht(v)} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <Bar dataKey="รายรับ" fill={C.green} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+        <Bar dataKey="รายรับ" fill={C.green} radius={[4, 4, 0, 0]} isAnimationActive={false} onClick={click} style={cur}>
           <LabelList dataKey="รายรับ" position="top" formatter={fmt} style={{ fontSize: 11, fill: C.green, fontWeight: 600 }} />
         </Bar>
-        <Bar dataKey="รายจ่าย" fill={C.red} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+        <Bar dataKey="รายจ่าย" fill={C.red} radius={[4, 4, 0, 0]} isAnimationActive={false} onClick={click} style={cur}>
           <LabelList dataKey="รายจ่าย" position="top" formatter={fmt} style={{ fontSize: 11, fill: C.red, fontWeight: 600 }} />
         </Bar>
       </BarChart>
@@ -1174,7 +1178,7 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
           {monthAsc.length === 0 ? (
             <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีรายการในบัญชี</div>
           ) : (
-            <MonthlyChart rows={monthAsc} height={220} />
+            <MonthlyChart rows={monthAsc} height={220} onPick={() => go("accounting")} />
           )}
         </Card>
       )}
@@ -1938,20 +1942,27 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
   const openEdit = (t) => setForm({ mode: "edit", data: t });
   const pickMonth = (k) => setMonth((cur) => (cur === k ? "" : k));
 
-  // ===== ส่งออก Excel — เฉพาะเดือนที่เลือก (หรือทั้งหมด) =====
-  const exportMonth = () => {
-    const label = month || "ทั้งหมด";
-    const rows = visible.map((t) => ({
+  // ===== กดดูรายละเอียดรายเดือน (จากตาราง/กราฟสรุป) =====
+  const [detailMonth, setDetailMonth] = useState(null);
+  const detailTxns = detailMonth ? txns.filter((t) => monthKey(t) === detailMonth) : [];
+  const detailIn = sum(detailTxns, "in");
+  const detailOut = sum(detailTxns, "out");
+
+  // ===== ส่งออก Excel — รายการชุดที่ส่งมา + สรุปรายเดือน =====
+  const exportRows = (list, label) => {
+    const inS = sum(list, "in"), outS = sum(list, "out");
+    const rows = list.map((t) => ({
       "รหัส": t.id, "วันที่": t.date, "รายละเอียด": t.desc, "หมวด": t.cat,
       "ประเภท": t.type === "in" ? "รายรับ" : "รายจ่าย",
       "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
       "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "",
       "สลิป (ลิงก์)": parseUrls(t.slips).join("\n"),
     }));
-    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inSum, "รายจ่าย": outSum, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inSum - outSum}`, "สลิป (ลิงก์)": "" });
+    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "สลิป (ลิงก์)": "" });
     const summary = monthRows.map((r) => ({ "เดือน": r.key, "รายรับ": r.in, "รายจ่าย": r.out, "คงเหลือ": r.in - r.out, "จำนวนรายการ": r.n }));
     exportExcel([{ name: `บัญชี ${label}`, rows }, { name: "สรุปรายเดือน", rows: summary }], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
   };
+  const exportMonth = () => exportRows(visible, month || "ทั้งหมด");
 
   return (
     <div>
@@ -1982,13 +1993,13 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         <Card className="p-4">
           <div className="flex items-baseline justify-between gap-2 mb-1">
             <span className="font-bold">สรุปเดือนต่อเดือน</span>
-            <span className="text-xs" style={{ color: C.taupe }}>กดที่เดือนเพื่อดูเฉพาะเดือนนั้น</span>
+            <span className="text-xs" style={{ color: C.taupe }}>กดที่แท่งกราฟหรือแถวเดือน เพื่อดูรายการของเดือนนั้น</span>
           </div>
           {monthRows.length === 0 ? (
             <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีข้อมูล</div>
           ) : (
             <>
-              <MonthlyChart rows={monthAsc} />
+              <MonthlyChart rows={monthAsc} onPick={setDetailMonth} />
               <div className="overflow-x-auto mt-3">
                 <table className="w-full text-xs" style={{ minWidth: 420 }}>
                   <thead>
@@ -2002,9 +2013,9 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                   </thead>
                   <tbody>
                     {monthRows.map((r) => (
-                      <tr key={r.key} onClick={() => pickMonth(r.key)} className="cursor-pointer"
+                      <tr key={r.key} onClick={() => setDetailMonth(r.key)} className="cursor-pointer hover:opacity-80" title="กดดูรายการของเดือนนี้"
                         style={{ borderTop: "1px solid " + C.line, background: month === r.key ? C.goldBg : "transparent" }}>
-                        <td className="py-2 font-medium">{r.key}</td>
+                        <td className="py-2 font-medium" style={{ color: "#8a6d1f" }}>{r.key} <ChevronRight size={12} className="inline -mt-0.5" /></td>
                         <td className="py-2 text-right" style={{ color: r.in ? C.green : C.taupe }}>{baht(r.in)}</td>
                         <td className="py-2 text-right" style={{ color: r.out ? C.red : C.taupe }}>{baht(r.out)}</td>
                         <td className="py-2 text-right font-semibold" style={{ color: r.in - r.out >= 0 ? C.charcoal : C.red }}>{baht(r.in - r.out)}</td>
@@ -2067,6 +2078,38 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
           onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
       )}
       {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}
+
+      {/* หน้าต่างรายการของเดือนที่กดจากสรุป */}
+      {detailMonth && (
+        <Modal onClose={() => setDetailMonth(null)} title={`รายการเดือน ${detailMonth}`} wide>
+          <div className="grid grid-cols-3 gap-2 mb-3 text-center">
+            <div className="p-2.5 rounded-xl" style={{ background: C.greenBg }}><div className="text-[11px]" style={{ color: C.taupe }}>รายรับ</div><div className="font-bold text-sm" style={{ color: C.green }}>{baht(detailIn)}</div></div>
+            <div className="p-2.5 rounded-xl" style={{ background: C.redBg }}><div className="text-[11px]" style={{ color: C.taupe }}>รายจ่าย</div><div className="font-bold text-sm" style={{ color: C.red }}>{baht(detailOut)}</div></div>
+            <div className="p-2.5 rounded-xl" style={{ background: C.goldBg }}><div className="text-[11px]" style={{ color: C.taupe }}>คงเหลือ</div><div className="font-bold text-sm" style={{ color: detailIn - detailOut >= 0 ? C.charcoal : C.red }}>{baht(detailIn - detailOut)}</div></div>
+          </div>
+          <div className="rounded-xl border overflow-hidden mb-3" style={{ borderColor: C.line }}>
+            {detailTxns.length === 0 && <div className="text-sm text-center py-6" style={{ color: C.taupe }}>ไม่มีรายการ</div>}
+            {detailTxns.map((t, i, arr) => (
+              <div key={t.id} className="flex items-center gap-2.5 px-3 py-2.5" style={{ borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none" }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.type === "in" ? C.greenBg : C.redBg }}>
+                  {t.type === "in" ? <ArrowUpRight size={14} style={{ color: C.green }} /> : <ArrowDownRight size={14} style={{ color: C.red }} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{t.desc}</div>
+                  <div className="text-[11px] truncate" style={{ color: C.taupe }}>{t.date} · {t.cat}{t.payer ? ` · เบิกโดย ${t.payer}` : ""}{t.payee ? ` → ${t.payee}` : ""}</div>
+                </div>
+                <div className="font-bold text-sm shrink-0" style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</div>
+                <IconBtn icon={Pencil} onClick={() => { setDetailMonth(null); openEdit(t); }} />
+              </div>
+            ))}
+          </div>
+          <div className="text-[11px] mb-3 text-right" style={{ color: C.taupe }}>{detailTxns.length} รายการ</div>
+          <div className="flex gap-2">
+            <Btn variant="outline" icon={Download} onClick={() => exportRows(detailTxns, detailMonth)}>Export เดือนนี้</Btn>
+            <button onClick={() => { setMonth(detailMonth); setDetailMonth(null); }} className="flex-1 py-2.5 rounded-xl font-medium text-sm text-white" style={{ background: C.gold }}>ดูเดือนนี้ในหน้าหลัก</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
