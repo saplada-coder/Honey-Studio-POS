@@ -33,8 +33,10 @@ function Steps({ platform }: { platform: "ios" | "android" }) {
 }
 
 // ปุ่ม "ติดตั้งแอป" — Android กดแล้วขึ้นหน้าต่างติดตั้งทันที · iPhone โชว์ขั้นตอน (Safari ไม่มีปุ่มติดตั้งอัตโนมัติ)
-// inline = โชว์ขั้นตอนไว้ในหน้าเลย (ใช้หน้า login ให้เห็นก่อนเข้าเว็บ) · ไม่ใส่ = ปุ่มอย่างเดียว กดแล้วค่อยขึ้นคู่มือ
-export default function InstallApp({ compact = false, inline = false }: { compact?: boolean; inline?: boolean }) {
+// inline = โชว์ขั้นตอนไว้ในหน้าเลย · auto = เปิดหน้าต่างเล็กๆ บอกวิธีติดตั้งเองตอนเข้าหน้า (เฉพาะมือถือ ยังไม่ติดตั้ง ยังไม่เคยกดปิด)
+// ไม่ใส่ทั้งคู่ = ปุ่มอย่างเดียว กดแล้วค่อยขึ้นคู่มือ
+const SEEN_KEY = "hs-install-guide-seen";
+export default function InstallApp({ compact = false, inline = false, auto = false }: { compact?: boolean; inline?: boolean; auto?: boolean }) {
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -50,7 +52,14 @@ export default function InstallApp({ compact = false, inline = false }: { compac
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     setIsIOS(ios);
     if (ios) setTab("ios");
-    setIsMobile(/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent));
+    const mobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+    // เด้งหน้าต่างวิธีติดตั้งเองครั้งแรก (มือถือ + ยังไม่ได้ติดตั้ง + ยังไม่เคยกด "เข้าใจแล้ว")
+    if (auto && mobile && !standalone) {
+      let seen = false;
+      try { seen = localStorage.getItem(SEEN_KEY) === "1"; } catch {}
+      if (!seen) setTimeout(() => setGuide(true), 600);
+    }
     setCanPrompt(!!deferredPrompt);
     const on = () => setCanPrompt(true);
     const done = () => { setInstalled(true); deferredPrompt = null; };
@@ -73,6 +82,8 @@ export default function InstallApp({ compact = false, inline = false }: { compac
     }
     if (!inline) setGuide(true); // ไม่มี prompt → โชว์ขั้นตอน (ถ้า inline ขั้นตอนอยู่ในหน้าอยู่แล้ว)
   }
+  // ปิดหน้าต่าง + จำไว้ว่าเคยเห็นแล้ว (จะไม่เด้งเองอีก แต่กดปุ่มเปิดดูได้)
+  const closeGuide = () => { setGuide(false); try { localStorage.setItem(SEEN_KEY, "1"); } catch {} };
 
   const btnCls = compact
     ? "w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium"
@@ -117,17 +128,22 @@ export default function InstallApp({ compact = false, inline = false }: { compac
     <>
       {button}
       {guide && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={() => setGuide(false)}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden" style={{ background: "#fff", color: C.charcoal }} onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center px-5 py-4 border-b" style={{ borderColor: C.line }}>
-              <span className="font-bold">ติดตั้งแอปบนมือถือ</span>
-              <button onClick={() => setGuide(false)}><X size={20} style={{ color: C.taupe }} /></button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-5" style={{ background: "rgba(0,0,0,.45)" }} onClick={closeGuide}>
+          <div className="w-full max-w-[300px] rounded-2xl overflow-hidden shadow-xl" style={{ background: "#fff", color: C.charcoal }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center px-4 py-3 border-b" style={{ borderColor: C.line }}>
+              <span className="font-bold text-sm flex items-center gap-1.5"><Smartphone size={15} style={{ color: C.gold }} />ติดตั้งเป็นแอปมือถือ</span>
+              <button onClick={closeGuide} aria-label="ปิด"><X size={18} style={{ color: C.taupe }} /></button>
             </div>
-            <div className="p-5 space-y-4">
-              <img src="/logo.png" alt="" className="w-20 h-20 object-contain mx-auto" />
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="" className="w-12 h-12 object-contain shrink-0" />
+                <div className="text-[11px] leading-snug" style={{ color: C.taupe }}>มีไอคอน HONEY STUDIO บนหน้าจอ เปิดเต็มจอเหมือนแอป — ทำครั้งเดียว</div>
+              </div>
               <Steps platform={isIOS ? "ios" : "android"} />
-              <div className="text-xs rounded-xl p-3" style={{ background: C.cream, color: C.taupe }}>ติดตั้งแล้วจะมีไอคอน HONEY STUDIO บนหน้าจอ เปิดได้เหมือนแอปทั่วไป ไม่มีแถบเบราว์เซอร์</div>
-              <button onClick={() => setGuide(false)} className="w-full py-2.5 rounded-xl text-sm font-medium text-white" style={{ background: C.gold }}>เข้าใจแล้ว</button>
+              {!isIOS && canPrompt && (
+                <button onClick={install} className="w-full py-2.5 rounded-xl text-sm font-medium text-white" style={{ background: C.gold }}>ติดตั้งเลย</button>
+              )}
+              <button onClick={closeGuide} className="w-full py-2 rounded-xl text-sm font-medium" style={{ background: C.cream, color: C.charcoal }}>{!isIOS && canPrompt ? "ไว้ทีหลัง" : "เข้าใจแล้ว"}</button>
             </div>
           </div>
         </div>

@@ -318,7 +318,8 @@ function CustomerSelect({ value, onChange, customers = [] }) {
 /* ============ ช่องเลือกจากรายชื่อ + พิมพ์ชื่อใหม่ได้ (ใช้กับ ผู้เบิก/ผู้โอน) ============ */
 function ComboField({ value, onChange, options = [], placeholder }) {
   // ถ้าค่าที่มีอยู่ไม่อยู่ในรายชื่อ (เช่น ข้อมูลเก่า) เปิดโหมดพิมพ์เองให้เลย
-  const [custom, setCustom] = useState(() => !!value && !options.includes(value));
+  // เทียบแบบตัดช่องว่างหัวท้าย กันข้อมูลเก่าที่มีเว้นวรรคติดมาแล้วกลายเป็นช่องพิมพ์แทน dropdown
+  const [custom, setCustom] = useState(() => !!value && !options.some((o) => String(o).trim() === String(value).trim()));
   const cls = "w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none";
   if (custom) {
     return (
@@ -352,7 +353,10 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
     e.preventDefault();
     setSaving(true); setErr("");
     try {
-      await onSubmit(form);
+      // ช่องตัวเลขเก็บเป็นข้อความระหว่างพิมพ์ (ลบให้ว่างได้) → แปลงเป็นตัวเลขตอนบันทึก
+      const data = { ...form };
+      fields.forEach((f) => { if (f.type === "number") data[f.key] = Number(data[f.key]) || 0; });
+      await onSubmit(data);
     } catch (e2) {
       setErr(e2?.message || "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
       setSaving(false);
@@ -396,7 +400,10 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
               <input
                 type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
                 value={form[f.key]}
-                onChange={(e) => set(f.key, f.type === "number" ? Number(e.target.value) : e.target.value)}
+                onChange={(e) => set(f.key, e.target.value)}
+                inputMode={f.type === "number" ? "decimal" : undefined}
+                min={f.type === "number" ? 0 : undefined}
+                onFocus={(e) => { if (f.type === "number") e.target.select(); }} // แตะช่องตัวเลขแล้วเลือกทั้งหมด พิมพ์ทับได้เลย
                 placeholder={f.placeholder || ""}
                 required={f.required}
                 disabled={f.readOnly}
@@ -567,16 +574,23 @@ const laundryFields = (isEdit) => [
   { key: "owner", label: "ผู้รับผิดชอบ/ร้าน", placeholder: "เช่น ร้านซักพี่หมี" },
   { key: "status", label: "สถานะ", type: "select", options: LAUNDRY_STATUS },
 ];
-const txnFields = (isEdit, names = []) => [
+// หมวดบัญชีมาตรฐาน — เลือกได้เลยไม่ต้องพิมพ์ (หมวดที่เคยกรอกไว้จะโผล่ต่อท้ายให้อัตโนมัติ)
+const TXN_CATS = [
+  "รายรับ-เช่า", "รายรับ-ขาย", "รายรับ-อื่นๆ",
+  "ค่าเช่าที่", "ค่าน้ำ-ไฟ-เน็ต", "ค่าโทรศัพท์", "ค่าจ้าง", "ค่าขนส่ง", "ค่าเดินทาง",
+  "ของใช้สำนักงาน", "อุปกรณ์ร้าน", "ต้นทุนสินค้า", "ค่าดูแลสินค้า", "ค่าเซ้งร้าน", "รายจ่าย-อื่นๆ",
+];
+const txnFields = (isEdit, names = [], cats = TXN_CATS) => [
   { key: "id", label: "รหัสรายการ", required: true, readOnly: isEdit, placeholder: "เช่น T-9001" },
-  { key: "date", label: "วันที่", placeholder: "เช่น 16 มิ.ย." },
-  { key: "desc", label: "รายละเอียด", required: true },
-  { key: "cat", label: "หมวด", placeholder: "เช่น รายรับ-เช่า" },
+  { key: "date", label: "วันที่", placeholder: "เช่น 16 มิ.ย. 69" },
   { key: "type", label: "ประเภท", type: "select", options: [{ value: "in", label: "รายรับ" }, { value: "out", label: "รายจ่าย" }], required: true },
-  { key: "amt", label: "จำนวนเงิน (บาท)", type: "number" },
+  { key: "desc", label: "รายละเอียด", required: true },
+  { key: "cat", label: "หมวด", type: "combo", options: cats, placeholder: "พิมพ์หมวดใหม่" },
+  { key: "amt", label: "จำนวนเงิน (บาท)", type: "number", required: true },
   { key: "payer", label: "ผู้เบิก (พนักงานที่รับเงินไปซื้อ)", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
   { key: "sender", label: "ผู้โอนเงิน", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
   { key: "payee", label: "ชื่อบัญชี/ร้านที่รับเงิน", placeholder: "เช่น ดวงแข เติมประยูร" },
+  { key: "account", label: "เลขบัญชี / พร้อมเพย์ (ปลายทาง)", placeholder: "เช่น พร้อมเพย์ 064-792-0841" },
   { key: "slips", label: "แนบรูปบิล/สลิปโอนเงิน (สูงสุด 5 รูป)", type: "images", max: 5 },
 ];
 const shipFields = (isEdit) => [
@@ -1937,6 +1951,8 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
     if (n && !seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); extraNames.push(n); }
   });
   const nameOptions = [...PAYER_NAMES, ...extraNames];
+  // หมวด: มาตรฐาน + หมวดที่เคยกรอกไว้ (ไม่ซ้ำ)
+  const catOptions = [...TXN_CATS, ...new Set(txns.map((t) => String(t.cat || "").trim()).filter((c) => c && !TXN_CATS.includes(c)))];
 
   const openAdd = () => setForm({ mode: "add", data: { id: genId("T-"), type: "in", date: todayTH() } });
   const openEdit = (t) => setForm({ mode: "edit", data: t });
@@ -1955,10 +1971,10 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
       "รหัส": t.id, "วันที่": t.date, "รายละเอียด": t.desc, "หมวด": t.cat,
       "ประเภท": t.type === "in" ? "รายรับ" : "รายจ่าย",
       "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
-      "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "",
+      "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "", "เลขบัญชี/พร้อมเพย์": t.account || "",
       "สลิป (ลิงก์)": parseUrls(t.slips).join("\n"),
     }));
-    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "สลิป (ลิงก์)": "" });
+    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "สลิป (ลิงก์)": "" });
     const summary = monthRows.map((r) => ({ "เดือน": r.key, "รายรับ": r.in, "รายจ่าย": r.out, "คงเหลือ": r.in - r.out, "จำนวนรายการ": r.n }));
     exportExcel([{ name: `บัญชี ${label}`, rows }, { name: "สรุปรายเดือน", rows: summary }], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
   };
@@ -2055,6 +2071,7 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                 {t.payer ? ` · เบิกโดย ${t.payer}` : ""}
                 {t.sender && t.sender !== t.payer ? ` · โอนโดย ${t.sender}` : ""}
                 {t.payee ? ` → ${t.payee}` : ""}
+                {t.account ? ` (${t.account})` : ""}
               </div>
               {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ */}
               {parseUrls(t.slips).length > 0 && (
@@ -2074,7 +2091,7 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         ))}
       </Card>
       {form && (
-        <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit", nameOptions)} initial={form.data} onClose={() => setForm(null)}
+        <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit", nameOptions, catOptions)} initial={form.data} onClose={() => setForm(null)}
           onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
       )}
       {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}

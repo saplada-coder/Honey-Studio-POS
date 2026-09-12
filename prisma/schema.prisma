@@ -122,6 +122,7 @@ model Transaction {
   payer     String   @default("") // ผู้เบิก (พนักงานที่รับเงินไปซื้อ)
   sender    String   @default("") // ผู้โอนเงิน
   payee     String   @default("") // ชื่อบัญชี/ร้านที่รับเงินปลายทาง
+  account   String   @default("") // เลขบัญชี/พร้อมเพย์ ปลายทาง
   slips     String   @default("") // รูปบิล/สลิป (JSON array ของ URL บน Vercel Blob สูงสุด 5 รูป)
   auto      Boolean  @default(false)
   createdAt DateTime @default(now())

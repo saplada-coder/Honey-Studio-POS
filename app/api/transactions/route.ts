@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const txns = await prisma.transaction.findMany({ orderBy: { id: "desc" } });
+  // เรียง "ที่เพิ่มล่าสุดอยู่บน" (เดิมเรียงตามรหัส ทำให้รายการใหม่ที่รหัสสุ่มไปโผล่กลางๆ)
+  const txns = await prisma.transaction.findMany({ orderBy: { createdAt: "desc" } });
   return NextResponse.json(txns);
 }
 
