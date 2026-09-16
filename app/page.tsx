@@ -2094,12 +2094,32 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         </div>
         {visible.length === 0 && <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ไม่พบรายการตามตัวกรองที่เลือก</div>}
         {visible.map((t, i, arr) => (
-          <div key={t.id} className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none" }}>
+          <div key={t.id} className="flex items-center gap-3 px-4 py-3" style={{
+            borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none",
+            // รายการที่สำรองจ่ายให้เห็นชัดตั้งแต่ไกล — แถบสีซ้าย + พื้นอ่อนๆ (แดง = ยังไม่โอนคืน, เขียว = โอนคืนแล้ว)
+            borderLeft: t.advance ? "4px solid " + (t.transferred ? C.green : C.red) : "4px solid transparent",
+            background: t.advance && !t.transferred ? "#FDF6F6" : "transparent",
+          }}>
             <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.type === "in" ? C.greenBg : C.redBg }}>
               {t.type === "in" ? <ArrowUpRight size={16} style={{ color: C.green }} /> : <ArrowDownRight size={16} style={{ color: C.red }} />}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium flex items-center gap-1.5">{t.desc}{t.auto && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: C.goldBg, color: "#8a6d1f" }}>AUTO</span>}</div>
+              <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
+                {t.desc}
+                {t.auto && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: C.goldBg, color: "#8a6d1f" }}>AUTO</span>}
+                {/* แท็ก "สำรองจ่าย" — อยู่ข้างชื่อรายการเลย เห็นชัดที่สุด */}
+                {t.advance && (
+                  t.transferred ? (
+                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1" style={{ background: C.greenBg, color: C.green }}>
+                      <CheckCircle2 size={12} />สำรองจ่าย · โอนคืนแล้ว
+                    </span>
+                  ) : (
+                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 text-white" style={{ background: C.red }}>
+                      <AlertTriangle size={12} />สำรองจ่าย · รอโอนคืน
+                    </span>
+                  )
+                )}
+              </div>
               <div className="text-xs truncate" style={{ color: C.taupe }}>
                 {t.date} · {t.cat}
                 {t.payer ? ` · เบิกโดย ${t.payer}` : ""}
@@ -2107,22 +2127,6 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                 {t.payee ? ` → ${t.payee}` : ""}
                 {t.account ? ` (${t.account})` : ""}
               </div>
-              {/* ป้ายสำรองจ่าย / โอนเรียบร้อย — กดสลับได้ทันที ไม่ต้องเปิดฟอร์ม */}
-              {(t.advance || t.transferred) && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {t.advance && (
-                    <button onClick={() => saveEntity("transactions", { advance: false }, t.id)} title="กดเพื่อยกเลิก สำรองจ่าย"
-                      className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: C.goldBg, color: "#8a6d1f" }}>สำรองจ่าย</button>
-                  )}
-                  {t.transferred ? (
-                    <button onClick={() => saveEntity("transactions", { transferred: false }, t.id)} title="กดเพื่อเปลี่ยนเป็น ยังไม่โอน"
-                      className="text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1" style={{ background: C.greenBg, color: C.green }}><CheckCircle2 size={10} />โอนเรียบร้อย</button>
-                  ) : t.advance ? (
-                    <button onClick={() => saveEntity("transactions", { transferred: true }, t.id)} title="กดเพื่อทำเครื่องหมายว่าโอนแล้ว"
-                      className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: C.redBg, color: C.red }}>ยังไม่ได้โอนคืน</button>
-                  ) : null}
-                </div>
-              )}
               {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ · สีขอบบอกว่าเป็นของช่องไหน */}
               {(() => {
                 const sets = [
@@ -2143,6 +2147,12 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
               })()}
             </div>
             <div className="font-bold text-sm shrink-0" style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</div>
+            {/* ติ๊ก "โอนเรียบร้อย" ได้จากด้านนอกเลย ไม่ต้องเปิดฟอร์ม */}
+            <label title="ติ๊กเมื่อโอนเงินเรียบร้อยแล้ว" className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer select-none shrink-0"
+              style={{ background: t.transferred ? C.greenBg : C.cream, color: t.transferred ? C.green : C.taupe }}>
+              <input type="checkbox" checked={!!t.transferred} onChange={(e) => saveEntity("transactions", { transferred: e.target.checked }, t.id)} className="w-4 h-4" style={{ accentColor: C.green }} />
+              <span className="text-[11px] font-medium whitespace-nowrap hidden sm:inline">โอนแล้ว</span>
+            </label>
             <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
             <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
           </div>
