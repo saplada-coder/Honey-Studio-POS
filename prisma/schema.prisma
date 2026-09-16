@@ -125,6 +125,8 @@ model Transaction {
   account   String   @default("") // เลขบัญชี/พร้อมเพย์ ปลายทาง
   advance     Boolean @default(false) // สำรองจ่าย (พนักงานออกเงินไปก่อน)
   transferred Boolean @default(false) // โอนเรียบร้อยแล้ว
+  slipsAdvance String @default("") // รูปบิล/สลิปตอนสำรองจ่าย (JSON array ของ URL)
+  slipsTransfer String @default("") // สลิปตอนโอนคืน (JSON array ของ URL)
   slips     String   @default("") // รูปบิล/สลิป (JSON array ของ URL บน Vercel Blob สูงสุด 5 รูป)
   auto      Boolean  @default(false)
   createdAt DateTime @default(now())

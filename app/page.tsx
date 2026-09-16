@@ -366,7 +366,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
   return (
     <Modal onClose={onClose} title={title} wide>
       <form onSubmit={handle} className="space-y-3">
-        {fields.map((f) => f.type === "check" ? (
+        {fields.filter((f) => !f.showIf || f.showIf(form)).map((f) => f.type === "check" ? (
           // ช่องติ๊ก — กดได้ทั้งแถว (นิ้วโดนง่ายบนมือถือ)
           <label key={f.key} className="flex items-center gap-2.5 p-3 rounded-xl cursor-pointer select-none"
             style={{ background: form[f.key] ? C.goldBg : C.cream, border: "1px solid " + (form[f.key] ? C.gold : C.line) }}>
@@ -600,8 +600,12 @@ const txnFields = (isEdit, names = [], cats = TXN_CATS) => [
   { key: "payee", label: "ชื่อบัญชี/ร้านที่รับเงิน", placeholder: "เช่น ดวงแข เติมประยูร" },
   { key: "account", label: "เลขบัญชี / พร้อมเพย์ (ปลายทาง)", placeholder: "เช่น พร้อมเพย์ 064-792-0841" },
   { key: "advance", label: "สำรองจ่าย", type: "check", hint: "พนักงานออกเงินไปก่อน/บัญชีสำรอง" },
+  // ติ๊กสำรองจ่ายแล้วถึงจะโผล่ช่องแนบรูป (กันฟอร์มรก)
+  { key: "slipsAdvance", label: "แนบบิล/สลิป — ตอนสำรองจ่าย (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.advance },
   { key: "transferred", label: "โอนเรียบร้อย", type: "check", hint: "โอนเงินให้แล้ว" },
-  { key: "slips", label: "แนบรูปบิล/สลิปโอนเงิน (สูงสุด 5 รูป)", type: "images", max: 5 },
+  { key: "slipsTransfer", label: "แนบสลิป — ตอนโอนคืน (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.transferred },
+  // ช่องแนบรูปแบบเดิม — เอาออกจากฟอร์มแล้ว แต่ยังโผล่ให้แก้ได้ถ้ารายการนั้นมีรูปเก่าค้างอยู่
+  { key: "slips", label: "รูปบิล/สลิปที่แนบไว้เดิม (ลบได้)", type: "images", max: 5, showIf: (f) => parseUrls(f.slips).length > 0 },
 ];
 const shipFields = (isEdit) => [
   { key: "id", label: "รหัสใบส่ง", required: true, readOnly: isEdit, placeholder: "เช่น SH-301" },
@@ -1985,9 +1989,11 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
       "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
       "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "", "เลขบัญชี/พร้อมเพย์": t.account || "",
       "สำรองจ่าย": t.advance ? "✓" : "", "โอนเรียบร้อย": t.transferred ? "✓" : "",
-      "สลิป (ลิงก์)": parseUrls(t.slips).join("\n"),
+      "สลิปสำรองจ่าย (ลิงก์)": parseUrls(t.slipsAdvance).join("\n"),
+      "สลิปโอนคืน (ลิงก์)": parseUrls(t.slipsTransfer).join("\n"),
+      "สลิปอื่นๆ (ลิงก์)": parseUrls(t.slips).join("\n"),
     }));
-    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "สำรองจ่าย": "", "โอนเรียบร้อย": "", "สลิป (ลิงก์)": "" });
+    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "สำรองจ่าย": "", "โอนเรียบร้อย": "", "สลิปสำรองจ่าย (ลิงก์)": "", "สลิปโอนคืน (ลิงก์)": "", "สลิปอื่นๆ (ลิงก์)": "" });
     const summary = monthRows.map((r) => ({ "เดือน": r.key, "รายรับ": r.in, "รายจ่าย": r.out, "คงเหลือ": r.in - r.out, "จำนวนรายการ": r.n }));
     exportExcel([{ name: `บัญชี ${label}`, rows }, { name: "สรุปรายเดือน", rows: summary }], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
   };
@@ -2117,16 +2123,24 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                   ) : null}
                 </div>
               )}
-              {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ */}
-              {parseUrls(t.slips).length > 0 && (
-                <div className="flex gap-1 mt-1.5">
-                  {parseUrls(t.slips).map((u, i) => (
-                    <a key={i} href={u} target="_blank" rel="noreferrer" title="เปิดรูปสลิป" className="w-8 h-8 rounded-md overflow-hidden border" style={{ background: C.cream, borderColor: C.line }}>
-                      <img src={u} alt="สลิป" className="w-full h-full object-cover" />
-                    </a>
-                  ))}
-                </div>
-              )}
+              {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ · สีขอบบอกว่าเป็นของช่องไหน */}
+              {(() => {
+                const sets = [
+                  { urls: parseUrls(t.slipsAdvance), color: C.gold, title: "บิล/สลิป ตอนสำรองจ่าย" },
+                  { urls: parseUrls(t.slipsTransfer), color: C.green, title: "สลิป ตอนโอนคืน" },
+                  { urls: parseUrls(t.slips), color: C.line, title: "บิล/สลิปอื่นๆ" },
+                ].filter((s) => s.urls.length);
+                if (!sets.length) return null;
+                return (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {sets.flatMap((s) => s.urls.map((u, i) => (
+                      <a key={s.title + i} href={u} target="_blank" rel="noreferrer" title={s.title} className="w-8 h-8 rounded-md overflow-hidden" style={{ background: C.cream, border: "2px solid " + s.color }}>
+                        <img src={u} alt={s.title} className="w-full h-full object-cover" />
+                      </a>
+                    )))}
+                  </div>
+                );
+              })()}
             </div>
             <div className="font-bold text-sm shrink-0" style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</div>
             <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
