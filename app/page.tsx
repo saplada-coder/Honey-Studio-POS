@@ -342,7 +342,7 @@ function ComboField({ value, onChange, options = [], placeholder }) {
 function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], products = [] }) {
   const [form, setForm] = useState(() => {
     const base = {};
-    fields.forEach((f) => { base[f.key] = initial?.[f.key] ?? (f.type === "number" ? 0 : ""); });
+    fields.forEach((f) => { base[f.key] = initial?.[f.key] ?? (f.type === "number" ? 0 : f.type === "check" ? false : ""); });
     return base;
   });
   const [saving, setSaving] = useState(false);
@@ -366,7 +366,15 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
   return (
     <Modal onClose={onClose} title={title} wide>
       <form onSubmit={handle} className="space-y-3">
-        {fields.map((f) => (
+        {fields.map((f) => f.type === "check" ? (
+          // ช่องติ๊ก — กดได้ทั้งแถว (นิ้วโดนง่ายบนมือถือ)
+          <label key={f.key} className="flex items-center gap-2.5 p-3 rounded-xl cursor-pointer select-none"
+            style={{ background: form[f.key] ? C.goldBg : C.cream, border: "1px solid " + (form[f.key] ? C.gold : C.line) }}>
+            <input type="checkbox" checked={!!form[f.key]} onChange={(e) => set(f.key, e.target.checked)} className="w-5 h-5 shrink-0" style={{ accentColor: C.gold }} />
+            <span className="text-sm font-medium">{f.label}</span>
+            {f.hint && <span className="text-[11px] ml-auto text-right" style={{ color: C.taupe }}>{f.hint}</span>}
+          </label>
+        ) : (
           <div key={f.key}>
             <label className="text-xs" style={{ color: C.taupe }}>{f.label}{f.required && " *"}</label>
             {f.type === "image" ? (
@@ -591,6 +599,8 @@ const txnFields = (isEdit, names = [], cats = TXN_CATS) => [
   { key: "sender", label: "ผู้โอนเงิน", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
   { key: "payee", label: "ชื่อบัญชี/ร้านที่รับเงิน", placeholder: "เช่น ดวงแข เติมประยูร" },
   { key: "account", label: "เลขบัญชี / พร้อมเพย์ (ปลายทาง)", placeholder: "เช่น พร้อมเพย์ 064-792-0841" },
+  { key: "advance", label: "สำรองจ่าย", type: "check", hint: "พนักงานออกเงินไปก่อน/บัญชีสำรอง" },
+  { key: "transferred", label: "โอนเรียบร้อย", type: "check", hint: "โอนเงินให้แล้ว" },
   { key: "slips", label: "แนบรูปบิล/สลิปโอนเงิน (สูงสุด 5 รูป)", type: "images", max: 5 },
 ];
 const shipFields = (isEdit) => [
@@ -1937,6 +1947,8 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
   const sum = (arr, kind) => arr.filter((t) => t.type === kind).reduce((s, t) => s + t.amt, 0);
   const inSum = sum(visible, "in");
   const outSum = sum(visible, "out");
+  // สำรองจ่ายที่ยังไม่ได้โอนคืน (ดูทั้งหมด ไม่อิงเดือนที่เลือก จะได้ไม่ลืม)
+  const pendingAdvance = txns.filter((t) => t.advance && !t.transferred);
 
   // ===== สรุปรายเดือน =====
   const monthAsc = monthlyRows(txns);        // เก่า→ใหม่ สำหรับกราฟ
@@ -1972,9 +1984,10 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
       "ประเภท": t.type === "in" ? "รายรับ" : "รายจ่าย",
       "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
       "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "", "เลขบัญชี/พร้อมเพย์": t.account || "",
+      "สำรองจ่าย": t.advance ? "✓" : "", "โอนเรียบร้อย": t.transferred ? "✓" : "",
       "สลิป (ลิงก์)": parseUrls(t.slips).join("\n"),
     }));
-    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "สลิป (ลิงก์)": "" });
+    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "สำรองจ่าย": "", "โอนเรียบร้อย": "", "สลิป (ลิงก์)": "" });
     const summary = monthRows.map((r) => ({ "เดือน": r.key, "รายรับ": r.in, "รายจ่าย": r.out, "คงเหลือ": r.in - r.out, "จำนวนรายการ": r.n }));
     exportExcel([{ name: `บัญชี ${label}`, rows }, { name: "สรุปรายเดือน", rows: summary }], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
   };
@@ -1997,6 +2010,21 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
           <Btn icon={Download} variant="outline" size="sm" onClick={exportMonth}>Export Excel{month ? ` (${month})` : " (ทั้งหมด)"}</Btn>
         </div>
       </Card>
+
+      {/* ค้างคืนเงินพนักงาน — รายการที่ติ๊กสำรองจ่ายแต่ยังไม่ติ๊กโอนเรียบร้อย */}
+      {pendingAdvance.length > 0 && (
+        <Card className="p-3 mb-4">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <AlertTriangle size={16} style={{ color: C.red }} />
+            <span className="font-medium">ค้างโอนคืนพนักงาน</span>
+            <span className="font-bold" style={{ color: C.red }}>{baht(pendingAdvance.reduce((s, t) => s + t.amt, 0))}</span>
+            <span className="text-xs" style={{ color: C.taupe }}>({pendingAdvance.length} รายการ)</span>
+            <span className="text-xs ml-auto" style={{ color: C.taupe }}>
+              {[...new Set(pendingAdvance.map((t) => t.payer).filter(Boolean))].map((n) => `${n} ${baht(pendingAdvance.filter((t) => t.payer === n).reduce((s, t) => s + t.amt, 0))}`).join(" · ")}
+            </span>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowUpRight size={14} style={{ color: C.green }} />รายรับ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.green }}>{baht(inSum)}</div></Card>
@@ -2073,6 +2101,22 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                 {t.payee ? ` → ${t.payee}` : ""}
                 {t.account ? ` (${t.account})` : ""}
               </div>
+              {/* ป้ายสำรองจ่าย / โอนเรียบร้อย — กดสลับได้ทันที ไม่ต้องเปิดฟอร์ม */}
+              {(t.advance || t.transferred) && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {t.advance && (
+                    <button onClick={() => saveEntity("transactions", { advance: false }, t.id)} title="กดเพื่อยกเลิก สำรองจ่าย"
+                      className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: C.goldBg, color: "#8a6d1f" }}>สำรองจ่าย</button>
+                  )}
+                  {t.transferred ? (
+                    <button onClick={() => saveEntity("transactions", { transferred: false }, t.id)} title="กดเพื่อเปลี่ยนเป็น ยังไม่โอน"
+                      className="text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1" style={{ background: C.greenBg, color: C.green }}><CheckCircle2 size={10} />โอนเรียบร้อย</button>
+                  ) : t.advance ? (
+                    <button onClick={() => saveEntity("transactions", { transferred: true }, t.id)} title="กดเพื่อทำเครื่องหมายว่าโอนแล้ว"
+                      className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: C.redBg, color: C.red }}>ยังไม่ได้โอนคืน</button>
+                  ) : null}
+                </div>
+              )}
               {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ */}
               {parseUrls(t.slips).length > 0 && (
                 <div className="flex gap-1 mt-1.5">
