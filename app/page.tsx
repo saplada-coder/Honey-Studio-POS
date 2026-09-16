@@ -2041,43 +2041,49 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
       {/* สรุปเดือนต่อเดือน */}
       <div className="mb-5">
         <Card className="p-4">
-          <div className="flex items-baseline justify-between gap-2 mb-1">
+          <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-0.5 md:gap-2 mb-1">
             <span className="font-bold">สรุปเดือนต่อเดือน</span>
-            <span className="text-xs" style={{ color: C.taupe }}>กดที่แท่งกราฟหรือแถวเดือน เพื่อดูรายการของเดือนนั้น</span>
+            <span className="text-[11px] md:text-xs" style={{ color: C.taupe }}>กดที่แท่งกราฟหรือแถวเดือน เพื่อดูรายการของเดือนนั้น</span>
           </div>
           {monthRows.length === 0 ? (
             <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ยังไม่มีข้อมูล</div>
           ) : (
             <>
               <MonthlyChart rows={monthAsc} onPick={setDetailMonth} />
+              {/* ตารางสรุป — บนมือถือย่อให้พอดีจอ (ซ่อนคอลัมน์ "รายการ" ไปอยู่ใต้ชื่อเดือนแทน) ไม่ต้องเลื่อนซ้าย-ขวา */}
               <div className="overflow-x-auto mt-3">
-                <table className="w-full text-xs" style={{ minWidth: 420 }}>
+                <table className="w-full text-[11px] md:text-xs md:min-w-[420px]">
                   <thead>
                     <tr style={{ color: C.taupe }}>
                       <th className="text-left font-medium py-1.5">เดือน</th>
                       <th className="text-right font-medium py-1.5">รายรับ</th>
                       <th className="text-right font-medium py-1.5">รายจ่าย</th>
                       <th className="text-right font-medium py-1.5">คงเหลือ</th>
-                      <th className="text-right font-medium py-1.5">รายการ</th>
+                      <th className="text-right font-medium py-1.5 hidden md:table-cell">รายการ</th>
                     </tr>
                   </thead>
                   <tbody>
                     {monthRows.map((r) => (
                       <tr key={r.key} onClick={() => setDetailMonth(r.key)} className="cursor-pointer hover:opacity-80" title="กดดูรายการของเดือนนี้"
                         style={{ borderTop: "1px solid " + C.line, background: month === r.key ? C.goldBg : "transparent" }}>
-                        <td className="py-2 font-medium" style={{ color: "#8a6d1f" }}>{r.key} <ChevronRight size={12} className="inline -mt-0.5" /></td>
-                        <td className="py-2 text-right" style={{ color: r.in ? C.green : C.taupe }}>{baht(r.in)}</td>
-                        <td className="py-2 text-right" style={{ color: r.out ? C.red : C.taupe }}>{baht(r.out)}</td>
-                        <td className="py-2 text-right font-semibold" style={{ color: r.in - r.out >= 0 ? C.charcoal : C.red }}>{baht(r.in - r.out)}</td>
-                        <td className="py-2 text-right" style={{ color: C.taupe }}>{r.n}</td>
+                        <td className="py-2 font-medium whitespace-nowrap" style={{ color: "#8a6d1f" }}>
+                          {r.key} <ChevronRight size={12} className="inline -mt-0.5" />
+                          <span className="md:hidden block font-normal text-[10px]" style={{ color: C.taupe }}>{r.n} รายการ</span>
+                        </td>
+                        <td className="py-2 text-right whitespace-nowrap" style={{ color: r.in ? C.green : C.taupe }}>{baht(r.in)}</td>
+                        <td className="py-2 text-right whitespace-nowrap" style={{ color: r.out ? C.red : C.taupe }}>{baht(r.out)}</td>
+                        <td className="py-2 text-right font-semibold whitespace-nowrap" style={{ color: r.in - r.out >= 0 ? C.charcoal : C.red }}>{baht(r.in - r.out)}</td>
+                        <td className="py-2 text-right hidden md:table-cell" style={{ color: C.taupe }}>{r.n}</td>
                       </tr>
                     ))}
                     <tr style={{ borderTop: "2px solid " + C.line }}>
-                      <td className="py-2 font-bold">รวมทั้งหมด</td>
-                      <td className="py-2 text-right font-bold" style={{ color: C.green }}>{baht(monthRows.reduce((s, r) => s + r.in, 0))}</td>
-                      <td className="py-2 text-right font-bold" style={{ color: C.red }}>{baht(monthRows.reduce((s, r) => s + r.out, 0))}</td>
-                      <td className="py-2 text-right font-bold">{baht(monthRows.reduce((s, r) => s + r.in - r.out, 0))}</td>
-                      <td className="py-2 text-right font-bold" style={{ color: C.taupe }}>{monthRows.reduce((s, r) => s + r.n, 0)}</td>
+                      <td className="py-2 font-bold whitespace-nowrap">รวมทั้งหมด
+                        <span className="md:hidden block font-normal text-[10px]" style={{ color: C.taupe }}>{monthRows.reduce((s, r) => s + r.n, 0)} รายการ</span>
+                      </td>
+                      <td className="py-2 text-right font-bold whitespace-nowrap" style={{ color: C.green }}>{baht(monthRows.reduce((s, r) => s + r.in, 0))}</td>
+                      <td className="py-2 text-right font-bold whitespace-nowrap" style={{ color: C.red }}>{baht(monthRows.reduce((s, r) => s + r.out, 0))}</td>
+                      <td className="py-2 text-right font-bold whitespace-nowrap">{baht(monthRows.reduce((s, r) => s + r.in - r.out, 0))}</td>
+                      <td className="py-2 text-right font-bold hidden md:table-cell" style={{ color: C.taupe }}>{monthRows.reduce((s, r) => s + r.n, 0)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -2093,70 +2099,92 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
           <span className="text-xs font-normal" style={{ color: C.taupe }}>{visible.length} รายการ</span>
         </div>
         {visible.length === 0 && <div className="text-sm text-center py-10" style={{ color: C.taupe }}>ไม่พบรายการตามตัวกรองที่เลือก</div>}
-        {visible.map((t, i, arr) => (
-          <div key={t.id} className="flex items-center gap-3 px-4 py-3" style={{
+        {visible.map((t, i, arr) => {
+          // ยอดเงิน + ปุ่มต่างๆ ใช้ซ้ำ 2 ที่ (จอใหญ่อยู่ขวาของแถว · มือถือลงมาอยู่บรรทัดล่าง)
+          const amount = <span style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</span>;
+          // ติ๊ก "โอนเรียบร้อย" ได้จากด้านนอกเลย ไม่ต้องเปิดฟอร์ม
+          const tickTransfer = (
+            <label title="ติ๊กเมื่อโอนเงินเรียบร้อยแล้ว" className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer select-none shrink-0"
+              style={{ background: t.transferred ? C.greenBg : C.cream, color: t.transferred ? C.green : C.taupe }}>
+              <input type="checkbox" checked={!!t.transferred} onChange={(e) => saveEntity("transactions", { transferred: e.target.checked }, t.id)} className="w-4 h-4" style={{ accentColor: C.green }} />
+              <span className="text-[11px] font-medium whitespace-nowrap">โอนแล้ว</span>
+            </label>
+          );
+          return (
+          <div key={t.id} className="px-3 md:px-4 py-3" style={{
             borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none",
             // รายการที่สำรองจ่ายให้เห็นชัดตั้งแต่ไกล — แถบสีซ้าย + พื้นอ่อนๆ (แดง = ยังไม่โอนคืน, เขียว = โอนคืนแล้ว)
             borderLeft: t.advance ? "4px solid " + (t.transferred ? C.green : C.red) : "4px solid transparent",
             background: t.advance && !t.transferred ? "#FDF6F6" : "transparent",
           }}>
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.type === "in" ? C.greenBg : C.redBg }}>
-              {t.type === "in" ? <ArrowUpRight size={16} style={{ color: C.green }} /> : <ArrowDownRight size={16} style={{ color: C.red }} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
-                {t.desc}
-                {t.auto && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: C.goldBg, color: "#8a6d1f" }}>AUTO</span>}
-                {/* แท็ก "สำรองจ่าย" — อยู่ข้างชื่อรายการเลย เห็นชัดที่สุด */}
-                {t.advance && (
-                  t.transferred ? (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1" style={{ background: C.greenBg, color: C.green }}>
-                      <CheckCircle2 size={12} />สำรองจ่าย · โอนคืนแล้ว
-                    </span>
-                  ) : (
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 text-white" style={{ background: C.red }}>
-                      <AlertTriangle size={12} />สำรองจ่าย · รอโอนคืน
-                    </span>
-                  )
-                )}
+            <div className="flex items-start md:items-center gap-2.5 md:gap-3">
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.type === "in" ? C.greenBg : C.redBg }}>
+                {t.type === "in" ? <ArrowUpRight size={16} style={{ color: C.green }} /> : <ArrowDownRight size={16} style={{ color: C.red }} />}
               </div>
-              <div className="text-xs truncate" style={{ color: C.taupe }}>
-                {t.date} · {t.cat}
-                {t.payer ? ` · เบิกโดย ${t.payer}` : ""}
-                {t.sender && t.sender !== t.payer ? ` · โอนโดย ${t.sender}` : ""}
-                {t.payee ? ` → ${t.payee}` : ""}
-                {t.account ? ` (${t.account})` : ""}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
+                  {t.desc}
+                  {t.auto && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: C.goldBg, color: "#8a6d1f" }}>AUTO</span>}
+                  {/* แท็ก "สำรองจ่าย" — อยู่ข้างชื่อรายการเลย เห็นชัดที่สุด */}
+                  {t.advance && (
+                    t.transferred ? (
+                      <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap" style={{ background: C.greenBg, color: C.green }}>
+                        <CheckCircle2 size={12} />สำรองจ่าย · โอนคืนแล้ว
+                      </span>
+                    ) : (
+                      <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap text-white" style={{ background: C.red }}>
+                        <AlertTriangle size={12} />สำรองจ่าย · รอโอนคืน
+                      </span>
+                    )
+                  )}
+                </div>
+                {/* บนมือถือให้ข้อความขึ้นบรรทัดใหม่ได้ จะได้เห็นครบ (เดิมโดนตัดเหลือแค่วันที่) */}
+                <div className="text-xs mt-0.5 break-words md:truncate" style={{ color: C.taupe }}>
+                  {t.date} · {t.cat}
+                  {t.payer ? ` · เบิกโดย ${t.payer}` : ""}
+                  {t.sender && t.sender !== t.payer ? ` · โอนโดย ${t.sender}` : ""}
+                  {t.payee ? ` → ${t.payee}` : ""}
+                  {t.account ? ` (${t.account})` : ""}
+                </div>
+                {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ · สีขอบบอกว่าเป็นของช่องไหน */}
+                {(() => {
+                  const sets = [
+                    { urls: parseUrls(t.slipsAdvance), color: C.gold, title: "บิล/สลิป ตอนสำรองจ่าย" },
+                    { urls: parseUrls(t.slipsTransfer), color: C.green, title: "สลิป ตอนโอนคืน" },
+                    { urls: parseUrls(t.slips), color: C.line, title: "บิล/สลิปอื่นๆ" },
+                  ].filter((s) => s.urls.length);
+                  if (!sets.length) return null;
+                  return (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {sets.flatMap((s) => s.urls.map((u, i) => (
+                        <a key={s.title + i} href={u} target="_blank" rel="noreferrer" title={s.title} className="w-11 h-11 md:w-8 md:h-8 rounded-md overflow-hidden" style={{ background: C.cream, border: "2px solid " + s.color }}>
+                          <img src={u} alt={s.title} className="w-full h-full object-cover" />
+                        </a>
+                      )))}
+                    </div>
+                  );
+                })()}
               </div>
-              {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ · สีขอบบอกว่าเป็นของช่องไหน */}
-              {(() => {
-                const sets = [
-                  { urls: parseUrls(t.slipsAdvance), color: C.gold, title: "บิล/สลิป ตอนสำรองจ่าย" },
-                  { urls: parseUrls(t.slipsTransfer), color: C.green, title: "สลิป ตอนโอนคืน" },
-                  { urls: parseUrls(t.slips), color: C.line, title: "บิล/สลิปอื่นๆ" },
-                ].filter((s) => s.urls.length);
-                if (!sets.length) return null;
-                return (
-                  <div className="flex flex-wrap gap-1 mt-1.5">
-                    {sets.flatMap((s) => s.urls.map((u, i) => (
-                      <a key={s.title + i} href={u} target="_blank" rel="noreferrer" title={s.title} className="w-8 h-8 rounded-md overflow-hidden" style={{ background: C.cream, border: "2px solid " + s.color }}>
-                        <img src={u} alt={s.title} className="w-full h-full object-cover" />
-                      </a>
-                    )))}
-                  </div>
-                );
-              })()}
+              {/* จอใหญ่ — ยอดเงินและปุ่มอยู่ขวาของแถวเดียวกัน */}
+              <div className="hidden md:flex items-center gap-3 shrink-0">
+                <div className="font-bold text-sm">{amount}</div>
+                {tickTransfer}
+                <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
+                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
+              </div>
             </div>
-            <div className="font-bold text-sm shrink-0" style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</div>
-            {/* ติ๊ก "โอนเรียบร้อย" ได้จากด้านนอกเลย ไม่ต้องเปิดฟอร์ม */}
-            <label title="ติ๊กเมื่อโอนเงินเรียบร้อยแล้ว" className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer select-none shrink-0"
-              style={{ background: t.transferred ? C.greenBg : C.cream, color: t.transferred ? C.green : C.taupe }}>
-              <input type="checkbox" checked={!!t.transferred} onChange={(e) => saveEntity("transactions", { transferred: e.target.checked }, t.id)} className="w-4 h-4" style={{ accentColor: C.green }} />
-              <span className="text-[11px] font-medium whitespace-nowrap hidden sm:inline">โอนแล้ว</span>
-            </label>
-            <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
-            <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
+            {/* มือถือ — ยอดเงินและปุ่มลงมาอยู่บรรทัดล่าง ตัวใหญ่ กดง่าย ไม่เบียดกัน */}
+            <div className="flex md:hidden items-center gap-2 mt-2 pt-2" style={{ borderTop: "1px dashed " + C.line }}>
+              <div className="font-bold text-base">{amount}</div>
+              <div className="ml-auto flex items-center gap-1.5">
+                {tickTransfer}
+                <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
+                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
+              </div>
+            </div>
           </div>
-        ))}
+          );
+        })}
       </Card>
       {form && (
         <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit", nameOptions, catOptions)} initial={form.data} onClose={() => setForm(null)}
