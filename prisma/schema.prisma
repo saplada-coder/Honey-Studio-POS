@@ -118,17 +118,30 @@ model Transaction {
   desc      String
   cat       String
   type      String // in / out
-  amt       Int      @default(0)
+  amt       Float    @default(0) // บาท (ใส่สตางค์ได้ เช่น 9982.97)
   payer     String   @default("") // ผู้เบิก (พนักงานที่รับเงินไปซื้อ)
   sender    String   @default("") // ผู้โอนเงิน
   payee     String   @default("") // ชื่อบัญชี/ร้านที่รับเงินปลายทาง
   account   String   @default("") // เลขบัญชี/พร้อมเพย์ ปลายทาง
-  advance     Boolean @default(false) // สำรองจ่าย (พนักงานออกเงินไปก่อน)
-  transferred Boolean @default(false) // โอนเรียบร้อยแล้ว
-  slipsAdvance String @default("") // รูปบิล/สลิปตอนสำรองจ่าย (JSON array ของ URL)
-  slipsTransfer String @default("") // สลิปตอนโอนคืน (JSON array ของ URL)
+  advance     Boolean @default(false) // จ่ายด้วย "เงินส่วนบุคคล" (พนักงานสำรองจ่าย → บริษัทต้องโอนคืน)
+  transferred Boolean @default(false) // จ่ายด้วย "เงินส่วนกลางบริษัท" (ไม่ต้องโอนคืนใคร)
+  slipsAdvance String @default("") // รูปบิล/สลิปของรายการที่จ่ายด้วยเงินส่วนบุคคล (JSON array ของ URL)
+  slipsTransfer String @default("") // รูปบิล/สลิปของรายการที่จ่ายด้วยเงินส่วนกลาง (JSON array ของ URL)
   slips     String   @default("") // รูปบิล/สลิป (JSON array ของ URL บน Vercel Blob สูงสุด 5 รูป)
   auto      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ===== การโอนคืนเงินสำรองจ่าย =====
+// บริษัทโอนคืนเงินที่พนักงานสำรองจ่ายไป — โอนเป็น "ก้อน" ครอบคลุมหลายรายการรวมกัน
+// จึงเก็บแยกจาก Transaction (ไม่ใช่รายรับ/รายจ่ายของร้าน แค่ย้ายเงินคืนเจ้าของเงิน)
+model AdvanceRepayment {
+  id        String   @id // เช่น AR-3021
+  date      String   @default("")
+  person    String   @default("") // พนักงานที่ได้รับเงินคืน
+  amt       Float    @default(0) // บาท (ใส่สตางค์ได้)
+  note      String   @default("")
+  slips     String   @default("") // สลิปโอนคืน (JSON array ของ URL)
   createdAt DateTime @default(now())
 }
 

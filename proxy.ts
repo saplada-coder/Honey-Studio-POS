@@ -46,6 +46,7 @@ function apiAllowed(role: string, pathname: string, method: string) {
   if (role === "เจ้าของ" || role === "ผู้ดูแลระบบ") return true;
   if (role === "พนักงานขาย") {
     if (pathname.startsWith("/api/transactions")) return false; // ไม่เห็นบัญชี
+    if (pathname.startsWith("/api/advance-repayments")) return false; // การโอนคืนเงินสำรองจ่าย = ส่วนบัญชี
     if (pathname.startsWith("/api/users")) return false; // ไม่จัดการผู้ใช้
     return true;
   }

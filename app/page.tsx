@@ -36,7 +36,13 @@ const C = {
   bg: "#FBF9F4", line: "#EAE2D4", green: "#6FA66B", greenBg: "#E6F0E4",
   blue: "#7C93B8", blueBg: "#E6EBF3", red: "#C66B6B", redBg: "#F6E4E4",
 };
-const baht = (n) => "฿" + Number(n || 0).toLocaleString("th-TH");
+// แสดงเงินบาท — มีสตางค์ก็โชว์ทศนิยม 2 ตำแหน่ง ถ้าลงตัวก็ไม่ต้องมี .00 ให้รก
+// ปัดที่ทศนิยม 2 ก่อนเทียบ กัน float เพี้ยน (เช่น 9982.969999999999 ต้องถือว่าเป็น 9982.97)
+const baht = (n) => {
+  const v = Math.round((Number(n) || 0) * 100) / 100;
+  const dec = Number.isInteger(v) ? 0 : 2;
+  return "฿" + v.toLocaleString("th-TH", { minimumFractionDigits: dec, maximumFractionDigits: 2 });
+};
 // ที่อยู่เว็บจริง — ใช้ทำลิงก์ใน QR บนสติกเกอร์ (ต้องเป็นเว็บจริงเสมอ ไม่ใช่ localhost ไม่งั้นสติกเกอร์ที่พิมพ์ไปใช้ไม่ได้)
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://honey-studio-opal.vercel.app";
 // ลิงก์หน้าสินค้าสาธารณะ (ไม่ต้องล็อกอิน) — ปลายทางของ QR
@@ -411,6 +417,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
                 onChange={(e) => set(f.key, e.target.value)}
                 inputMode={f.type === "number" ? "decimal" : undefined}
                 min={f.type === "number" ? 0 : undefined}
+                step={f.type === "number" ? "any" : undefined} // ไม่ใส่ = เบราว์เซอร์ไม่ยอมรับสตางค์ (step ปริยาย = 1)
                 onFocus={(e) => { if (f.type === "number") e.target.select(); }} // แตะช่องตัวเลขแล้วเลือกทั้งหมด พิมพ์ทับได้เลย
                 placeholder={f.placeholder || ""}
                 required={f.required}
@@ -594,16 +601,19 @@ const txnFields = (isEdit, names = [], cats = TXN_CATS) => [
   { key: "type", label: "ประเภท", type: "select", options: [{ value: "in", label: "รายรับ" }, { value: "out", label: "รายจ่าย" }], required: true },
   { key: "desc", label: "รายละเอียด", required: true },
   { key: "cat", label: "หมวด", type: "combo", options: cats, placeholder: "พิมพ์หมวดใหม่" },
-  { key: "amt", label: "จำนวนเงิน (บาท)", type: "number", required: true },
+  { key: "amt", label: "จำนวนเงิน (บาท) — ใส่สตางค์ได้ เช่น 1250.75", type: "number", required: true },
   { key: "payer", label: "ผู้เบิก (พนักงานที่รับเงินไปซื้อ)", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
   { key: "sender", label: "ผู้โอนเงิน", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่" },
   { key: "payee", label: "ชื่อบัญชี/ร้านที่รับเงิน", placeholder: "เช่น ดวงแข เติมประยูร" },
   { key: "account", label: "เลขบัญชี / พร้อมเพย์ (ปลายทาง)", placeholder: "เช่น พร้อมเพย์ 064-792-0841" },
-  { key: "advance", label: "สำรองจ่าย", type: "check", hint: "พนักงานออกเงินไปก่อน/บัญชีสำรอง" },
-  // ติ๊กสำรองจ่ายแล้วถึงจะโผล่ช่องแนบรูป (กันฟอร์มรก)
-  { key: "slipsAdvance", label: "แนบบิล/สลิป — ตอนสำรองจ่าย (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.advance },
-  { key: "transferred", label: "โอนเรียบร้อย", type: "check", hint: "โอนเงินให้แล้ว" },
-  { key: "slipsTransfer", label: "แนบสลิป — ตอนโอนคืน (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.transferred },
+  // ===== จ่ายด้วยเงินก้อนไหน =====
+  // สำรองจ่าย = พนักงานควักเงินตัวเอง → บริษัทต้องโอนคืน (ไปโผล่ในยอด "คงเหลือต้องจ่ายคืน")
+  // เงินส่วนกลาง = เงินกองกลางของร้าน → จบในตัว ไม่ต้องคืนใคร
+  { key: "advance", label: "สำรองจ่าย — ใช้เงินส่วนบุคคล", type: "check", hint: "พนักงานออกเงินตัวเองไปก่อน · บริษัทต้องโอนคืน" },
+  // ติ๊กแล้วถึงจะโผล่ช่องแนบรูป (กันฟอร์มรก)
+  { key: "slipsAdvance", label: "แนบบิล/สลิป — รายการที่ใช้เงินส่วนบุคคล (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.advance },
+  { key: "transferred", label: "โอนเรียบร้อย — ใช้เงินส่วนกลางบริษัท", type: "check", hint: "จ่ายจากเงินกองกลางของร้าน · ไม่ต้องโอนคืนใคร" },
+  { key: "slipsTransfer", label: "แนบบิล/สลิป — รายการที่ใช้เงินส่วนกลาง (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.transferred },
   // ช่องแนบรูปแบบเดิม — เอาออกจากฟอร์มแล้ว แต่ยังโผล่ให้แก้ได้ถ้ารายการนั้นมีรูปเก่าค้างอยู่
   { key: "slips", label: "รูปบิล/สลิปที่แนบไว้เดิม (ลบได้)", type: "images", max: 5, showIf: (f) => parseUrls(f.slips).length > 0 },
 ];
@@ -663,6 +673,7 @@ export default function App() {
   const [rentals, setRentals] = useState([]);
   const [laundry, setLaundry] = useState([]);
   const [txns, setTxns] = useState([]);
+  const [repays, setRepays] = useState([]); // การโอนคืนเงินสำรองจ่าย
   const [shipments, setShipments] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -686,7 +697,7 @@ export default function App() {
 
   async function loadAll() {
     try {
-      const [mr, p, c, o, r, l, t, s, u, cat] = await Promise.all([
+      const [mr, p, c, o, r, l, t, s, u, cat, rp] = await Promise.all([
         getJSON("/api/auth/me", { user: null }),
         getJSON("/api/products", []),
         getJSON("/api/customers", []),
@@ -697,10 +708,11 @@ export default function App() {
         getJSON("/api/shipments", []),
         getJSON("/api/users", []),
         getJSON("/api/categories", []),
+        getJSON("/api/advance-repayments", []),
       ]);
       setMe(mr.user);
       setProducts(p); setCustomers(c); setOrders(o); setRentals(r); setLaundry(l);
-      setTxns(t); setShipments(s); setUsers(u); setCategories(cat);
+      setTxns(t); setShipments(s); setUsers(u); setCategories(cat); setRepays(rp);
     } catch (e) {
       console.error("โหลดข้อมูลไม่สำเร็จ", e);
     } finally {
@@ -824,7 +836,7 @@ export default function App() {
   }, [me, page, allowed]);
 
   const ctx = {
-    products, customers, orders, rentals, laundry, txns, shipments, users, categories,
+    products, customers, orders, rentals, laundry, txns, repays, shipments, users, categories,
     adjustStock, advanceRental, makeTrack, setQrItem, setReceipt, mobile,
     saveEntity, deleteEntity, me, role, canEdit,
   };
@@ -1939,10 +1951,22 @@ function Laundry({ laundry = [], saveEntity, deleteEntity, products = [] }) {
 // รายชื่อพนักงานที่เบิก/โอนเงินได้ (ผู้ใช้กำหนดเอง) — เพิ่มชื่อใหม่ที่นี่
 const PAYER_NAMES = ["Eupeve", "Namtan", "Mook"];
 
-function Accounting({ txns = [], saveEntity, deleteEntity }) {
+// ฟอร์ม "บันทึกการโอนคืนเงินสำรองจ่าย" — บริษัทโอนคืนเป็นก้อน ครอบคลุมหลายรายการรวมกัน
+const repayFields = (isEdit, names = []) => [
+  { key: "id", label: "รหัสการโอนคืน", required: true, readOnly: isEdit, placeholder: "เช่น AR-3021" },
+  { key: "date", label: "วันที่โอนคืน", placeholder: "เช่น 25 ก.ย. 69" },
+  { key: "person", label: "โอนคืนให้ (พนักงานที่สำรองจ่าย)", type: "combo", options: names, placeholder: "พิมพ์ชื่อใหม่", required: true },
+  { key: "amt", label: "จำนวนเงินที่โอนคืน (บาท) — ใส่สตางค์ได้", type: "number", required: true },
+  { key: "note", label: "หมายเหตุ", placeholder: "เช่น โอนคืนค่าแต่งร้าน งวดที่ 1" },
+  { key: "slips", label: "แนบสลิปโอนคืน (สูงสุด 5 รูป)", type: "images", max: 5 },
+];
+
+function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const [month, setMonth] = useState(""); // "" = ทุกเดือน
+  const [repayForm, setRepayForm] = useState(null); // ฟอร์มบันทึกการโอนคืนเงินสำรองจ่าย
+  const [delRepay, setDelRepay] = useState(null);
 
   const monthKey = (t) => thMonthOf(t.date)?.key || NO_MONTH;
   const byMonth = (t) => !month || monthKey(t) === month;
@@ -1951,8 +1975,24 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
   const sum = (arr, kind) => arr.filter((t) => t.type === kind).reduce((s, t) => s + t.amt, 0);
   const inSum = sum(visible, "in");
   const outSum = sum(visible, "out");
-  // สำรองจ่ายที่ยังไม่ได้โอนคืน (ดูทั้งหมด ไม่อิงเดือนที่เลือก จะได้ไม่ลืม)
-  const pendingAdvance = txns.filter((t) => t.advance && !t.transferred);
+
+  // ===== เงินสำรองจ่าย (เงินส่วนบุคคล) =====
+  // ดูทั้งหมด ไม่อิงเดือนที่เลือก — ยอดค้างคืนต้องเห็นตลอด จะได้ไม่ลืมโอน
+  const advTxns = txns.filter((t) => t.advance);
+  const advTotal = advTxns.reduce((s, t) => s + t.amt, 0);       // เงินส่วนบุคคลที่สำรองจ่ายไป
+  const repaidTotal = repays.reduce((s, r) => s + r.amt, 0);     // บริษัทโอนคืนแล้ว
+  const advOwed = advTotal - repaidTotal;                        // คงเหลือต้องจ่ายคืน
+  // รายการที่ติ๊กไว้ทั้งสองช่อง — เป็นไปไม่ได้ (เงินก้อนเดียวจะเป็นทั้งส่วนตัวและส่วนกลางพร้อมกันไม่ได้)
+  // ส่วนใหญ่เป็นข้อมูลเก่าตอนที่ "โอนเรียบร้อย" ยังแปลว่า "โอนคืนแล้ว" → ให้เจ้าของร้านกดเลือกใหม่
+  const conflictTxns = txns.filter((t) => t.advance && t.transferred);
+  // แยกรายคน: สำรองไปเท่าไหร่ / ได้คืนแล้วเท่าไหร่ / ค้างเท่าไหร่
+  const byPerson = (() => {
+    const m = new Map();
+    const get = (n) => { const k = n || "ไม่ระบุชื่อ"; if (!m.has(k)) m.set(k, { name: k, adv: 0, paid: 0, n: 0 }); return m.get(k); };
+    advTxns.forEach((t) => { const x = get(t.payer); x.adv += t.amt; x.n += 1; });
+    repays.forEach((r) => { get(r.person).paid += r.amt; });
+    return [...m.values()].filter((x) => x.adv || x.paid).sort((a, b) => (b.adv - b.paid) - (a.adv - a.paid));
+  })();
 
   // ===== สรุปรายเดือน =====
   const monthAsc = monthlyRows(txns);        // เก่า→ใหม่ สำหรับกราฟ
@@ -1972,6 +2012,7 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
 
   const openAdd = () => setForm({ mode: "add", data: { id: genId("T-"), type: "in", date: todayTH() } });
   const openEdit = (t) => setForm({ mode: "edit", data: t });
+  const openAddRepay = () => setRepayForm({ mode: "add", data: { id: genId("AR-"), date: todayTH() } });
   const pickMonth = (k) => setMonth((cur) => (cur === k ? "" : k));
 
   // ===== กดดูรายละเอียดรายเดือน (จากตาราง/กราฟสรุป) =====
@@ -1988,14 +2029,25 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
       "ประเภท": t.type === "in" ? "รายรับ" : "รายจ่าย",
       "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
       "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "", "เลขบัญชี/พร้อมเพย์": t.account || "",
-      "สำรองจ่าย": t.advance ? "✓" : "", "โอนเรียบร้อย": t.transferred ? "✓" : "",
-      "สลิปสำรองจ่าย (ลิงก์)": parseUrls(t.slipsAdvance).join("\n"),
-      "สลิปโอนคืน (ลิงก์)": parseUrls(t.slipsTransfer).join("\n"),
+      "แหล่งเงิน": t.advance ? "เงินส่วนบุคคล (สำรองจ่าย)" : t.transferred ? "เงินส่วนกลางบริษัท" : "",
+      "สลิป-เงินส่วนบุคคล (ลิงก์)": parseUrls(t.slipsAdvance).join("\n"),
+      "สลิป-เงินส่วนกลาง (ลิงก์)": parseUrls(t.slipsTransfer).join("\n"),
       "สลิปอื่นๆ (ลิงก์)": parseUrls(t.slips).join("\n"),
     }));
-    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "สำรองจ่าย": "", "โอนเรียบร้อย": "", "สลิปสำรองจ่าย (ลิงก์)": "", "สลิปโอนคืน (ลิงก์)": "", "สลิปอื่นๆ (ลิงก์)": "" });
+    rows.push({ "รหัส": "", "วันที่": "", "รายละเอียด": "รวม", "หมวด": "", "ประเภท": "", "รายรับ": inS, "รายจ่าย": outS, "ผู้เบิก": "", "ผู้โอน": "", "ชื่อบัญชี/ผู้รับเงิน": `คงเหลือ ${inS - outS}`, "เลขบัญชี/พร้อมเพย์": "", "แหล่งเงิน": "", "สลิป-เงินส่วนบุคคล (ลิงก์)": "", "สลิป-เงินส่วนกลาง (ลิงก์)": "", "สลิปอื่นๆ (ลิงก์)": "" });
     const summary = monthRows.map((r) => ({ "เดือน": r.key, "รายรับ": r.in, "รายจ่าย": r.out, "คงเหลือ": r.in - r.out, "จำนวนรายการ": r.n }));
-    exportExcel([{ name: `บัญชี ${label}`, rows }, { name: "สรุปรายเดือน", rows: summary }], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
+    // ชีตสำรองจ่าย — หน้าตาเดียวกับสรุปที่ร้านทำในกูเกิลชีต
+    const advSheet = [
+      ...byPerson.map((p) => ({ "พนักงาน": p.name, "สำรองจ่าย (เงินส่วนบุคคล)": p.adv, "โอนคืนแล้ว": p.paid, "คงเหลือต้องจ่ายคืน": p.adv - p.paid, "จำนวนรายการ": p.n })),
+      { "พนักงาน": "รวมทั้งหมด", "สำรองจ่าย (เงินส่วนบุคคล)": advTotal, "โอนคืนแล้ว": repaidTotal, "คงเหลือต้องจ่ายคืน": advOwed, "จำนวนรายการ": advTxns.length },
+    ];
+    const repaySheet = repays.map((r) => ({ "รหัส": r.id, "วันที่": r.date, "โอนคืนให้": r.person, "จำนวนเงิน": r.amt, "หมายเหตุ": r.note || "", "สลิป (ลิงก์)": parseUrls(r.slips).join("\n") }));
+    exportExcel([
+      { name: `บัญชี ${label}`, rows },
+      { name: "สรุปรายเดือน", rows: summary },
+      { name: "สรุปสำรองจ่าย", rows: advSheet },
+      { name: "ประวัติโอนคืน", rows: repaySheet },
+    ], `บัญชี-${label.replace(/\s+/g, "")}.xlsx`);
   };
   const exportMonth = () => exportRows(visible, month || "ทั้งหมด");
 
@@ -2017,26 +2069,110 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         </div>
       </Card>
 
-      {/* ค้างคืนเงินพนักงาน — รายการที่ติ๊กสำรองจ่ายแต่ยังไม่ติ๊กโอนเรียบร้อย */}
-      {pendingAdvance.length > 0 && (
-        <Card className="p-3 mb-4">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <AlertTriangle size={16} style={{ color: C.red }} />
-            <span className="font-medium">ค้างโอนคืนพนักงาน</span>
-            <span className="font-bold" style={{ color: C.red }}>{baht(pendingAdvance.reduce((s, t) => s + t.amt, 0))}</span>
-            <span className="text-xs" style={{ color: C.taupe }}>({pendingAdvance.length} รายการ)</span>
-            <span className="text-xs ml-auto" style={{ color: C.taupe }}>
-              {[...new Set(pendingAdvance.map((t) => t.payer).filter(Boolean))].map((n) => `${n} ${baht(pendingAdvance.filter((t) => t.payer === n).reduce((s, t) => s + t.amt, 0))}`).join(" · ")}
-            </span>
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowUpRight size={14} style={{ color: C.green }} />รายรับ</div><div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words" style={{ color: C.green }}>{baht(inSum)}</div></Card>
+        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowDownRight size={14} style={{ color: C.red }} />รายจ่าย</div><div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words" style={{ color: C.red }}>{baht(outSum)}</div></Card>
+        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><TrendingUp size={14} style={{ color: C.gold }} />คงเหลือ</div><div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words" style={{ color: C.gold }}>{baht(inSum - outSum)}</div></Card>
+      </div>
+
+      {/* เตือนรายการที่ยังติ๊กค้างไว้ทั้งสองช่อง — ยอดสำรองจ่ายจะเพี้ยนจนกว่าจะเลือกอย่างใดอย่างหนึ่ง */}
+      {conflictTxns.length > 0 && (
+        <Card className="p-3 mb-3" style={{ borderColor: C.gold, background: C.goldBg }}>
+          <div className="flex items-start gap-2 text-sm">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5" style={{ color: "#8a6d1f" }} />
+            <div className="min-w-0">
+              <div className="font-bold" style={{ color: "#8a6d1f" }}>มี {conflictTxns.length} รายการติ๊กไว้ทั้ง “ส่วนบุคคล” และ “เงินบริษัท”</div>
+              <div className="text-xs mt-0.5" style={{ color: C.taupe }}>
+                เงินก้อนเดียวเลือกได้อย่างเดียว — กดปุ่ม <b>ส่วนบุคคล</b> หรือ <b>เงินบริษัท</b> ที่ท้ายรายการเพื่อเลือกใหม่ (ตอนนี้ระบบนับเป็นเงินส่วนบุคคลไว้ก่อน)
+              </div>
+              <div className="text-xs mt-1" style={{ color: C.charcoal }}>
+                {conflictTxns.map((t) => `${t.desc} ${baht(t.amt)}`).join(" · ")}
+              </div>
+            </div>
           </div>
         </Card>
       )}
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowUpRight size={14} style={{ color: C.green }} />รายรับ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.green }}>{baht(inSum)}</div></Card>
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><ArrowDownRight size={14} style={{ color: C.red }} />รายจ่าย</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.red }}>{baht(outSum)}</div></Card>
-        <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><TrendingUp size={14} style={{ color: C.gold }} />คงเหลือ</div><div className="text-lg md:text-xl font-bold mt-1" style={{ color: C.gold }}>{baht(inSum - outSum)}</div></Card>
+      {/* ===== เงินสำรองจ่าย (เงินส่วนบุคคล) — นับทุกเดือน ไม่อิงเดือนที่เลือก ===== */}
+      <div className="grid grid-cols-3 gap-3 mb-2">
+        <Card className="p-4">
+          <div className="flex items-start gap-1.5 text-xs" style={{ color: C.taupe }}><Wallet size={14} className="shrink-0 mt-0.5" style={{ color: C.gold }} /><span className="leading-tight">เงินส่วนบุคคล ที่สำรองจ่าย</span></div>
+          <div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words">{baht(advTotal)}</div>
+          <div className="text-[10px] mt-0.5" style={{ color: C.taupe }}>{advTxns.length} รายการ</div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-start gap-1.5 text-xs" style={{ color: C.taupe }}><CheckCircle2 size={14} className="shrink-0 mt-0.5" style={{ color: C.green }} /><span className="leading-tight">เงินส่งบริษัท คืนให้แล้ว</span></div>
+          <div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words" style={{ color: C.green }}>{baht(repaidTotal)}</div>
+          <div className="text-[10px] mt-0.5" style={{ color: C.taupe }}>โอนคืน {repays.length} ครั้ง</div>
+        </Card>
+        <Card className="p-4" style={advOwed > 0 ? { borderColor: C.red, background: "#FDF6F6" } : undefined}>
+          <div className="flex items-start gap-1.5 text-xs" style={{ color: C.taupe }}><AlertTriangle size={14} className="shrink-0 mt-0.5" style={{ color: advOwed > 0 ? C.red : C.taupe }} /><span className="leading-tight">คงเหลือ ต้องจ่ายคืน</span></div>
+          <div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words" style={{ color: advOwed > 0 ? C.red : C.taupe }}>{baht(advOwed)}</div>
+          <div className="text-[10px] mt-0.5" style={{ color: C.taupe }}>{advOwed > 0 ? "ยังต้องโอนคืนพนักงาน" : advOwed < 0 ? "โอนคืนเกินยอด" : "คืนครบแล้ว"}</div>
+        </Card>
       </div>
+
+      {/* แยกรายคน + ปุ่มบันทึกการโอนคืน */}
+      <Card className="p-3 mb-5">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="text-sm font-bold">สรุปสำรองจ่ายรายคน</span>
+          <Btn icon={Plus} variant="outline" size="sm" onClick={openAddRepay}>บันทึกการโอนคืน</Btn>
+        </div>
+        {byPerson.length === 0 ? (
+          <div className="text-xs text-center py-4" style={{ color: C.taupe }}>ยังไม่มีรายการที่ติ๊ก “สำรองจ่าย — ใช้เงินส่วนบุคคล”</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px] md:text-xs">
+              <thead>
+                <tr style={{ color: C.taupe }}>
+                  <th className="text-left font-medium py-1.5">พนักงาน</th>
+                  <th className="text-right font-medium py-1.5">สำรองจ่าย</th>
+                  <th className="text-right font-medium py-1.5">โอนคืนแล้ว</th>
+                  <th className="text-right font-medium py-1.5">คงเหลือ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {byPerson.map((p) => (
+                  <tr key={p.name} style={{ borderTop: "1px solid " + C.line }}>
+                    <td className="py-2 font-medium whitespace-nowrap">{p.name}
+                      <span className="md:hidden block font-normal text-[10px]" style={{ color: C.taupe }}>{p.n} รายการ</span>
+                    </td>
+                    <td className="py-2 text-right whitespace-nowrap">{baht(p.adv)}</td>
+                    <td className="py-2 text-right whitespace-nowrap" style={{ color: p.paid ? C.green : C.taupe }}>{baht(p.paid)}</td>
+                    <td className="py-2 text-right font-bold whitespace-nowrap" style={{ color: p.adv - p.paid > 0 ? C.red : C.green }}>{baht(p.adv - p.paid)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* ประวัติการโอนคืน */}
+        {repays.length > 0 && (
+          <div className="mt-3 pt-2" style={{ borderTop: "1px solid " + C.line }}>
+            <div className="text-[11px] font-medium mb-1.5" style={{ color: C.taupe }}>ประวัติการโอนคืน ({repays.length} ครั้ง)</div>
+            {repays.map((r) => (
+              <div key={r.id} className="flex items-center gap-2 py-1.5" style={{ borderTop: "1px dashed " + C.line }}>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium">โอนคืน {r.person || "ไม่ระบุชื่อ"}</div>
+                  <div className="text-[10px] break-words" style={{ color: C.taupe }}>{r.date}{r.note ? ` · ${r.note}` : ""}</div>
+                  {parseUrls(r.slips).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {parseUrls(r.slips).map((u, i) => (
+                        <a key={i} href={u} target="_blank" rel="noreferrer" title="สลิปโอนคืน" className="w-11 h-11 md:w-8 md:h-8 rounded-md overflow-hidden" style={{ background: C.cream, border: "2px solid " + C.green }}>
+                          <img src={u} alt="สลิปโอนคืน" className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs font-bold shrink-0" style={{ color: C.green }}>{baht(r.amt)}</div>
+                <IconBtn icon={Pencil} onClick={() => setRepayForm({ mode: "edit", data: r })} />
+                <IconBtn icon={Trash2} color={C.red} onClick={() => setDelRepay(r)} />
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       {/* สรุปเดือนต่อเดือน */}
       <div className="mb-5">
@@ -2102,20 +2238,27 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
         {visible.map((t, i, arr) => {
           // ยอดเงิน + ปุ่มต่างๆ ใช้ซ้ำ 2 ที่ (จอใหญ่อยู่ขวาของแถว · มือถือลงมาอยู่บรรทัดล่าง)
           const amount = <span style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</span>;
-          // ติ๊ก "โอนเรียบร้อย" ได้จากด้านนอกเลย ไม่ต้องเปิดฟอร์ม
-          const tickTransfer = (
-            <label title="ติ๊กเมื่อโอนเงินเรียบร้อยแล้ว" className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer select-none shrink-0"
-              style={{ background: t.transferred ? C.greenBg : C.cream, color: t.transferred ? C.green : C.taupe }}>
-              <input type="checkbox" checked={!!t.transferred} onChange={(e) => saveEntity("transactions", { transferred: e.target.checked }, t.id)} className="w-4 h-4" style={{ accentColor: C.green }} />
-              <span className="text-[11px] font-medium whitespace-nowrap">โอนแล้ว</span>
-            </label>
+          // สลับ "แหล่งเงิน" ได้จากด้านนอกเลย ไม่ต้องเปิดฟอร์ม — เลือกได้อย่างเดียว ติ๊กอันหนึ่งอีกอันหลุดเอง
+          const setSource = (src) => saveEntity("transactions", { advance: src === "person", transferred: src === "company" }, t.id);
+          const srcBtn = (src, label, on, color, bg) => (
+            <button type="button" title={src === "person" ? "จ่ายด้วยเงินส่วนบุคคล (บริษัทต้องโอนคืน)" : "จ่ายด้วยเงินส่วนกลางบริษัท (ไม่ต้องโอนคืน)"}
+              onClick={() => setSource(on ? "" : src)} className="px-2 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap shrink-0"
+              style={{ background: on ? bg : C.cream, color: on ? color : C.taupe, border: "1px solid " + (on ? color : "transparent") }}>
+              {label}
+            </button>
+          );
+          const sourcePick = (
+            <div className="flex items-center gap-1 shrink-0">
+              {srcBtn("person", "ส่วนบุคคล", !!t.advance, C.red, "#FDECEC")}
+              {srcBtn("company", "เงินบริษัท", !!t.transferred, C.green, C.greenBg)}
+            </div>
           );
           return (
           <div key={t.id} className="px-3 md:px-4 py-3" style={{
             borderBottom: i < arr.length - 1 ? "1px solid " + C.line : "none",
-            // รายการที่สำรองจ่ายให้เห็นชัดตั้งแต่ไกล — แถบสีซ้าย + พื้นอ่อนๆ (แดง = ยังไม่โอนคืน, เขียว = โอนคืนแล้ว)
-            borderLeft: t.advance ? "4px solid " + (t.transferred ? C.green : C.red) : "4px solid transparent",
-            background: t.advance && !t.transferred ? "#FDF6F6" : "transparent",
+            // แถบสีซ้ายบอกแหล่งเงิน — แดง = เงินส่วนบุคคล (ค้างคืน), เขียว = เงินส่วนกลางบริษัท
+            borderLeft: t.advance ? "4px solid " + C.red : t.transferred ? "4px solid " + C.green : "4px solid transparent",
+            background: t.advance ? "#FDF6F6" : "transparent",
           }}>
             <div className="flex items-start md:items-center gap-2.5 md:gap-3">
               <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: t.type === "in" ? C.greenBg : C.redBg }}>
@@ -2125,17 +2268,16 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                 <div className="text-sm font-medium flex items-center gap-1.5 flex-wrap">
                   {t.desc}
                   {t.auto && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: C.goldBg, color: "#8a6d1f" }}>AUTO</span>}
-                  {/* แท็ก "สำรองจ่าย" — อยู่ข้างชื่อรายการเลย เห็นชัดที่สุด */}
+                  {/* แท็กบอก "แหล่งเงิน" — อยู่ข้างชื่อรายการเลย เห็นชัดที่สุด */}
                   {t.advance && (
-                    t.transferred ? (
-                      <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap" style={{ background: C.greenBg, color: C.green }}>
-                        <CheckCircle2 size={12} />สำรองจ่าย · โอนคืนแล้ว
-                      </span>
-                    ) : (
-                      <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap text-white" style={{ background: C.red }}>
-                        <AlertTriangle size={12} />สำรองจ่าย · รอโอนคืน
-                      </span>
-                    )
+                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap text-white" style={{ background: C.red }}>
+                      <AlertTriangle size={12} />สำรองจ่าย · เงินส่วนบุคคล
+                    </span>
+                  )}
+                  {t.transferred && (
+                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap" style={{ background: C.greenBg, color: C.green }}>
+                      <CheckCircle2 size={12} />เงินส่วนกลางบริษัท
+                    </span>
                   )}
                 </div>
                 {/* บนมือถือให้ข้อความขึ้นบรรทัดใหม่ได้ จะได้เห็นครบ (เดิมโดนตัดเหลือแค่วันที่) */}
@@ -2149,8 +2291,8 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
                 {/* รูปบิล/สลิป — กดเปิดรูปเต็มในแท็บใหม่ · สีขอบบอกว่าเป็นของช่องไหน */}
                 {(() => {
                   const sets = [
-                    { urls: parseUrls(t.slipsAdvance), color: C.gold, title: "บิล/สลิป ตอนสำรองจ่าย" },
-                    { urls: parseUrls(t.slipsTransfer), color: C.green, title: "สลิป ตอนโอนคืน" },
+                    { urls: parseUrls(t.slipsAdvance), color: C.red, title: "บิล/สลิป — จ่ายด้วยเงินส่วนบุคคล" },
+                    { urls: parseUrls(t.slipsTransfer), color: C.green, title: "บิล/สลิป — จ่ายด้วยเงินส่วนกลางบริษัท" },
                     { urls: parseUrls(t.slips), color: C.line, title: "บิล/สลิปอื่นๆ" },
                   ].filter((s) => s.urls.length);
                   if (!sets.length) return null;
@@ -2168,7 +2310,7 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
               {/* จอใหญ่ — ยอดเงินและปุ่มอยู่ขวาของแถวเดียวกัน */}
               <div className="hidden md:flex items-center gap-3 shrink-0">
                 <div className="font-bold text-sm">{amount}</div>
-                {tickTransfer}
+                {sourcePick}
                 <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
                 <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
               </div>
@@ -2177,7 +2319,7 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
             <div className="flex md:hidden items-center gap-2 mt-2 pt-2" style={{ borderTop: "1px dashed " + C.line }}>
               <div className="font-bold text-base">{amount}</div>
               <div className="ml-auto flex items-center gap-1.5">
-                {tickTransfer}
+                {sourcePick}
                 <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
                 <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
               </div>
@@ -2191,6 +2333,12 @@ function Accounting({ txns = [], saveEntity, deleteEntity }) {
           onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
       )}
       {del && <ConfirmDelete name={del.desc} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("transactions", del.id); setDel(null); }} />}
+
+      {repayForm && (
+        <FormModal title={repayForm.mode === "add" ? "บันทึกการโอนคืนเงินสำรองจ่าย" : "แก้ไขการโอนคืน"} fields={repayFields(repayForm.mode === "edit", nameOptions)} initial={repayForm.data} onClose={() => setRepayForm(null)}
+          onSubmit={async (data) => { await saveEntity("advance-repayments", data, repayForm.mode === "edit" ? repayForm.data.id : null); setRepayForm(null); }} />
+      )}
+      {delRepay && <ConfirmDelete name={`โอนคืน ${delRepay.person} ${baht(delRepay.amt)}`} onClose={() => setDelRepay(null)} onConfirm={async () => { await deleteEntity("advance-repayments", delRepay.id); setDelRepay(null); }} />}
 
       {/* หน้าต่างรายการของเดือนที่กดจากสรุป */}
       {detailMonth && (
