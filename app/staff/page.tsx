@@ -1563,6 +1563,7 @@ function Customers({ customers, orders, saveEntity, deleteEntity }) {
   return (
     <div>
       <PageHead title="ลูกค้า" sub={`${customers.length} รายชื่อ`} action={<Btn icon={Plus} onClick={openAdd}>เพิ่มลูกค้า</Btn>} />
+      <p className="text-sm mb-4" style={{color:C.taupe}}>พนักงานบันทึกชื่อและเบอร์โทรให้ลูกค้าก่อน ระบบสร้างสมาชิกและเชื่อมรายการเช่าอัตโนมัติ ลูกค้าใช้ชื่อและเบอร์เดียวกันเข้าสู่ระบบเพื่อดูรายการจองและแต้มสะสม</p>
       <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
         {customers.map(c => (
           <Card key={c.id} className="p-4">

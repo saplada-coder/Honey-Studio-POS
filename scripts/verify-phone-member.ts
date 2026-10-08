@@ -15,16 +15,21 @@ async function main(){
   try{
     const publicLogin=await fetch(base+'/customer-login');assert.equal(publicLogin.status,200);const loginHtml=await publicLogin.text();assert.ok(loginHtml.includes('เบอร์โทรศัพท์'));assert.ok(!loginHtml.includes('type="password"'));
     assert.equal((await req('/api/auth/member','','POST',{name,phone:'invalid'})).status,400);
+    const customerId='TEST-CUSTOMER-'+suffix,preRentalId='TEST-PRELOGIN-'+suffix;
+    const savedCustomer=await req('/api/customers',staff,'POST',{id:customerId,name,phone:'+66'+phone.slice(1)});assert.equal(savedCustomer.status,201,JSON.stringify(savedCustomer.data));assert.equal(savedCustomer.data.phone,phone);
+    const preMember=await db.query('SELECT id FROM "User" WHERE phone=$1',[phone]);assert.equal(preMember.rowCount,1);users.push(preMember.rows[0].id);
+    assert.equal((await req('/api/products',staff,'POST',{id:code,name:'ชุดทดสอบชื่อเบอร์',cat:'ชุดราตรี',type:'เช่า',rent:150,stockRent:1,stockSell:0})).status,201);
+    const preRental=await req('/api/rentals',staff,'POST',{id:preRentalId,cust:name,phone,code,item:'เช่าก่อนเข้าสู่ระบบ',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:150,deposit:150,status:'รับชุดแล้ว',paymentStatus:'ชำระแล้ว'});assert.equal(preRental.status,201,JSON.stringify(preRental.data));assert.equal(preRental.data.userId,preMember.rows[0].id);
+    assert.equal((await req('/api/rentals/'+preRentalId,staff,'PATCH',{status:'คืนแล้ว'})).status,200);
     const first=await req('/api/auth/member','','POST',{name,phone,role:'เจ้าของ'});assert.equal(first.status,200);assert.equal(first.data.user.role,'ลูกค้า');users.push(first.data.user.id);const cookie=first.cookie!.match(/hs_session=([^;]+)/)![1];
     const again=await req('/api/auth/member','','POST',{name,phone:'+66'+phone.slice(1)});assert.equal(again.status,200);assert.equal(again.data.user.id,first.data.user.id);
     assert.equal((await req('/api/auth/member','','POST',{name:'ชื่อไม่ตรง',phone})).status,401);
     assert.equal((await req('/api/users',cookie)).status,403);assert.equal((await req('/api/shop/settings',cookie,'PUT',{})).status,403);
     const html=await (await fetch(base+'/member',{headers:{Cookie:'hs_session='+cookie}})).text();for(const title of ['เข้าสู่ระบบลูกค้า','ข้อมูลการจอง+สะสมแต้ม','รายละเอียดชุด','ปฏิทินจองชุด','ชำระเงิน','รีวิวลูกค้า','ติดต่อร้าน'])assert.ok(html.includes(title));
-    assert.equal((await req('/api/products',staff,'POST',{id:code,name:'ชุดทดสอบชื่อเบอร์',cat:'ชุดราตรี',type:'เช่า',rent:150,stockRent:1,stockSell:0})).status,201);
     const rentalId='TEST-RENT-PHONE-'+suffix;
-    const rental=await req('/api/rentals',staff,'POST',{id:rentalId,cust:name,phone,code,item:'ชุดทดสอบชื่อเบอร์',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:150,deposit:150,status:'รับชุดแล้ว',paymentStatus:'ชำระแล้ว'});assert.equal(rental.status,201);assert.equal(rental.data.userId,first.data.user.id);
-    const account=await req('/api/shop/customer-account',cookie);assert.equal(account.data.phone,phone);assert.equal(account.data.rentals[0].deposit,150);assert.ok(account.data.notifications.length>0);
-    assert.equal((await req('/api/rentals/'+rentalId,staff,'PATCH',{status:'คืนแล้ว'})).status,200);assert.equal((await req('/api/shop/customer-account',cookie)).data.balance,1);
+    const rental=await req('/api/rentals',staff,'POST',{id:rentalId,cust:name,phone,code,item:'ชุดทดสอบชื่อเบอร์',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:150,deposit:150,status:'รับชุดแล้ว',paymentStatus:'ชำระแล้ว'});assert.equal(rental.status,201,JSON.stringify(rental.data));assert.equal(rental.data.userId,first.data.user.id);
+    const account=await req('/api/shop/customer-account',cookie);assert.equal(account.data.phone,phone);assert.equal(account.data.rentals[0].deposit,150);assert.ok(account.data.notifications.length>0);assert.equal(account.data.balance,1);assert.ok(account.data.rentals.some((r:{id:string})=>r.id===preRentalId));
+    assert.equal((await req('/api/rentals/'+rentalId,staff,'PATCH',{status:'คืนแล้ว'})).status,200);assert.equal((await req('/api/shop/customer-account',cookie)).data.balance,2);
     const review=await req('/api/shop/reviews',cookie,'POST',{rentalId,text:'รีวิวจากการเช่าหน้าร้านทดสอบ',consent:true});assert.equal(review.status,201);assert.equal(review.data.approved,false);
     await db.query('INSERT INTO "User" (id,name,role,email) VALUES ($1,$2,$3,$4)',[legacyId,'บัญชีเดิม '+suffix,'ลูกค้า','legacy-'+suffix+'@example.invalid']);users.push(legacyId);
     assert.equal((await req('/api/users/'+legacyId,staff,'PATCH',{phone:phone2})).status,200);
@@ -34,7 +39,7 @@ async function main(){
     assert.equal((await req('/api/auth/member','','POST',{name,phone})).status,429);
     console.log('PASS: name/phone signup, repeated login, normalization, mismatched-name refusal, staff isolation, eight menus, automatic rental link, deposit, return point, walk-in review moderation, legacy account continuity and rate limit');
   }finally{
-    await db.query('BEGIN');await db.query('DELETE FROM "CustomerReview" WHERE "userId"=ANY($1::text[])',[users]);await db.query('DELETE FROM "LoyaltyEntry" WHERE "userId"=ANY($1::text[])',[users]);await db.query('DELETE FROM "NotificationRead" WHERE "userId"=ANY($1::text[])',[users]);await db.query('DELETE FROM "Rental" WHERE code=$1',[code]);await db.query('DELETE FROM "Product" WHERE id=$1',[code]);await db.query('DELETE FROM "User" WHERE id=ANY($1::text[])',[users]);for(const p of [phone,phone2])for(const bucket of [Math.floor(Date.now()/300000),Math.floor(Date.now()/300000)-1])await db.query('DELETE FROM "MemberLoginLimit" WHERE key=$1',[createHash('sha256').update(ip+':'+p+':'+bucket).digest('hex')]);await db.query('COMMIT');await db.end();console.log('Temporary phone/member data removed');
+    await db.query('BEGIN');await db.query('DELETE FROM "CustomerReview" WHERE "userId"=ANY($1::text[])',[users]);await db.query('DELETE FROM "LoyaltyEntry" WHERE "userId"=ANY($1::text[])',[users]);await db.query('DELETE FROM "NotificationRead" WHERE "userId"=ANY($1::text[])',[users]);await db.query('DELETE FROM "Rental" WHERE code=$1 OR "userId"=ANY($2::text[])',[code,users]);await db.query('DELETE FROM "Customer" WHERE id=$1',['TEST-CUSTOMER-'+suffix]);await db.query('DELETE FROM "Product" WHERE id=$1',[code]);await db.query('DELETE FROM "User" WHERE id=ANY($1::text[])',[users]);for(const p of [phone,phone2])for(const bucket of [Math.floor(Date.now()/300000),Math.floor(Date.now()/300000)-1])await db.query('DELETE FROM "MemberLoginLimit" WHERE key=$1',[createHash('sha256').update(ip+':'+p+':'+bucket).digest('hex')]);await db.query('COMMIT');await db.end();console.log('Temporary phone/member data removed');
   }
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1;});
