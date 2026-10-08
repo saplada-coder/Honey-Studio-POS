@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import * as XLSX from "xlsx";
 import QRCode from "qrcode";
+import RentPriceField from './rent-price-field';
+import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
 function exportExcel(sheets, filename) {
@@ -71,7 +73,7 @@ function QR({ value = "HS", size = 120, onData }) {
     let alive = true;
     QRCode.toDataURL(String(value || "HS"), {
       width: 640,                  // ความละเอียดสูงพอสำหรับพิมพ์สติกเกอร์
-      margin: 1,
+      margin: 4,
       errorCorrectionLevel: "M",   // ทนรอยเปื้อน/ยับได้ระดับกลาง
       color: { dark: C.charcoal, light: "#FFFFFF" },
     })
@@ -88,7 +90,7 @@ function QR({ value = "HS", size = 120, onData }) {
 // กันอักขระพิเศษไม่ให้ทำ HTML พัง
 const esc = (v) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 // เปิดหน้าต่างใหม่แล้วสั่งพิมพ์ — ผู้ใช้เลือก "บันทึกเป็น PDF" ในหน้าต่างพิมพ์ได้
-function openPrintWindow(title, bodyHtml) {
+function openPrintWindow(title, bodyHtml, extraCss = "") {
   const w = window.open("", "_blank", "width=520,height=700");
   if (!w) { alert("เบราว์เซอร์บล็อกหน้าต่างใหม่ — กรุณาอนุญาต popup ของเว็บนี้แล้วลองอีกครั้ง"); return null; }
   w.document.open();
@@ -105,7 +107,7 @@ function openPrintWindow(title, bodyHtml) {
     '.big{font-size:18px;font-weight:700}' +
     'img{display:block;margin:0 auto}' +
     '@media print{body{padding:0}@page{margin:8mm}}' +
-    '</style></head><body onload="window.focus();window.print();">' + bodyHtml + '</body></html>'
+    extraCss + '</style></head><body onload="window.focus();window.print();">' + bodyHtml + '</body></html>'
   );
   w.document.close();
   return w;
@@ -348,7 +350,7 @@ function ComboField({ value, onChange, options = [], placeholder }) {
 function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], products = [] }) {
   const [form, setForm] = useState(() => {
     const base = {};
-    fields.forEach((f) => { base[f.key] = initial?.[f.key] ?? (f.type === "number" ? 0 : f.type === "check" ? false : ""); });
+    fields.forEach((f) => { base[f.key] = initial?.[f.key] ?? f.default ?? (f.type === "number" ? 0 : f.type === "check" ? false : ""); });
     return base;
   });
   const [saving, setSaving] = useState(false);
@@ -362,6 +364,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
       // ช่องตัวเลขเก็บเป็นข้อความระหว่างพิมพ์ (ลบให้ว่างได้) → แปลงเป็นตัวเลขตอนบันทึก
       const data = { ...form };
       fields.forEach((f) => { if (f.type === "number") data[f.key] = Number(data[f.key]) || 0; });
+      if ('rentPrices' in data) data.rentPrices=validateRentPrices(data.rentPrices);
       await onSubmit(data);
     } catch (e2) {
       setErr(e2?.message || "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
@@ -383,7 +386,9 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
         ) : (
           <div key={f.key}>
             <label className="text-xs" style={{ color: C.taupe }}>{f.label}{f.required && " *"}</label>
-            {f.type === "image" ? (
+            {f.type === "rentPrices" ? (
+              <RentPriceField value={form[f.key]} onChange={v=>set(f.key,v)} rent={form.rent} />
+            ) : f.type === "image" ? (
               <div className="mt-1"><ImageField value={form[f.key]} onChange={(v) => set(f.key, v)} /></div>
             ) : f.type === "images" ? (
               <div className="mt-1"><MultiImageField value={form[f.key]} onChange={(v) => set(f.key, v)} max={f.max || 10} /></div>
@@ -530,7 +535,8 @@ const productFields = (isEdit, cats = []) => [
   { key: "waist", label: "เอว (นิ้ว)", type: "number" },
   { key: "hip", label: "สะโพก (นิ้ว)", type: "number" },
   { key: "length", label: "ความยาว (นิ้ว)", type: "number" },
-  { key: "rent", label: "ค่าเช่า (บาท)", type: "number" },
+  { key: "rent", label: "ราคาเช่า 1 วัน / มัดจำ (บาท)", type: "number" },
+  { key: "rentPrices", label: "ราคาเช่าตามจำนวนวัน", type: "rentPrices" },
   { key: "sell", label: "ราคาขาย (บาท)", type: "number" },
   { key: "stockRent", label: "สต็อกเช่า (ชิ้น)", type: "number" },
   { key: "stockSell", label: "สต็อกขาย (ชิ้น)", type: "number" },
@@ -565,7 +571,7 @@ const rentalFields = (isEdit) => [
   { key: "id", label: "เลขที่การเช่า", required: true, readOnly: isEdit, placeholder: "เช่น R-501" },
   { key: "cust", label: "ลูกค้า", type: "customer", required: true },
   { key: "phone", label: "เบอร์โทรลูกค้า", placeholder: "เช่น 081-234-5678" },
-  { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0 } },
+  { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0, deposit: (p)=>p.rent||0 } },
   { key: "item", label: "รายการที่เช่า (แก้ไขได้)", required: true },
   { key: "start", label: "วันรับ", placeholder: "เช่น 16 มิ.ย." },
   { key: "end", label: "วันคืน", placeholder: "เช่น 18 มิ.ย." },
@@ -680,8 +686,12 @@ export default function App() {
 
   const [qrItem, setQrItem] = useState(null);
   const [qrPng, setQrPng] = useState(""); // รูป QR (PNG data URL) ไว้ดาวน์โหลด/พิมพ์สติกเกอร์
+  const [labelWidth, setLabelWidth] = useState(70);
+  const [labelHeight, setLabelHeight] = useState(100);
   const [receipt, setReceipt] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [appQrOpen,setAppQrOpen]=useState(false);
+  const [appQrPng,setAppQrPng]=useState('');
 
   // ดึง JSON แบบปลอดภัย — ถ้าเข้าไม่ได้ (เช่น 403 ตามสิทธิ์) คืนค่า fallback
   async function getJSON(url, fallback) {
@@ -807,21 +817,20 @@ export default function App() {
   const printSticker = () => {
     if (!qrItem || !qrPng) return;
     const p = qrItem;
-    const specs = [["ไซส์", p.size], ["สี", p.color], ["ค่าเช่า", p.rent ? baht(p.rent) : ""], ["ราคาขาย", p.sell ? baht(p.sell) : ""], ["ตำแหน่งเก็บ", p.loc]]
+    const specs = [...productMeasurements(p), ["มัดจำ", baht(p.rent)], ...[1,3,5].map(days=>[`${days} วัน`,baht(rentalPrice(p,days))]), ["เพิ่มวัน", "+50 บาท/วัน"]]
       .filter(([, v]) => v)
       .map(([k, v]) => `<div class="row"><span class="muted">${esc(k)}</span><span>${esc(v)}</span></div>`)
       .join("");
     openPrintWindow(`สติกเกอร์ ${p.id}`,
-      `<div class="wrap box center">
+      `<div class="wrap box center sticker">
         <div class="big">${esc(p.name)}</div>
         <div class="muted" style="font-size:12px;margin-bottom:10px">${esc(p.cat || "")}</div>
-        <img src="${qrPng}" width="180" height="180" alt="QR" />
+        <img class="label-qr" src="${qrPng}" alt="QR" />
         <div style="font-family:monospace;font-size:16px;letter-spacing:1px;margin-top:8px">${esc(p.id)}</div>
-        <div class="muted" style="font-size:9px;word-break:break-all;margin-top:2px">${esc(productUrl(p.id))}</div>
         <div class="line"></div>
-        <div style="text-align:left">${specs}</div>
+        <div style="text-align:left"><b style="font-size:10px">ขนาด / ราคาเช่า</b>${specs}</div>
         <div class="muted" style="font-size:11px;margin-top:10px">HONEY STUDIO</div>
-      </div>`);
+      </div>`, `@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}body{padding:0}.sticker{width:${labelWidth}mm;max-width:none;min-height:${labelHeight}mm;padding:3mm;border:0;border-radius:0}.label-qr{width:${Math.min(labelWidth-8, labelHeight*.26)}mm;height:auto;image-rendering:pixelated}.sticker .big{font-size:12px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.sticker .row{font-size:10px;line-height:1.1;margin-bottom:1px}.sticker .line{margin:4px 0}.sticker img{max-width:100%}`);
   };
 
   // ===== สิทธิ์ตามบทบาท =====
@@ -887,6 +896,7 @@ export default function App() {
               <button onClick={() => setProfileOpen(true)} title="โปรไฟล์ / ตั้งค่า" className="p-1.5 rounded-lg" style={{ background: "#fff" }}><Settings size={15} style={{ color: C.taupe }} /></button>
             </div>
             <div className="mb-2"><InstallApp compact /></div>
+            <button onClick={()=>setAppQrOpen(true)} className="w-full py-2 mb-2 rounded-xl text-sm font-medium" style={{background:C.goldBg,color:C.charcoal}}>QR เข้าสู่แอพสำหรับลูกค้า</button>
             <button onClick={logout} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium" style={{ background: C.redBg, color: C.red }}>
               <LogOut size={15} />ออกจากระบบ
             </button>
@@ -946,6 +956,7 @@ export default function App() {
                 ))}
               </div>
               <div className="mt-4"><InstallApp /></div>
+              <button onClick={()=>{setMoreOpen(false);setAppQrOpen(true);}} className="w-full py-2.5 mt-2 rounded-xl text-sm font-medium" style={{background:C.goldBg,color:C.charcoal}}>QR เข้าสู่แอพสำหรับลูกค้า</button>
               <button onClick={() => { setMoreOpen(false); setProfileOpen(true); }} className="w-full flex items-center justify-center gap-1.5 py-2.5 mt-2 rounded-xl text-sm font-medium" style={{ background: C.cream, color: C.charcoal }}>
                 <Settings size={15} />โปรไฟล์ / เปลี่ยนรหัสผ่าน
               </button>
@@ -957,6 +968,18 @@ export default function App() {
         )}
       </div>
 
+      {appQrOpen&&<Modal title="QR เข้าสู่แอพสำหรับลูกค้า" onClose={()=>setAppQrOpen(false)}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="font-bold">HONEY STUDIO</div>
+          <QR value={SITE_URL.replace(/\/$/,'')+'/'} size={220} onData={setAppQrPng}/>
+          <p className="text-sm">สแกนเพื่อเข้าสู่แอพ สมัครสมาชิก หรือเข้าสู่ระบบ<br/>ติดตั้งแอพจากปุ่ม “ติดตั้งแอป” ได้</p>
+          <a href={SITE_URL} target="_blank" rel="noreferrer" className="underline text-xs break-all">{SITE_URL}</a>
+          <div className="flex gap-2 flex-wrap justify-center">
+            <Btn onClick={()=>{if(!appQrPng)return;const a=document.createElement('a');a.href=appQrPng;a.download='HONEY-STUDIO-app-QR.png';a.click();}}>ดาวน์โหลด QR</Btn>
+            <Btn variant="outline" onClick={()=>{if(!appQrPng)return;openPrintWindow('QR แอพ HONEY STUDIO',`<div class="wrap box center"><div class="big">HONEY STUDIO</div><p>สแกนเพื่อเข้าสู่แอพ</p><img src="${appQrPng}" width="240" height="240" alt="QR แอพ"/><p>สมัครสมาชิก / เข้าสู่ระบบ</p><div class="muted" style="font-size:11px">${esc(SITE_URL)}</div></div>`);}}>พิมพ์ QR</Btn>
+          </div>
+        </div>
+      </Modal>}
       {qrItem && (
         <Modal onClose={() => setQrItem(null)} title="รายละเอียดสินค้า" wide>
           <div className="flex flex-col items-center gap-3 py-1">
@@ -984,7 +1007,7 @@ export default function App() {
             {/* สัดส่วน */}
             {(qrItem.size || qrItem.color || qrItem.chest || qrItem.waist || qrItem.hip || qrItem.length) && (
               <div className="grid grid-cols-3 gap-2 w-full text-xs">
-                {[["ไซส์", qrItem.size], ["สี", qrItem.color], ["อก", qrItem.chest && qrItem.chest + '"'], ["เอว", qrItem.waist && qrItem.waist + '"'], ["สะโพก", qrItem.hip && qrItem.hip + '"'], ["ความยาว", qrItem.length && qrItem.length + '"']]
+                {[["ไซส์", qrItem.size], ["สี", qrItem.color], ...productMeasurements(qrItem)]
                   .filter(([, v]) => v).map(([k, v]) => (
                     <div key={k} className="p-2 rounded-lg text-center" style={{ background: C.cream }}>
                       <div style={{ color: C.taupe }}>{k}</div><div className="font-semibold">{v}</div>
@@ -993,12 +1016,21 @@ export default function App() {
               </div>
             )}
             <QR value={productUrl(qrItem.id)} size={140} onData={setQrPng} />
+            <div className="text-sm w-full rounded-lg p-3" style={{background:C.cream}}>
+              <div>มัดจำ {baht(qrItem.rent)} (ราคาเช่า 1 วัน)</div>
+              {[1,3,5].map(days=><div key={days}>{days} วัน = {baht(rentalPrice(qrItem,days))}</div>)}
+              <div>เพิ่มวัน +50 บาท/วัน</div>
+            </div>
+            <div className="flex gap-2 text-xs items-center">
+              <label>ป้ายกว้าง <input aria-label="ความกว้างป้าย มม." type="number" min="50" max="150" value={labelWidth} onChange={e=>setLabelWidth(Math.max(50,Math.min(150,Number(e.target.value)||70)))} className="border rounded p-1 w-16"/> มม.</label>
+              <label>สูง <input aria-label="ความสูงป้าย มม." type="number" min="90" max="200" value={labelHeight} onChange={e=>setLabelHeight(Math.max(90,Math.min(200,Number(e.target.value)||100)))} className="border rounded p-1 w-16"/> มม.</label>
+            </div>
             <div className="flex gap-2 w-full">
               <Btn icon={Printer} variant="outline" onClick={printSticker}>พิมพ์สติกเกอร์</Btn>
               <Btn icon={Download} onClick={downloadQR}>ดาวน์โหลด QR</Btn>
             </div>
             <p className="text-xs text-center" style={{ color: C.taupe }}>
-              สแกนด้วยกล้องมือถือแล้ว<b>เปิดหน้าสินค้าได้ทันที</b> (ไม่ต้องล็อกอิน)
+              สแกนดูสินค้าได้ทันที · พนักงานล็อกอินเพื่อเช็คสต๊อก เช่า และคืนจาก QR เดียว
               <br /><a href={productUrl(qrItem.id)} target="_blank" rel="noreferrer" className="underline break-all" style={{ color: C.gold }}>{productUrl(qrItem.id)}</a>
             </p>
           </div>

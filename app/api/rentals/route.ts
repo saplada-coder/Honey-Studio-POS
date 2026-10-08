@@ -19,17 +19,16 @@ export async function POST(req: Request) {
   const body = await req.json();
   const code = String(body.code || "").trim();
 
-  let applied = false;
-  if (code) {
-    const prod = await prisma.product.findUnique({ where: { id: code } });
-    if (prod && (prod.stockRent ?? 0) > 0) {
-      await prisma.product.update({ where: { id: code }, data: { stockRent: prod.stockRent - 1 } });
-      applied = true; // ตัดสต็อกสำเร็จ → ทำเครื่องหมายไว้ (กันตัด/คืนซ้ำ)
-    }
-  }
-
   // ไม่ให้ฟอร์มส่ง flag มาเองได้ — ระบบเป็นคนกำหนด
   const { stockApplied: _a, stockReturned: _b, ...clean } = body;
-  const created = await prisma.rental.create({ data: { ...clean, stockApplied: applied, stockReturned: false } });
-  return NextResponse.json(created, { status: 201 });
+  try{
+    const created=await prisma.$transaction(async tx=>{
+      if(code){
+        const claimed=await tx.product.updateMany({where:{id:code,type:{in:['เช่า','ทั้งคู่']},stockRent:{gt:0},status:{notIn:['ซัก','ซ่อม','ปลดสต็อก']}},data:{stockRent:{decrement:1}}});
+        if(!claimed.count)throw new Error('ชุดนี้ไม่มีสต๊อกพร้อมเช่า');
+      }
+      return tx.rental.create({data:{...clean,code,stockApplied:!!code,stockReturned:false}});
+    },{timeout:15000});
+    return NextResponse.json(created,{status:201});
+  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'บันทึกไม่สำเร็จ'},{status:409});}
 }

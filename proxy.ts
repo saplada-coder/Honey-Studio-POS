@@ -13,7 +13,7 @@ export async function proxy(req: NextRequest) {
   // manifest + sw.js = ไฟล์ PWA สำหรับติดตั้งเป็นแอปมือถือ ต้องเปิดสาธารณะเช่นกัน
   if (pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/") ||
       pathname === "/logo.png" || pathname.startsWith("/icon") || pathname.startsWith("/apple-icon") ||
-      pathname === "/manifest.webmanifest" || pathname === "/sw.js") {
+      pathname === "/manifest.webmanifest" || pathname === "/sw.js" || pathname === "/qr-app.png" || pathname === "/qr-app.svg") {
     return NextResponse.next();
   }
 

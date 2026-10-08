@@ -35,7 +35,8 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      window.location.href = "/";
+      const next=new URLSearchParams(window.location.search).get('next');
+      window.location.href = next?.startsWith('/p/') && !next.includes('\\') ? next : '/';
     } catch {
       setErr("เกิดข้อผิดพลาด กรุณาลองใหม่");
       setLoading(false);

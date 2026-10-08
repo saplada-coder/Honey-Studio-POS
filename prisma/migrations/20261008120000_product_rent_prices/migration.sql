@@ -1,0 +1,1 @@
+ALTER TABLE "Product" ADD COLUMN "rentPrices" TEXT NOT NULL DEFAULT '';

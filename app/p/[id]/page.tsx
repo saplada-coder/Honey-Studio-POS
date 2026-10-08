@@ -1,6 +1,9 @@
 // หน้าสินค้าสาธารณะ — ปลายทางของ QR บนสติกเกอร์ (สแกนแล้วเปิดหน้านี้ได้เลย ไม่ต้องล็อกอิน)
 // โชว์เฉพาะข้อมูลที่ให้ลูกค้าเห็นได้ ไม่โชว์ตำแหน่งเก็บ / มูลค่าชุด / หมายเหตุภายใน / จำนวนสตอก
 import { prisma } from "@/lib/prisma";
+import { currentUser } from '@/lib/session';
+import { productMeasurements, rentalPrice } from '@/lib/product-details';
+import RentalControls from './rental-controls';
 
 export const dynamic = "force-dynamic";
 
@@ -73,13 +76,14 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
   }
 
   const defects = parseUrls(p.defects);
-  const canRent = (p.type === "เช่า" || p.type === "ทั้งคู่") && (p.stockRent ?? 0) > 0;
+  const user=await currentUser();
+  const isStaff=!!user&&['เจ้าของ','ผู้ดูแลระบบ','พนักงานขาย'].includes(user.role);
+  const canRent = (p.type === "เช่า" || p.type === "ทั้งคู่") && (p.stockRent ?? 0) > 0 && !['ซัก','ซ่อม','ปลดสต็อก'].includes(p.status);
   const canSell = (p.type === "ขาย" || p.type === "ทั้งคู่") && (p.stockSell ?? 0) > 0;
   const available = canRent || canSell;
   const specs: [string, string][] = [
     ["ไซส์", p.size], ["สี", p.color],
-    ["อก", p.chest ? `${p.chest}"` : ""], ["เอว", p.waist ? `${p.waist}"` : ""],
-    ["สะโพก", p.hip ? `${p.hip}"` : ""], ["ความยาว", p.length ? `${p.length}"` : ""],
+    ...productMeasurements(p),
   ].filter(([, v]) => v) as [string, string][];
 
   return shell(
@@ -108,8 +112,9 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
           <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
             {p.rent > 0 && (
               <div style={{ flex: 1, background: C.goldBg, borderRadius: 12, padding: "10px 12px" }}>
-                <div style={{ fontSize: 11, color: "#8a6d1f" }}>ค่าเช่า</div>
-                <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "Georgia, serif" }}>{baht(p.rent)}</div>
+                <div style={{ fontSize: 11, color: "#8a6d1f" }}>ราคาเช่า</div>
+                {[1,3,5].map(days=><div key={days}>{days} วัน = {baht(rentalPrice(p,days))}</div>)}
+                <div>เพิ่มวัน +50 บาท/วัน</div><div>มัดจำ {baht(p.rent)} (ราคาเช่า 1 วัน)</div>
               </div>
             )}
             {p.sell > 0 && (
@@ -149,6 +154,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
           </>
         )}
 
+        {isStaff?<RentalControls product={{id:p.id,rent:p.rent,rentPrices:p.rentPrices,type:p.type}}/>:!user?<a href={`/login?next=${encodeURIComponent('/p/'+encodeURIComponent(p.id))}`} className="block mt-5 underline text-sm">พนักงาน: เข้าสู่ระบบเพื่อเช็คสต๊อก เช่า และคืน</a>:null}
         <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${C.line}`, fontSize: 12, color: C.taupe }}>
           ข้อมูลจากระบบร้าน · สถานะชุด: {p.status}
         </div>

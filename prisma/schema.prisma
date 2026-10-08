@@ -17,6 +17,7 @@ model Product {
   cat       String // หมวดหมู่
   type      String // เช่า / ขาย / ทั้งคู่
   rent      Int      @default(0) // ค่าเช่า (บาท)
+  rentPrices String  @default("") // JSON: [{days,price}] ราคาเช่าตามจำนวนวัน
   sell      Int      @default(0) // ราคาขาย (บาท)
   stockRent Int      @default(0) // จำนวนคลังเช่า
   stockSell Int      @default(0) // จำนวนคลังขาย
