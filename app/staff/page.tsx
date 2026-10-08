@@ -399,7 +399,9 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
         ) : (
           <div key={f.key}>
             <label className="text-xs" style={{ color: C.taupe }}>{f.label}{f.required && " *"}</label>
-            {f.type === "rentPrices" ? (
+            {f.type === "summary" ? (
+              <div className="mt-1 p-3 rounded-xl font-semibold text-sm" style={{background:C.goldBg}}>{f.value(form)}</div>
+            ) : f.type === "rentPrices" ? (
               <RentPriceField value={form[f.key]} onChange={v=>set(f.key,v)} rent={form.rent} />
             ) : f.type === "image" ? (
               <div className="mt-1"><ImageField value={form[f.key]} onChange={(v) => set(f.key, v)} /></div>
@@ -572,6 +574,8 @@ const customerFields = (isEdit) => [
   { key: "rentalStart", label: "วันรับชุด", type: "date", required:true, showIf:f=>!!f.rentalCode },
   { key: "rentalEnd", label: "วันคืนชุด", type: "date", required:true, showIf:f=>!!f.rentalCode },
   { key: "rentalFee", label: "ค่าเช่า (บาท) — เติมตามจำนวนวัน แก้ไขได้", type: "number", showIf:f=>!!f.rentalCode },
+  { key: "rentalDiscount", label: "ส่วนลดค่าเช่า (บาท)", type: "number", showIf:f=>!!f.rentalCode },
+  { key: "rentalNet", label: "ยอดหลังส่วนลด", type: "summary", showIf:f=>!!f.rentalCode, value:f=>`ค่าเช่าสุทธิ ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0)))} + เงินประกัน ${baht(Number(f.rentalDeposit||0))} = ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0))+Number(f.rentalDeposit||0))}` },
   { key: "rentalDeposit", label: "เงินประกัน (บาท)", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalPayment", label: "สถานะชำระเงิน", type: "select", default:'รอชำระ', options:['รอชำระ','ชำระแล้ว'], required:true, showIf:f=>!!f.rentalCode },
   { key: "orders", label: "จำนวนออเดอร์สะสม", type: "number" },
@@ -591,14 +595,15 @@ const rentalFields = (isEdit) => [
   { key: "cust", label: "ลูกค้า", type: "customer", required: true },
   { key: "paymentStatus", label: "สถานะรับชำระค่าใช้จ่าย", type: "select", options: ["รอชำระ", "ชำระแล้ว"] },
   { key: "loyaltyGroup", label: "เลขที่รายการเช่ารวม (กรณีหลายชุด)", placeholder: "ชุดในรายการเดียวกันใช้เลขเดียวกัน เพื่อรับรวม 1 แต้ม" },
-  { key: "promotion", label: "โปรโมชั่นที่ใช้", type: "select", options: [{value:"",label:"ไม่ใช้โปรโมชั่น"},{value:"bogo",label:"เช่า 1 แถม 1"},{value:"discount10",label:"ส่วนลดค่าเช่า 10%"},{value:"loyalty",label:"ใช้สิทธิ์ 10 แต้ม (ระบบบันทึก)",disabled:true}] },
+  { key: "promotion", label: "โปรโมชั่นที่ใช้", type: "select", options: [{value:"",label:"ไม่ใช้โปรโมชั่น"},{value:"bogo",label:"เช่า 1 แถม 1"},{value:"discount10",label:"ส่วนลดค่าเช่า 10%"},{value:"manual-discount",label:"ส่วนลดจากฟอร์มลูกค้า",disabled:true},{value:"loyalty",label:"ใช้สิทธิ์ 10 แต้ม (ระบบบันทึก)",disabled:true}] },
   { key: "phone", label: "เบอร์โทรลูกค้า", placeholder: "เช่น 081-234-5678" },
   { key: "userId", label: "รหัสสมาชิกจากแอพลูกค้า (ถ้ามี)", placeholder: "ให้ลูกค้าเปิดหน้าสมาชิก แล้วคัดลอกรหัส" },
   { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0, deposit: (p)=>p.rent||0 } },
   { key: "item", label: "รายการที่เช่า (แก้ไขได้)", required: true },
   { key: "start", label: "วันรับ", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "end", label: "วันคืน", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
-  { key: "fee", label: "ค่าเช่า (บาท)", type: "number" },
+  { key: "fee", label: "ค่าเช่าสุทธิ (บาท)", type: "number" },
+  { key: "discount", label: "ส่วนลดที่บันทึกจากฟอร์มลูกค้า (บาท)", type: "number", readOnly:true },
   { key: "deposit", label: "เงินมัดจำ (บาท)", type: "number" },
   { key: "fine", label: "ค่าปรับล่าช้า (บาท)", type: "number" },
   { key: "damage", label: "ค่าเสียหาย/ค่าซ่อม (บาท)", type: "number" },
@@ -1625,8 +1630,8 @@ function Customers({ customers, orders, products=[], saveEntity, deleteEntity })
           products={products.filter(p=>['เช่า','ทั้งคู่'].includes(p.type)&&p.stockRent>0&&!['ซัก','ซ่อม','ปลดสต็อก'].includes(p.status))}
           onClose={() => setForm(null)}
           onSubmit={async (data) => {
-            const {rentalCode,rentalStart,rentalEnd,rentalFee,rentalDeposit,rentalPayment,...customer}=data;
-            const rental=rentalCode?{code:rentalCode,start:rentalStart,end:rentalEnd,fee:rentalFee,deposit:rentalDeposit,paymentStatus:rentalPayment}:undefined;
+            const {rentalCode,rentalStart,rentalEnd,rentalFee,rentalDiscount,rentalNet,rentalDeposit,rentalPayment,...customer}=data;
+            const rental=rentalCode?{code:rentalCode,start:rentalStart,end:rentalEnd,fee:rentalFee,discount:rentalDiscount,deposit:rentalDeposit,paymentStatus:rentalPayment}:undefined;
             await saveEntity("customers", {...customer,rental}, form.mode === "edit" ? form.data.id : null);setForm(null);
           }}
         />

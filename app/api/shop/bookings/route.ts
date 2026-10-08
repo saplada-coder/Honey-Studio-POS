@@ -8,7 +8,7 @@ import {rentalPrice} from '@/lib/product-details';
 export const dynamic='force-dynamic';
 export async function GET(){
   const user=await currentUser();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});
-  const bookings=await prisma.rental.findMany({where:staffRoles.includes(user.role)?{online:true}:{userId:user.id},orderBy:{createdAt:'desc'},select:{id:true,code:true,cust:true,phone:true,item:true,start:true,end:true,fee:true,deposit:true,status:true,paymentStatus:true,paymentSlip:true,stockApplied:true,stockReturned:true,createdAt:true,online:true,rewardUsed:true}});
+  const bookings=await prisma.rental.findMany({where:staffRoles.includes(user.role)?{online:true}:{userId:user.id},orderBy:{createdAt:'desc'},select:{id:true,code:true,cust:true,phone:true,item:true,start:true,end:true,fee:true,discount:true,deposit:true,status:true,paymentStatus:true,paymentSlip:true,stockApplied:true,stockReturned:true,createdAt:true,online:true,rewardUsed:true}});
   return NextResponse.json(bookings);
 }
 export async function POST(req:Request){

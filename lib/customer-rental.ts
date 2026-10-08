@@ -12,7 +12,9 @@ export async function addCustomerRental(tx:Prisma.TransactionClient,customer:{na
   if(!isDate(String(r.start||''))||!isDate(String(r.end||''))||String(r.end)<=String(r.start))throw new Error('เลือกวันรับและวันคืน โดยวันคืนต้องอยู่หลังวันรับ');
   if(!['รอชำระ','ชำระแล้ว'].includes(String(r.paymentStatus)))throw new Error('เลือกสถานะชำระเงิน');
   for(const key of ['fee','deposit'])if(!Number.isSafeInteger(r[key])||Number(r[key])<0)throw new Error('ค่าเช่าและเงินประกันต้องเป็นจำนวนเต็มตั้งแต่ 0 บาท');
+  const discount=r.discount??0;
+  if(!Number.isSafeInteger(discount)||Number(discount)<0||Number(discount)>Number(r.fee))throw new Error('ส่วนลดต้องเป็นจำนวนเต็มตั้งแต่ 0 บาท และไม่เกินค่าเช่า');
   const code=String(r.code||'').trim(),product=await tx.product.findUnique({where:{id:code}});
   if(!product||!['เช่า','ทั้งคู่'].includes(product.type))throw new Error('กรุณาเลือกชุดเช่าจากคลัง');
-  await createStaffRental(tx,{id:'R-'+randomUUID(),cust:customer.name,phone:customer.phone,code,item:product.name,start:r.start,end:r.end,fee:r.fee,deposit:r.deposit,paymentStatus:r.paymentStatus,status:'จองแล้ว'});
+  await createStaffRental(tx,{id:'R-'+randomUUID(),cust:customer.name,phone:customer.phone,code,item:product.name,start:r.start,end:r.end,fee:Number(r.fee)-Number(discount),discount,promotion:Number(discount)>0?'manual-discount':'',deposit:r.deposit,paymentStatus:r.paymentStatus,status:'จองแล้ว'});
 }

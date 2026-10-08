@@ -76,6 +76,7 @@ model Order {
 
 // ===== การเช่า =====
 model Rental {
+  discount Int @default(0)
   paidAmount Int @default(0)
   rewardUsed Boolean @default(false)
   rewardValue Int @default(0)
