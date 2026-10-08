@@ -44,3 +44,7 @@ next-env.d.ts
 .env*.local
 
 /app/generated/prisma
+
+# Local stock import reports and database snapshots
+/scripts/*-result.json
+/scripts/*-before-update.json
