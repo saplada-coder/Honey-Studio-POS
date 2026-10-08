@@ -91,6 +91,10 @@ model Rental {
   photoAfter  String   @default("") // รูปหลังรับคืน
   condition   String   @default("") // สภาพหลังรับคืน
   inspector   String   @default("") // ผู้ตรวจ/ดูแล
+  userId      String   @default("") // เจ้าของการจองออนไลน์ ใช้ตรวจสิทธิ์ตรง ID
+  online      Boolean  @default(false)
+  paymentStatus String @default("รอชำระ")
+  paymentSlip String   @default("")
   status      String   @default("จองแล้ว")
   stockApplied  Boolean @default(false) // ตัดสต็อกเช่าไปแล้วหรือยัง (กันตัดซ้ำ)
   stockReturned Boolean @default(false) // คืนสต็อกเช่าแล้วหรือยัง (กันคืนซ้ำ)
@@ -168,4 +172,39 @@ model User {
   icon         String   @default("Users") // ชื่อไอคอน (lucide)
   color        String   @default("#A8978E")
   createdAt    DateTime @default(now())
+}
+
+model ShopSettings {
+  id String @id @default("main")
+  data String @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+model CustomerReview {
+  id String @id @default(cuid())
+  userId String
+  rentalId String @unique
+  name String
+  text String
+  image String @default("")
+  consent Boolean @default(false)
+  approved Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model LoyaltyEntry {
+  id String @id @default(cuid())
+  userId String
+  rentalId String @unique
+  points Int @default(1)
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+model NotificationRead {
+  id String @id @default(cuid())
+  userId String
+  key String
+  createdAt DateTime @default(now())
+  @@unique([userId, key])
 }

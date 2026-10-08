@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { currentUser } from '@/lib/session';
 import { productMeasurements, rentalPrice } from '@/lib/product-details';
 import RentalControls from './rental-controls';
+import LineContact from '@/app/shop/line-contact';
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function PublicProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const p = await prisma.product.findUnique({ where: { id: safeDecode(id) } });
+  const user=await currentUser();
+  const isStaff=!!user&&['เจ้าของ','ผู้ดูแลระบบ','พนักงานขาย'].includes(user.role);
 
   const shell = (children: React.ReactNode) => (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.charcoal, fontFamily: "'Noto Sans Thai', -apple-system, 'Segoe UI', sans-serif" }}>
@@ -55,8 +58,9 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
           <div style={{ fontSize: 12, color: C.taupe }}>ร้านเช่า–ขาย ชุด รองเท้า กระเป๋า</div>
         </div>
         {children}
+        {!isStaff&&<LineContact/>}
         <div style={{ textAlign: "center", fontSize: 12, color: C.taupe, marginTop: 22 }}>
-          สอบถาม/จอง: โทร 074-000-000 · LINE @honeystudio
+          <a href="https://lin.ee/OfHxMgW" target="_blank" rel="noopener noreferrer">สอบถาม / จองทาง LINE</a>
         </div>
       </div>
     </div>
@@ -76,8 +80,6 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
   }
 
   const defects = parseUrls(p.defects);
-  const user=await currentUser();
-  const isStaff=!!user&&['เจ้าของ','ผู้ดูแลระบบ','พนักงานขาย'].includes(user.role);
   const canRent = (p.type === "เช่า" || p.type === "ทั้งคู่") && (p.stockRent ?? 0) > 0 && !['ซัก','ซ่อม','ปลดสต็อก'].includes(p.status);
   const canSell = (p.type === "ขาย" || p.type === "ทั้งคู่") && (p.stockSell ?? 0) > 0;
   const available = canRent || canSell;
@@ -154,6 +156,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
           </>
         )}
 
+        <div className="flex flex-wrap gap-3 mt-5"><a href={'/shop?view=booking&product='+encodeURIComponent(p.id)} className="shop-button">จองชุดออนไลน์</a><a href={'/shop?view=calendar&product='+encodeURIComponent(p.id)} className="shop-button secondary">ตรวจวันที่ว่าง</a></div>
         {isStaff?<RentalControls product={{id:p.id,rent:p.rent,rentPrices:p.rentPrices,type:p.type}}/>:!user?<a href={`/login?next=${encodeURIComponent('/p/'+encodeURIComponent(p.id))}`} className="block mt-5 underline text-sm">พนักงาน: เข้าสู่ระบบเพื่อเช็คสต๊อก เช่า และคืน</a>:null}
         <div style={{ marginTop: 18, paddingTop: 14, borderTop: `1px solid ${C.line}`, fontSize: 12, color: C.taupe }}>
           ข้อมูลจากระบบร้าน · สถานะชุด: {p.status}

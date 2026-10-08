@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { currentUser, isOwnRecord } from "@/lib/session";
+import {isDate,remainingForDates} from '@/lib/booking-availability';
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export async function GET() {
   // role "ลูกค้า" ต้องเห็นเฉพาะการเช่าของตัวเอง — กรองที่เซิร์ฟเวอร์ (ดูคำอธิบายใน /api/orders)
   const me = await currentUser();
   if (me?.role === "ลูกค้า") {
-    return NextResponse.json(rentals.filter((r) => isOwnRecord(r.cust, me.name)));
+    return NextResponse.json(rentals.filter((r) => r.online?r.userId===me.id:isOwnRecord(r.cust, me.name)));
   }
   return NextResponse.json(rentals);
 }
@@ -24,6 +25,12 @@ export async function POST(req: Request) {
   try{
     const created=await prisma.$transaction(async tx=>{
       if(code){
+        await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${code} FOR UPDATE`;
+        if(isDate(String(body.start||''))&&isDate(String(body.end||''))){
+          const product=await tx.product.findUnique({where:{id:code}});
+          const reservations=await tx.rental.findMany({where:{code,stockReturned:false,status:{notIn:['คืนแล้ว','ยกเลิก']}}});
+          if(!product||remainingForDates(product,reservations,body.start,body.end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
+        }
         const claimed=await tx.product.updateMany({where:{id:code,type:{in:['เช่า','ทั้งคู่']},stockRent:{gt:0},status:{notIn:['ซัก','ซ่อม','ปลดสต็อก']}},data:{stockRent:{decrement:1}}});
         if(!claimed.count)throw new Error('ชุดนี้ไม่มีสต๊อกพร้อมเช่า');
       }

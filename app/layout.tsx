@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HONEY STUDIO POS",
-  description: "ระบบจัดการร้านเช่า-ขายชุด HONEY STUDIO",
+  title: "HONEY STUDIO · เช่าชุดสำหรับวันสำคัญ",
+  description: "เลือกชุด ดูขนาด ตรวจวันว่าง และจองชุดออนไลน์กับ HONEY STUDIO",
   // ===== PWA: ให้ติดตั้งเป็นแอปบนมือถือได้ (manifest + ไอคอน iPhone) =====
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Honey Studio" },

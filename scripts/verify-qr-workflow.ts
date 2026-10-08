@@ -5,7 +5,7 @@ import {Client} from 'pg';
 import {createSession} from '../lib/auth';
 config({path:'.env.local',quiet:true});
 async function main(){
-  const base='http://127.0.0.1:3018';
+  const base=process.env.QR_TEST_BASE_URL||'http://127.0.0.1:3019';
   const id='TEST-QR-'+randomUUID();
   const token=await createSession({id:'test-qr',name:'ตรวจระบบ QR ชั่วคราว',role:'เจ้าของ',email:'test-qr@example.invalid'});
   const customer=await createSession({id:'test-readonly',name:'ทดสอบ',role:'ลูกค้า',email:'test-readonly@example.invalid'});
@@ -19,7 +19,7 @@ async function main(){
     const denied=await request(action,undefined,'');assert.equal(denied.status,401);
     const readonly=await request(action,undefined,customer);assert.equal(readonly.status,403);
     const created=await request('/api/products',{id,name:'ตรวจระบบ QR ชั่วคราว',cat:'ชุดราตรี',type:'เช่า',rent:300,rentPrices:JSON.stringify([{days:3,price:450},{days:5,price:650}]),stockRent:1,stockSell:0,chest:30,waist:26,hip:32,note:'ยาว 53.5 นิ้ว (135.89 ซม.)'});assert.equal(created.status,201);
-    const publicPage=await fetch(base+'/p/'+id);assert.equal(publicPage.status,200);const html=await publicPage.text();assert.ok(html.includes('53.5 นิ้ว'));assert.ok(html.includes('450'));assert.ok(html.includes('มัดจำ'));assert.ok(!html.includes('ชื่อลูกค้า'));
+    const publicPage=await fetch(base+'/p/'+id);assert.equal(publicPage.status,200);const html=await publicPage.text();assert.ok(html.includes('53.5 นิ้ว'),JSON.stringify({note:created.data.note,spec:html.slice(Math.max(0,html.indexOf('ความยาว')-80),html.indexOf('ความยาว')+300),url:publicPage.url}));assert.ok(html.includes('450'));assert.ok(html.includes('มัดจำ'));assert.ok(!html.includes('ชื่อลูกค้า'));assert.ok(html.includes('https://lin.ee/OfHxMgW'));
     const staffPage=await fetch(base+'/p/'+id,{headers:{Cookie:'hs_session='+token}});assert.ok((await staffPage.text()).includes('ชื่อลูกค้า'));
     const invalid=await request(action,{action:'rent',cust:'ทดสอบ',start:'2026-10-08',days:0});assert.equal(invalid.status,400);
     const rentals=await Promise.all([1,2].map(()=>request(action,{action:'rent',cust:'ทดสอบระบบชั่วคราว',start:'2026-10-08',days:3})));

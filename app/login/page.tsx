@@ -36,7 +36,8 @@ export default function LoginPage() {
         return;
       }
       const next=new URLSearchParams(window.location.search).get('next');
-      window.location.href = next?.startsWith('/p/') && !next.includes('\\') ? next : '/';
+      const safeNext=next&&(next.startsWith('/p/')||next.startsWith('/shop'))&&!next.includes('\\')?next:null;
+      window.location.href = safeNext || (data.user?.role==='ลูกค้า'?'/shop':'/staff');
     } catch {
       setErr("เกิดข้อผิดพลาด กรุณาลองใหม่");
       setLoading(false);

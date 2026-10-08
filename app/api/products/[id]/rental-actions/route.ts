@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { currentUser } from '@/lib/session';
 import { rentalPrice } from '@/lib/product-details';
+import {remainingForDates} from '@/lib/booking-availability';
+import {awardReturnPoint} from '@/lib/customer-rewards';
 export const dynamic='force-dynamic';
 const staffRoles=['เจ้าของ','ผู้ดูแลระบบ','พนักงานขาย'];
 async function staff(){const user=await currentUser();return user&&staffRoles.includes(user.role)?user:null;}
@@ -12,7 +14,8 @@ export async function GET(_req:Request,{params}:{params:Promise<{id:string}>}){
   const product=await prisma.product.findUnique({where:{id}});
   if(!product)return NextResponse.json({error:'ไม่พบสินค้า'},{status:404});
   const rentals=await prisma.rental.findMany({where:{code:id,stockApplied:true,stockReturned:false,status:{not:'คืนแล้ว'}},select:{id:true,cust:true,start:true,end:true,status:true},orderBy:{createdAt:'desc'}});
-  return NextResponse.json({stockRent:product.stockRent,stockSell:product.stockSell,status:product.status,rentals});
+  const bookings=await prisma.rental.findMany({where:{code:id,online:true,stockApplied:false,stockReturned:false,paymentStatus:'ชำระแล้ว',status:{notIn:['คืนแล้ว','ยกเลิก']}},select:{id:true,cust:true,start:true,end:true,status:true},orderBy:{start:'asc'}});
+  return NextResponse.json({stockRent:product.stockRent,stockSell:product.stockSell,status:product.status,rentals,bookings});
 }
 export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
   const user=await staff();if(!user)return NextResponse.json({error:'เฉพาะพนักงานที่ล็อกอิน'},{status:403});
@@ -28,6 +31,8 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
         await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${id} FOR UPDATE`;
         const product=await tx.product.findUnique({where:{id}});
         if(!product||!['เช่า','ทั้งคู่'].includes(product.type)||['ซัก','ซ่อม','ปลดสต็อก'].includes(product.status))throw new Error('ชุดนี้ยังไม่พร้อมเช่า');
+        const reservations=await tx.rental.findMany({where:{code:id,stockReturned:false,status:{notIn:['คืนแล้ว','ยกเลิก']}}});
+        if(remainingForDates(product,reservations,start,end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
         const claimed=await tx.product.updateMany({where:{id,stockRent:{gt:0}},data:{stockRent:{decrement:1}}});
         if(!claimed.count)throw new Error('สต๊อกเช่าหมดแล้ว กรุณาตรวจใหม่');
         return tx.rental.create({data:{id:'R-'+randomUUID(),code:id,item:product.name,cust,phone:String(body.phone||'').slice(0,40),start,end,fee:rentalPrice(product,days),deposit:product.rent,status:'รับชุดแล้ว',inspector:user.name,stockApplied:true,stockReturned:false}});
@@ -40,6 +45,7 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
         const returned=await tx.rental.updateMany({where:{id:rentalId,code:id,stockApplied:true,stockReturned:false,status:{not:'คืนแล้ว'}},data:{status:'คืนแล้ว',stockReturned:true,inspector:user.name,condition:String(body.condition||'').slice(0,1000)}});
         if(!returned.count)throw new Error('รายการนี้คืนแล้ว หรือไม่ตรงกับชุดที่สแกน');
         await tx.product.update({where:{id},data:{stockRent:{increment:1}}});
+        await awardReturnPoint(tx,await tx.rental.findUniqueOrThrow({where:{id:rentalId}}));
       },{timeout:15000});
       return NextResponse.json({ok:true});
     }
