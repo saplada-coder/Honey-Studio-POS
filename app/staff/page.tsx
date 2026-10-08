@@ -357,6 +357,14 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
     return base;
   });
   const [saving, setSaving] = useState(false);
+  useEffect(()=>{
+    const product=products.find(p=>p.id===(form.rentalCode||form.code));
+    if(!product)return;
+    setForm(s=>{
+      const key='rentalDeposit' in s?'rentalDeposit':'deposit' in s?'deposit':null;
+      return key&&s[key]!==product.rent?{...s,[key]:product.rent}:s;
+    });
+  },[form.rentalCode,form.code,products]);
   const [err, setErr] = useState("");
   const set = (k, v) => setForm((s) => {
     const next={...s,[k]:v};
@@ -583,7 +591,7 @@ const customerFields = (isEdit) => [
   { key: "rentalFee", label: "ค่าเช่า (บาท) — เติมตามจำนวนวัน แก้ไขได้", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalDiscount", label: "ส่วนลดค่าเช่า (บาท)", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalNet", label: "ยอดหลังส่วนลด", type: "summary", showIf:f=>!!f.rentalCode, value:f=>`ค่าเช่าสุทธิ ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0)))} + เงินประกัน ${baht(Number(f.rentalDeposit||0))} = ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0))+Number(f.rentalDeposit||0))}` },
-  { key: "rentalDeposit", label: "เงินประกัน (บาท)", type: "number", showIf:f=>!!f.rentalCode },
+  { key: "rentalDeposit", label: "เงินประกัน = ค่าเช่าชุด 1 วัน (อัตโนมัติ)", type: "number", readOnly:true, showIf:f=>!!f.rentalCode },
   { key: "rentalPayment", label: "สถานะชำระเงิน", type: "select", default:'รอชำระ', options:['รอชำระ','ชำระแล้ว'], required:true, showIf:f=>!!f.rentalCode },
   { key: "orders", label: "จำนวนออเดอร์สะสม", type: "number" },
   { key: "spent", label: "ยอดใช้จ่ายสะสม", type: "number" },
@@ -611,7 +619,7 @@ const rentalFields = (isEdit) => [
   { key: "end", label: "วันคืน", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "fee", label: "ค่าเช่าสุทธิ (บาท)", type: "number" },
   { key: "discount", label: "ส่วนลดที่บันทึกจากฟอร์มลูกค้า (บาท)", type: "number", readOnly:true },
-  { key: "deposit", label: "เงินมัดจำ (บาท)", type: "number" },
+  { key: "deposit", label: "เงินประกัน = ค่าเช่าชุด 1 วัน (อัตโนมัติ)", type: "number", readOnly:true },
   { key: "fine", label: "ค่าปรับล่าช้า (บาท)", type: "number" },
   { key: "damage", label: "ค่าเสียหาย/ค่าซ่อม (บาท)", type: "number" },
   { key: "status", label: "สถานะ", type: "select", options: RENTAL_STATUS },

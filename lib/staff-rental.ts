@@ -9,8 +9,9 @@ export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<
   if(userId&&(!isDate(String(body.start||''))||!isDate(String(body.end||''))||body.end<=body.start))throw new Error('รายการสมาชิกต้องระบุวันรับและวันคืนเป็นวันที่จริง โดยวันคืนหลังวันรับ');
   if(code){
     await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${code} FOR UPDATE`;
+    const product=await tx.product.findUnique({where:{id:code}});
+    if(product)clean.deposit=product.rent;
     if(isDate(String(body.start||''))&&isDate(String(body.end||''))){
-      const product=await tx.product.findUnique({where:{id:code}});
       const reservations=await tx.rental.findMany({where:{code,stockReturned:false,status:{notIn:['คืนแล้ว','ยกเลิก']}}});
       if(!product||remainingForDates(product,reservations,body.start,body.end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
     }
