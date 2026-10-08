@@ -12,7 +12,7 @@ async function main(){
   const db=new Client({connectionString:process.env.DATABASE_URL});await db.connect();let memberId='';
   async function req(path:string,cookie='',method='GET',body?:object){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(cookie?{Cookie:'hs_session='+cookie}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')};}
   try{
-    const join=await fetch(base+'/join',{redirect:'manual'});assert.equal(join.status,307);assert.ok(join.headers.get('location')?.includes('/login?next=%2Fmember'));
+    const join=await fetch(base+'/join',{redirect:'manual'});assert.equal(join.status,307);assert.ok(join.headers.get('location')?.includes('/customer-login'));
     const register=await req('/api/auth/register','','POST',{name:'สมาชิกหน้าร้านทดสอบ',email,password:'test-'+suffix});assert.equal(register.status,200);memberId=register.data.user.id;
     const cookie=register.cookie!.match(/hs_session=([^;]+)/)![1];
     const joined=await fetch(base+'/join',{headers:{Cookie:'hs_session='+cookie},redirect:'manual'});assert.ok(joined.headers.get('location')?.endsWith('/member'));

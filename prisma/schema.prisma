@@ -165,6 +165,7 @@ model Shipment {
 // ===== ผู้ใช้งานระบบ =====
 model User {
   id           String   @id @default(cuid())
+  phone        String?  @unique
   name         String
   role         String // เจ้าของ / ผู้ดูแลระบบ / พนักงานขาย / ลูกค้า
   email        String   @unique
@@ -172,6 +173,12 @@ model User {
   icon         String   @default("Users") // ชื่อไอคอน (lucide)
   color        String   @default("#A8978E")
   createdAt    DateTime @default(now())
+}
+
+model MemberLoginLimit {
+  key String @id
+  attempts Int @default(1)
+  expiresAt DateTime
 }
 
 model ShopSettings {

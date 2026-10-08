@@ -21,7 +21,8 @@ export async function GET(){
     return result;
   });
   const readIds=new Set(read.map(r=>r.key));
-  return NextResponse.json({memberId:user.id,name:user.name,rentals:rentals.map(r=>({id:r.id,item:r.item,start:r.start,end:r.end,status:r.status,online:r.online})),balance:history.reduce((sum,e)=>sum+e.points,0),history,notifications:notifications.map(n=>({...n,read:readIds.has(n.id)}))},{headers:{'Cache-Control':'no-store'}});
+  const member=await prisma.user.findUnique({where:{id:user.id},select:{phone:true}});
+  return NextResponse.json({memberId:user.id,name:user.name,phone:member?.phone||'',rentals:rentals.map(r=>({id:r.id,item:r.item,start:r.start,end:r.end,status:r.status,online:r.online,deposit:r.deposit,fee:r.fee,fine:r.fine,damage:r.damage})),balance:history.reduce((sum,e)=>sum+e.points,0),history,notifications:notifications.map(n=>({...n,read:readIds.has(n.id)}))},{headers:{'Cache-Control':'no-store'}});
 }
 export async function PATCH(req:Request){
   const user=await currentUser();if(!user)return NextResponse.json({error:'กรุณาเข้าสู่ระบบ'},{status:401});

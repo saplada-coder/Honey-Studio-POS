@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import {memberPhone} from '@/lib/member-identity';
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,17 @@ const ROLE_STYLE: Record<string, { icon: string; color: string }> = {
 export async function GET() {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, role: true, email: true, icon: true, color: true },
+    select: { id: true, name: true, phone:true, role: true, email: true, icon: true, color: true },
   });
   return NextResponse.json(users);
 }
 
 // เพิ่มผู้ใช้ใหม่
 export async function POST(req: Request) {
-  const { name, email, password, role } = await req.json();
+  const { name, email, password, role, phone } = await req.json();
+  const normalizedPhone=phone?memberPhone(phone):null;
+  if(phone&&(!normalizedPhone||role!=='ลูกค้า'))return NextResponse.json({error:'เบอร์โทรเข้าสู่ระบบต้องถูกต้องและใช้เฉพาะลูกค้า'},{status:400});
+  if(normalizedPhone&&await prisma.user.findUnique({where:{phone:normalizedPhone}}))return NextResponse.json({error:'เบอร์นี้เป็นสมาชิกอยู่แล้ว'},{status:409});
   if (!name || !email || !password || !role) {
     return NextResponse.json({ error: "กรุณากรอกชื่อ อีเมล รหัสผ่าน และบทบาท" }, { status: 400 });
   }
@@ -38,7 +42,7 @@ export async function POST(req: Request) {
   const style = ROLE_STYLE[role] || ROLE_STYLE["ลูกค้า"];
   const passwordHash = await bcrypt.hash(String(password), 10);
   const user = await prisma.user.create({
-    data: { name: String(name).trim(), email: mail, passwordHash, role, icon: style.icon, color: style.color },
+    data: { name: String(name).trim(), phone:normalizedPhone, email: mail, passwordHash, role, icon: style.icon, color: style.color },
   });
   return NextResponse.json({ id: user.id, name: user.name, role: user.role, email: user.email }, { status: 201 });
 }

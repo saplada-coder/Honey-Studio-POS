@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
+import {memberPhone} from '@/lib/member-identity';
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +34,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "ผู้ดูแลระบบไม่มีสิทธิ์แก้ไขบัญชีเจ้าของ" }, { status: 403 });
   }
 
-  const { name, role, password } = await req.json();
-  const data: { name?: string; role?: string; icon?: string; color?: string; passwordHash?: string } = {};
+  const { name, role, password, phone } = await req.json();
+  const data: { name?: string; role?: string; icon?: string; color?: string; passwordHash?: string;phone?:string|null } = {};
+  if(phone!==undefined){
+    if(String(phone||'').trim()){
+      if((role||target.role)!=='ลูกค้า')return NextResponse.json({error:'เบอร์เข้าสู่ระบบใช้เฉพาะสมาชิกที่เป็นลูกค้า'},{status:400});
+      const normalized=memberPhone(phone);if(!normalized)return NextResponse.json({error:'เบอร์โทรไม่ถูกต้อง'},{status:400});
+      const existing=await prisma.user.findUnique({where:{phone:normalized}});if(existing&&existing.id!==id)return NextResponse.json({error:'เบอร์นี้เป็นสมาชิกอยู่แล้ว กรุณาใช้บัญชีนั้นหรือให้เจ้าของตรวจสอบก่อน'},{status:409});
+      data.phone=normalized;
+    }else data.phone=null;
+  }
+  if(role&&role!=='ลูกค้า')data.phone=null;
 
   if (name && String(name).trim()) data.name = String(name).trim();
 

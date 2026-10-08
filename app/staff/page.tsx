@@ -634,6 +634,7 @@ const shipFields = (isEdit) => [
 ];
 const userFields = (isEdit) => [
   { key: "name", label: "ชื่อ-นามสกุล", required: true },
+  { key: "phone", label: "เบอร์สมาชิก (เฉพาะลูกค้า)", placeholder: "ผูกเบอร์กับบัญชีเดิมเพื่อเก็บรายการเช่าและแต้มเดิม" },
   { key: "email", label: "อีเมล (ใช้ล็อกอิน)", required: !isEdit, readOnly: isEdit, placeholder: "name@studio.co" },
   { key: "password", label: isEdit ? "รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)" : "รหัสผ่าน (อย่างน้อย 6 ตัว)", required: !isEdit },
   { key: "role", label: "บทบาท", type: "select", required: true, options: ["เจ้าของ", "ผู้ดูแลระบบ", "พนักงานขาย", "ลูกค้า"] },

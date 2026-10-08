@@ -11,7 +11,7 @@ export async function proxy(req: NextRequest) {
   // /p/<รหัสสินค้า> = หน้าสินค้าสาธารณะ (ปลายทางของ QR บนสติกเกอร์ ลูกค้าสแกนแล้วต้องเปิดได้เลย)
   // โลโก้/ไอคอน = ไฟล์รูปสาธารณะ ต้องโหลดได้แม้ยังไม่ล็อกอิน (หน้า login + หน้าสินค้าสาธารณะใช้)
   // manifest + sw.js = ไฟล์ PWA สำหรับติดตั้งเป็นแอปมือถือ ต้องเปิดสาธารณะเช่นกัน
-  if (pathname === '/join' || pathname === '/' || pathname === '/shop' || pathname.startsWith('/shop/') || pathname.startsWith('/api/shop/') || pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/") ||
+  if (pathname === '/customer-login' || pathname === '/join' || pathname === '/' || pathname === '/shop' || pathname.startsWith('/shop/') || pathname.startsWith('/api/shop/') || pathname.startsWith("/login") || pathname.startsWith("/api/auth") || pathname.startsWith("/p/") ||
       pathname === "/logo.png" || pathname.startsWith("/icon") || pathname.startsWith("/apple-icon") ||
       pathname === "/manifest.webmanifest" || pathname === "/sw.js" || pathname === "/qr-app.png" || pathname === "/qr-app.svg") {
     return NextResponse.next();

@@ -29,7 +29,7 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
       if(!Number.isInteger(days)||days<1||days>365||!cust||cust.length>200||!/^\d{4}-\d{2}-\d{2}$/.test(start)||!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==start)return NextResponse.json({error:'กรอกชื่อลูกค้า วันที่รับ และจำนวนวัน 1–365'},{status:400});
       const end=new Date(date.getTime()+days*86400000).toISOString().slice(0,10);
       const rental=await prisma.$transaction(async tx=>{
-        const userId=await validateMember(tx,body.userId);
+        const userId=await validateMember(tx,body.userId,{name:cust,phone:body.phone});
         await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${id} FOR UPDATE`;
         const product=await tx.product.findUnique({where:{id}});
         if(!product||!['เช่า','ทั้งคู่'].includes(product.type)||['ซัก','ซ่อม','ปลดสต็อก'].includes(product.status))throw new Error('ชุดนี้ยังไม่พร้อมเช่า');

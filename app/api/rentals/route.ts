@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const { stockApplied: _a, stockReturned: _b, ...clean } = body;
   try{
     const created=await prisma.$transaction(async tx=>{
-      const userId=await validateMember(tx,body.userId);
+      const userId=await validateMember(tx,body.userId,{name:body.cust,phone:body.phone});
       if(userId&&(!isDate(String(body.start||''))||!isDate(String(body.end||''))||body.end<=body.start))throw new Error('รายการสมาชิกต้องระบุวันรับและวันคืนเป็นวันที่จริง โดยวันคืนหลังวันรับ');
       if(code){
         await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${code} FOR UPDATE`;
