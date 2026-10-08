@@ -1,0 +1,1453 @@
+{
+  "status": "user confirmed measurement multipliers and separate physical items",
+  "additionalCodeMapping": {
+    "1": 95,
+    "2": 96,
+    "3": 97,
+    "4": 98
+  },
+  "rows": [
+    {
+      "family": "ชุดที่",
+      "number": 1,
+      "heading": "ชุดที่ 1 เดรสยาวมีหางพริ้วไหว สีชมพู•",
+      "chestSource": "30",
+      "waistSource": "26",
+      "hipSource": "32",
+      "lengthSource": [
+        "53.5 นิ้ว 136เซน"
+      ],
+      "rawSource": "ชุดที่ 1 เดรสยาวมีหางพริ้วไหว สีชมพู•\nอก 30\nเอว 26\nสะโพก 32\nยาว 53.5 นิ้ว 136เซน",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 2,
+      "heading": "ชุดที่ 2 เดรสปาดไหล่ ตะข่ายแขนเดียว •",
+      "chestSource": "32",
+      "waistSource": "26",
+      "hipSource": "31",
+      "lengthSource": [
+        "54 นิ้ว 137 เซน"
+      ],
+      "rawSource": "ชุดที่ 2 เดรสปาดไหล่ ตะข่ายแขนเดียว •\nอก 32\nเอว 26\nสะโพก 31\nยาว 54 นิ้ว 137 เซน",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 3,
+      "heading": "ชุดที่ 3 เดรสสั้นอกกว้าง ไหล่จีบ •",
+      "chestSource": "34",
+      "waistSource": "27",
+      "hipSource": "31",
+      "lengthSource": [
+        "42 นิ้ว 107 เซน"
+      ],
+      "rawSource": "ชุดที่ 3 เดรสสั้นอกกว้าง ไหล่จีบ •\nอก 34\nเอว 27\nสะโพก31\nยาว 42 นิ้ว 107 เซน",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 4,
+      "heading": "ชุดที่ 4 เดรสปาดไหล่ จับจีบแหวกข้าง •",
+      "chestSource": "32",
+      "waistSource": "30",
+      "hipSource": "34",
+      "lengthSource": [
+        "58 147.5"
+      ],
+      "rawSource": "ชุดที่ 4 เดรสปาดไหล่ จับจีบแหวกข้าง •\nอก 32\nเอว 30\nสะโพก34\nยาว 58 147.5",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 5,
+      "heading": "ชุดที่ 5 เดรสสั้นหัวเข่า ปาดไหล่ ด้านซ้าย หน้าตะข่าย [มีตำหนิ]•",
+      "chestSource": "34",
+      "waistSource": "30",
+      "hipSource": "36",
+      "lengthSource": [
+        "44 นิ้ว 112 เซน"
+      ],
+      "rawSource": "ชุดที่ 5 เดรสสั้นหัวเข่า ปาดไหล่ ด้านซ้าย หน้าตะข่าย [มีตำหนิ]•\nอก 34\nเอว 30\nสะโพก36\nยาว 44 นิ้ว 112 เซน",
+      "multiplier": 1,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 6,
+      "heading": "ชุดที่ 6 เดรสแขนกุด เอวจับจีบ •",
+      "chestSource": "32",
+      "waistSource": "26",
+      "hipSource": "36",
+      "lengthSource": [
+        "50 นิ้ว 127 เซน"
+      ],
+      "rawSource": "ชุดที่ 6 เดรสแขนกุด เอวจับจีบ •\nอก 32\nเอว 26\nสะโพก 36\nยาว 50 นิ้ว 127 เซน",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 7,
+      "heading": "ชุดที่ 7 เดรสปาดข้าง ผูกโบว์หัวไหล่ •",
+      "chestSource": "32",
+      "waistSource": "26",
+      "hipSource": "34",
+      "lengthSource": [
+        "49 นิ้ว 124.5 เซน"
+      ],
+      "rawSource": "ชุดที่ 7 เดรสปาดข้าง ผูกโบว์หัวไหล่ •\nอก 32\nเอว 26\nสะโพก 34\nยาว 49 นิ้ว 124.5 เซน",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 8,
+      "heading": "ชุดที่ 8 สายเดี่ยวตะข่าย •",
+      "chestSource": "32",
+      "waistSource": "30",
+      "hipSource": "32",
+      "lengthSource": [
+        "58นิ้ว 147เซน"
+      ],
+      "rawSource": "ชุดที่ 8 สายเดี่ยวตะข่าย •\nอก 32\nเอว 30\nสะโพก 32\nยาว 58นิ้ว 147เซน\n\n8/7/2026",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 9,
+      "heading": "ชุดที่ 9 เดรสยาว จีบกลาง?+•",
+      "chestSource": "21",
+      "waistSource": "16.5",
+      "hipSource": "19",
+      "lengthSource": [
+        "58.5 นิ้ว 149 เซน"
+      ],
+      "rawSource": "ชุดที่ 9 เดรสยาว จีบกลาง?+•\nอก 21\nเอว 16.5\nสะโพก 19\nยาว 58.5 นิ้ว 149 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 10,
+      "heading": "ชุดที่ 10 กระโปรง เกาะอก โบว์ใหญ่ +",
+      "chestSource": "16",
+      "waistSource": "13",
+      "hipSource": "15",
+      "lengthSource": [
+        "เสื้อ10 ยาว20.54 เซน กระโปรง 37.5 ยาว95"
+      ],
+      "rawSource": "ชุดที่ 10 กระโปรง เกาะอก โบว์ใหญ่ +\nอก 16\nเอว 13\nสะโพก 15\nยาว เสื้อ10 ยาว20.54 เซน กระโปรง 37.5 ยาว95",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 11,
+      "heading": "ชุดที่ 11 เดรสตะข่ายแนวขวาง +",
+      "chestSource": "18",
+      "waistSource": "15",
+      "hipSource": "17",
+      "lengthSource": [
+        "43.5 นิ้วื111 เซน"
+      ],
+      "rawSource": "ชุดที่ 11 เดรสตะข่ายแนวขวาง +\nอก 18\nเอว 15\nสะโพก 17\nยาว 43.5 นิ้วื111 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 12,
+      "heading": "ชุดที่ 12 ปาดไหล่ มีสายหลัง (ตำหนิ)",
+      "chestSource": "16",
+      "waistSource": "13",
+      "hipSource": "17",
+      "lengthSource": [
+        "56 นิ้ว 143 เซน"
+      ],
+      "rawSource": "ชุดที่ 12 ปาดไหล่ มีสายหลัง (ตำหนิ)\nอก 16\nเอว 13\nสะโพก 17\nยาว 56 นิ้ว 143 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 13,
+      "heading": "ชุดที่ 13 เดรสจีบ ดอกไม้ติดเอว •",
+      "chestSource": "18",
+      "waistSource": "16",
+      "hipSource": "18",
+      "lengthSource": [
+        "46.5 นิ้ว 118 เซน"
+      ],
+      "rawSource": "ชุดที่ 13 เดรสจีบ ดอกไม้ติดเอว •\nอก 18\nเอว 16\nสะโพก 18\nยาว 46.5 นิ้ว 118 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 14,
+      "heading": "ชุดที่ 14 เดรสยาวผูกโบว์คล้องคอ•",
+      "chestSource": "17",
+      "waistSource": "13",
+      "hipSource": "17",
+      "lengthSource": [
+        "57.5นิ้ว 146 เซน"
+      ],
+      "rawSource": "ชุดที่ 14 เดรสยาวผูกโบว์คล้องคอ•\nอก 17 (ฟรีไซส์)\nเอว 13\nสะโพก 17\nยาว 57.5นิ้ว 146 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 15,
+      "heading": "ชุดที่ 15 เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา",
+      "chestSource": "18",
+      "waistSource": "15",
+      "hipSource": "16",
+      "lengthSource": [
+        "46 นิ้ว 117 เซน"
+      ],
+      "rawSource": "ชุดที่ 15 เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา\nอก 18\nเอว 15\nสะโพก 16|\nยาว 46 นิ้ว 117 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 16,
+      "heading": "ชุดที่ 16 เดรสสั้น2แขนที่แตกต่าง",
+      "chestSource": "17",
+      "waistSource": "15",
+      "hipSource": "16.5",
+      "lengthSource": [
+        "35 นิ้ว 89 เซน"
+      ],
+      "rawSource": "ชุดที่ 16 เดรสสั้น2แขนที่แตกต่าง\nอก 17\nเอว 15\nสะโพก 16.5 \nยาว 35 นิ้ว 89 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 17,
+      "heading": "ชุดที่ 17 เดรสสั้นผูกโบว์หัวไหล่ (ตำหนิ)•ภ",
+      "chestSource": "18.5",
+      "waistSource": "16.5",
+      "hipSource": "18.5",
+      "lengthSource": [
+        "42นิ้ว 107เซน"
+      ],
+      "rawSource": "ชุดที่ 17 เดรสสั้นผูกโบว์หัวไหล่ (ตำหนิ)•ภ\nอก 18.5\nเอว 16.5\nสะโพก 18.5\nยาว 42นิ้ว 107เซน\nY",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 18,
+      "heading": "ชุดที่ 18 ชุดแหวก แขนโบว์เปิดไหล่ •",
+      "chestSource": "18",
+      "waistSource": "16",
+      "hipSource": "18",
+      "lengthSource": [
+        "39 นิ้ว 99 เซน"
+      ],
+      "rawSource": "ชุดที่ 18 ชุดแหวก แขนโบว์เปิดไหล่ •\nอก 18\nเอว 16\nสะโพก 18\nยาว 39 นิ้ว 99 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 19,
+      "heading": "ชุดที่ 19 จับจีบ เอวซ้ายปาดไหล่ข้างเดียว (ตำหนิ)",
+      "chestSource": "17",
+      "waistSource": "12",
+      "hipSource": "16",
+      "lengthSource": [
+        "56 นิ้ว 143 เซน"
+      ],
+      "rawSource": "ชุดที่ 19 จับจีบ เอวซ้ายปาดไหล่ข้างเดียว (ตำหนิ)\nอก 17\nเอว 12\nสะโพก 16\nยาว 56 นิ้ว 143 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 20,
+      "heading": "ชุดที่ 20 เดรสดอกไม้หัวไหล่ ดอกไม้เอว (ตำหนิ) •",
+      "chestSource": "17",
+      "waistSource": "14",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "49.5 นิ้ว 125.5 เซน"
+      ],
+      "rawSource": "ชุดที่ 20 เดรสดอกไม้หัวไหล่ ดอกไม้เอว (ตำหนิ) •\nอก 17\nเอว 14\nสะโพก 15.5\nยาว 49.5 นิ้ว 125.5 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 21,
+      "heading": "ชุดที่ 21 เดรสสายเดี่ยวทูโทน  แขนไม่เหมือนกันเดี่ยวข้าง (ตำหนิ) •",
+      "chestSource": "18",
+      "waistSource": "15",
+      "hipSource": "19",
+      "lengthSource": [
+        "59นิ้ว 150เซน"
+      ],
+      "rawSource": "ชุดที่ 21 เดรสสายเดี่ยวทูโทน  แขนไม่เหมือนกันเดี่ยวข้าง (ตำหนิ) •\nอก 18\nเอว 15\nสะโพก 19\nยาว 59นิ้ว 150เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 22,
+      "heading": "ชุดที่ 22 เดรสสั้น อกยางยืด สาวไซส์พลัส +",
+      "chestSource": "18-21",
+      "waistSource": "16.5",
+      "hipSource": "18",
+      "lengthSource": [
+        "38นิ้ว 97เซน"
+      ],
+      "rawSource": "ชุดที่ 22 เดรสสั้น อกยางยืด สาวไซส์พลัส +\nอก 18-21\nเอว16.5\nสะโพก 18\nยาว 38นิ้ว 97เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 23,
+      "heading": "ชุดที่ 23 เดรส จีบซ้อนจับจีบ ดอกไม้ •",
+      "chestSource": "16",
+      "waistSource": "14.5",
+      "hipSource": "15",
+      "lengthSource": [
+        "48 นิ้ว 122 เซน"
+      ],
+      "rawSource": "ชุดที่ 23 เดรส จีบซ้อนจับจีบ ดอกไม้ •\nอก 16\nเอว 14.5\nสะโพก 15\nยาว 48 นิ้ว 122 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 24,
+      "heading": "ชุดที่ 24 เดรสเรียบ เลยเข่า (ตำหนิ) •",
+      "chestSource": "18",
+      "waistSource": "16",
+      "hipSource": "20",
+      "lengthSource": [
+        "42นิ้ว 107 เซน"
+      ],
+      "rawSource": "ชุดที่ 24 เดรสเรียบ เลยเข่า (ตำหนิ) •\nอก 18\nเอว16\nสะโพก20\nยาว 42นิ้ว 107 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 25,
+      "heading": "ชุดที่ 25 เดรส แหวกอก ผูกโบว์ •",
+      "chestSource": "18",
+      "waistSource": "15",
+      "hipSource": "18",
+      "lengthSource": [
+        "50 นิ้ว 127 เซน"
+      ],
+      "rawSource": "ชุดที่ 25 เดรส แหวกอก ผูกโบว์ •\nอก 18\nเอว 15\nสะโพก 18\nยาว 50 นิ้ว 127 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 26,
+      "heading": "ชุดที่ 26 เดรสแขนตาข่ายกระดุมเพชรสามเม็ดตรงกลาง •",
+      "chestSource": "16",
+      "waistSource": "14.5",
+      "hipSource": "16",
+      "lengthSource": [
+        "52 นิ้ว 132 เซน"
+      ],
+      "rawSource": "ชุดที่ 26 เดรสแขนตาข่ายกระดุมเพชรสามเม็ดตรงกลาง •\nอก 16\nเอว 14.5\nสะโพก 16\nยาว 52 นิ้ว 132 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 27,
+      "heading": "ชุดที่ 27 เดรสสายเดี่ยวสายเพชร โบว์เพชร•",
+      "chestSource": "15",
+      "waistSource": "12",
+      "hipSource": "15",
+      "lengthSource": [
+        "48.5 นิ้ว 123 เซน"
+      ],
+      "rawSource": "ชุดที่ 27 เดรสสายเดี่ยวสายเพชร โบว์เพชร•\nอก 15\nเอว 12\nสะโพก 15\nยาว 48.5 นิ้ว 123 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 28,
+      "heading": "ชุดที่ 28 ชุดเดรสหน้าอกแหวกกุหลาบสามดอก •",
+      "chestSource": "16",
+      "waistSource": "12.5",
+      "hipSource": "17.5",
+      "lengthSource": [
+        "48 นิ้ว 122 เซน"
+      ],
+      "rawSource": "ชุดที่ 28 ชุดเดรสหน้าอกแหวกกุหลาบสามดอก •\nอก 16\nเอว 12.5\nสะโพก 17.5\nยาว 48 นิ้ว 122 เซน\n\n9/7/69",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 29,
+      "heading": "ชุดที่ 29 เดรสสั้น ไข่มุก+",
+      "chestSource": "18",
+      "waistSource": "14",
+      "hipSource": "17",
+      "lengthSource": [
+        "40 นิ้ว 102 เซน"
+      ],
+      "rawSource": "ชุดที่ 29 เดรสสั้น ไข่มุก+\nอก 18\nเอว 14\nสะโพก 17\nยาว 40 นิ้ว 102 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 30,
+      "heading": "ชุดที่ 30 เดรสสายเดี่ยวเชือกผูก หวิบหวับกุหลาบ 6ดอก+",
+      "chestSource": "18",
+      "waistSource": "14.5",
+      "hipSource": "17",
+      "lengthSource": [
+        "50 นิ้ว 127 เซน"
+      ],
+      "rawSource": "ชุดที่ 30 เดรสสายเดี่ยวเชือกผูก หวิบหวับกุหลาบ 6ดอก+\nอก 18\nเอว 14.5\nสะโพก 17\nยาว 50 นิ้ว 127 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 31,
+      "heading": "ชุดที่ 31 เดรสแหวกไหล่ •",
+      "chestSource": "16",
+      "waistSource": "14",
+      "hipSource": "16",
+      "lengthSource": [
+        "51นิ้ว 130เซน"
+      ],
+      "rawSource": "ชุดที่ 31 เดรสแหวกไหล่ •\nอก 16\nเอว 14\nสะโพก 16 \nยาว 51นิ้ว 130เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 32,
+      "heading": "ชุดที่ 32 เดรสใส่ได้สองแขน พริวไหว•",
+      "chestSource": "16.5",
+      "waistSource": "14",
+      "hipSource": "16.5",
+      "lengthSource": [
+        "52 นิ้ว 132 เซน"
+      ],
+      "rawSource": "ชุดที่ 32 เดรสใส่ได้สองแขน พริวไหว•\nอก 16.5\nเอว 14\nสะโพก 16.5\nยาว 52 นิ้ว 132 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 33,
+      "heading": "ชุดที่ 33 เดรสสั้นคอกลมมีตะข่าย •",
+      "chestSource": "17",
+      "waistSource": "14",
+      "hipSource": "17",
+      "lengthSource": [
+        "36.5 นิ้ว 93 เซน"
+      ],
+      "rawSource": "ชุดที่ 33 เดรสสั้นคอกลมมีตะข่าย •\nอก 17\nเอว 14\nสะโพก 17\nยาว 36.5 นิ้ว 93 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 34,
+      "heading": "ชุดที่ 34 เดรสสั้นลายสก็อต โบว์ดำใหญ่+•",
+      "chestSource": "14.5",
+      "waistSource": "13",
+      "hipSource": "14.5",
+      "lengthSource": [
+        "31.5 นิ้ว 80 เซน"
+      ],
+      "rawSource": "ชุดที่ 34 เดรสสั้นลายสก็อต โบว์ดำใหญ่+•\nอก 14.5\nเอว 13\nสะโพก 14.5\nยาว 31.5 นิ้ว 80 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 35,
+      "heading": "ชุดที่ 35 เดรสแหวกอกคอเพชร•",
+      "chestSource": "13",
+      "waistSource": "12",
+      "hipSource": "13.5",
+      "lengthSource": [
+        "53นิ้ว 135 เซน"
+      ],
+      "rawSource": "ชุดที่ 35 เดรสแหวกอกคอเพชร•\nอก 13\nเอว 12\nสะโพก 13.5\nยาว 53นิ้ว 135 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 36,
+      "heading": "ชุดที่ 36 เดรสสั้น ตระข่าย (มีตำหนิ เป็นขุยสีเนื้อ) •",
+      "chestSource": "17",
+      "waistSource": "15",
+      "hipSource": "17",
+      "lengthSource": [
+        "42.5นิ้ว 108 เซน"
+      ],
+      "rawSource": "ชุดที่ 36 เดรสสั้น ตระข่าย (มีตำหนิ เป็นขุยสีเนื้อ) •\nอก 17\nเอว 15 \nสะโพก 17\nยาว 42.5นิ้ว 108 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 37,
+      "heading": "ชุดที่ 37 ชุดเดรสยาว จับจีบ ซ้าย  เพชรสายเดี่ยว•",
+      "chestSource": "16",
+      "waistSource": "15",
+      "hipSource": "16.5",
+      "lengthSource": [
+        "53 นิ้ว 135 เซน"
+      ],
+      "rawSource": "ชุดที่ 37 ชุดเดรสยาว จับจีบ ซ้าย  เพชรสายเดี่ยว•\nอก 16\nเอว 15\nสะโพก 16.5\nยาว 53 นิ้ว 135 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 38,
+      "heading": "ชุดที่ 38 เดรสยาว แหวก อกดอกกุหลาบตรงกลาง สายเดี่ยวไขว้ (มีตำหนิบริเวณปลายกระโปรง)•",
+      "chestSource": "16",
+      "waistSource": "15",
+      "hipSource": "16",
+      "lengthSource": [
+        "56นิ้ว 142 เซน"
+      ],
+      "rawSource": "ชุดที่ 38 เดรสยาว แหวก อกดอกกุหลาบตรงกลาง สายเดี่ยวไขว้ (มีตำหนิบริเวณปลายกระโปรง)•\nอก 16\nเอว 15\nสะโพก 16\nยาว 56นิ้ว 142 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 39,
+      "heading": "ชุดที่ 39 เดรสสั้นตัวใหญ่ ปักลายลูกไม้ ดอกใหญ่ มีโบว์ตรงกลางเอว •",
+      "chestSource": "20",
+      "waistSource": "19",
+      "hipSource": "20.5",
+      "lengthSource": [
+        "39นิ้ว 99 เซน"
+      ],
+      "rawSource": "ชุดที่ 39 เดรสสั้นตัวใหญ่ ปักลายลูกไม้ ดอกใหญ่ มีโบว์ตรงกลางเอว •\nอก 20\nเอว 19\nสะโพก 20.5\nยาว 39นิ้ว 99 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 40,
+      "heading": "ชุดที่ 40 เดรส สั้น พรัสไซส์ ครอบชุดลูกไม้ติด ปักเพรชสีเงิน+•",
+      "chestSource": "19",
+      "waistSource": "20",
+      "hipSource": "19",
+      "lengthSource": [
+        "40 นิ้ว 102 เซน"
+      ],
+      "rawSource": "ชุดที่ 40 เดรส สั้น พรัสไซส์ ครอบชุดลูกไม้ติด ปักเพรชสีเงิน+•\nอก 19\nเอว 20\nสะโพก 19\nยาว 40 นิ้ว 102 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 41,
+      "heading": "ชุดที่ 41 เดรส หางปลา แขนเป็นลูกหมายแขนยาว •",
+      "chestSource": "15",
+      "waistSource": "13",
+      "hipSource": "15",
+      "lengthSource": [
+        "36.5 นิ้ว 93 เซน"
+      ],
+      "rawSource": "ชุดที่ 41 เดรส หางปลา แขนเป็นลูกหมายแขนยาว •\nอก 15\nเอว 13\nสะโพก 15\nยาว 36.5 นิ้ว 93 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 42,
+      "heading": "ชุดที่ 42 เดรสยาวมัดย้อม •",
+      "chestSource": "17",
+      "waistSource": "15",
+      "hipSource": "17",
+      "lengthSource": [
+        "50.5 นิ้ว 128.05เซน"
+      ],
+      "rawSource": "ชุดที่ 42 เดรสยาวมัดย้อม •\nอก 17\nเอว 15\nสะโพก 17\nยาว 50.5 นิ้ว 128.05เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 43,
+      "heading": "ชุดที่ 43 ชุดแยกส่วน เสื้อครึ่งตัวมีสายยาว •",
+      "chestSource": "15",
+      "waistSource": "13.5",
+      "hipSource": "16",
+      "lengthSource": [
+        "เสื้อ8 นิ้ว 20 เซน"
+      ],
+      "rawSource": "ชุดที่ 43 ชุดแยกส่วน เสื้อครึ่งตัวมีสายยาว •\nอก  15\nเอว 13.5\nสะโพก 16\nยาว เสื้อ8 นิ้ว 20 เซน\nกระโปรง 47นิ้ว 119.05เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 44,
+      "heading": "ชุดที่ 44 เดรส ไซส์ใหญ่ แหวกหน้า แหวกหลัง•",
+      "chestSource": "20.5",
+      "waistSource": "18",
+      "hipSource": "20.5",
+      "lengthSource": [
+        "53 นิ้ว 134.05เซน้อง"
+      ],
+      "rawSource": "ชุดที่ 44 เดรส ไซส์ใหญ่ แหวกหน้า แหวกหลัง•\nอก 20.5\nเอว 18\nสะโพก 20.5\nยาว  53 นิ้ว 134.05เซน้อง",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 45,
+      "heading": "ชุดที่ 45 เดรสยาว แหวกอก คอผูก จับจีบบนล่าง (ซ้ำ) •",
+      "chestSource": "17",
+      "waistSource": "14.5",
+      "hipSource": "16.5",
+      "lengthSource": [
+        "51 นิ้ว 129.05เซน"
+      ],
+      "rawSource": "ชุดที่ 45 เดรสยาว แหวกอก คอผูก จับจีบบนล่าง (ซ้ำ) •\nอก 17\nเอว 14.5\nสะโพก 16.5\nยาว 51 นิ้ว 129.05เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 46,
+      "heading": "ชุดที่ 46 เดรส แขนข้าง คอดอกไม้ เรียบๆ •",
+      "chestSource": "13",
+      "waistSource": "12",
+      "hipSource": "13",
+      "lengthSource": [
+        "47นิ้ว 119.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 46 เดรส แขนข้าง คอดอกไม้ เรียบๆ •\nอก 13\nเอว 12\nสะโพก 13\nยาว 47นิ้ว 119.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 47,
+      "heading": "ชุดที่ 47 เดรสยาวแขนตุ๊กตา ชุดที่จีบเยอะๆ   •",
+      "chestSource": "16",
+      "waistSource": "14",
+      "hipSource": "16",
+      "lengthSource": [
+        "50 นิ้ว 127 เซน"
+      ],
+      "rawSource": "ชุดที่ 47 เดรสยาวแขนตุ๊กตา ชุดที่จีบเยอะๆ   •\nอก 16  \nเอว 14\nสะโพก 16\nยาว 50 นิ้ว 127 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 48,
+      "heading": "ชุดที่ 48 เดรสยาวแหวกหน้าแหวกหลังคอเชือก กว้างมาก + •",
+      "chestSource": "15",
+      "waistSource": "14.5",
+      "hipSource": "15",
+      "lengthSource": [
+        "55.5 นิ้ว 141 เซน"
+      ],
+      "rawSource": "ชุดที่ 48 เดรสยาวแหวกหน้าแหวกหลังคอเชือก กว้างมาก + •\nอก 15\nเอว 14.5\nสะโพก 15\nยาว 55.5 นิ้ว 141 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 49,
+      "heading": "ชุดที่ 49  เดรสสั้น ชุดตาข่ายคุมไหล่สีเนื้อ คอตาข่ายสีชมพู +",
+      "chestSource": "16",
+      "waistSource": "14",
+      "hipSource": "17",
+      "lengthSource": [
+        "36 นิ้ว 91.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 49  เดรสสั้น ชุดตาข่ายคุมไหล่สีเนื้อ คอตาข่ายสีชมพู +\nอก 16\nเอว 14\nสะโพก 17\nยาว 36 นิ้ว 91.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 50,
+      "heading": "ชุดที่ 50 เดรสยาวค้องคอแบบปมตรงกลาง",
+      "chestSource": "14",
+      "waistSource": "13",
+      "hipSource": "15",
+      "lengthSource": [
+        "52 นิ้ว 132 เซน"
+      ],
+      "rawSource": "ชุดที่ 50 เดรสยาวค้องคอแบบปมตรงกลาง\nอก 14\nเอว 13\nสะโพก 15\nยาว 52 นิ้ว 132 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 51,
+      "heading": "ชุดที่ 51 เดรสยาวค้องคอแบบปมตรงกลาง (ตัวซ้ำ)",
+      "chestSource": "15",
+      "waistSource": "13",
+      "hipSource": "15",
+      "lengthSource": [
+        "49 นิ้ว 124.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 51 เดรสยาวค้องคอแบบปมตรงกลาง (ตัวซ้ำ)\nอก 15\nเอว 13\nสะโพก 15\nยาว 49 นิ้ว 124.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 52,
+      "heading": "ชุดที่ 52 เดรสสั้น ค้องคอ เป็นปมมีจับ ข้างกระโปรง •",
+      "chestSource": "13",
+      "waistSource": "12",
+      "hipSource": "13",
+      "lengthSource": [
+        "28นิ้ว 71เซน"
+      ],
+      "rawSource": "ชุดที่ 52 เดรสสั้น ค้องคอ เป็นปมมีจับ ข้างกระโปรง •\nอก 13\nเอว 12\nสะโพก 13\nยาว 28นิ้ว 71เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 53,
+      "heading": "ชุดที่ 53 ชุดเดรสยาวเกาะอก มีปอกแขนติด",
+      "chestSource": "14",
+      "waistSource": "15",
+      "hipSource": "16.5",
+      "lengthSource": [
+        "47.5นิ้ว 120.07 เซน"
+      ],
+      "rawSource": "ชุดที่ 53 ชุดเดรสยาวเกาะอก มีปอกแขนติด\nอก 14\nเอว 15\nสะโพก 16.5\nยาว 47.5นิ้ว 120.07 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 54,
+      "heading": "ชุดที่ 54 ชุดเดรสปาด ข้าง จีบยาวหางปลา •",
+      "chestSource": "14.5",
+      "waistSource": "13.5",
+      "hipSource": "14",
+      "lengthSource": [
+        "44.5 นิ้ว 113 เซน"
+      ],
+      "rawSource": "ชุดที่ 54 ชุดเดรสปาด ข้าง จีบยาวหางปลา •\nอก 14.5 \nเอว 13.5\nสะโพก 14\nยาว 44.5 นิ้ว 113 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 55,
+      "heading": "ชุดที่ 55 เพชรค้องคอเหล็ก มีคอห้อน หน้าแหวกข้างยาว มีจีบ •",
+      "chestSource": "14.5",
+      "waistSource": "12.5",
+      "hipSource": "14.5",
+      "lengthSource": [
+        "59 นิ้ว 150 เซน"
+      ],
+      "rawSource": "ชุดที่ 55 เพชรค้องคอเหล็ก มีคอห้อน หน้าแหวกข้างยาว มีจีบ •\nอก 14.5\nเอว 12.5\nสะโพก  14.5\nยาว 59 นิ้ว 150 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 56,
+      "heading": "ชุดที่ 56 ชุดเดรส ไหล่เดียว หางม้า•",
+      "chestSource": "16",
+      "waistSource": "14",
+      "hipSource": "16",
+      "lengthSource": [
+        "53.5 นิ้ว 136 เซน"
+      ],
+      "rawSource": "ชุดที่ 56 ชุดเดรส ไหล่เดียว หางม้า•\nอก 16\nเอว 14\nสะโพก 16\nยาว 53.5 นิ้ว 136 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 57,
+      "heading": "ชุดที่ 57 เดรสสั้น คนละสี ซ้ำ จีบปล่อย ข้าง ไม่ปล่อยข้าง•",
+      "chestSource": "17.5",
+      "waistSource": "16",
+      "hipSource": "17.5",
+      "lengthSource": [
+        "34 นิ้ว 86 เซน"
+      ],
+      "rawSource": "ชุดที่ 57 เดรสสั้น คนละสี ซ้ำ จีบปล่อย ข้าง ไม่ปล่อยข้าง•\nอก 17.5\nเอว 16\nสะโพก 17.5\nยาว 34 นิ้ว 86 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 58,
+      "heading": "ชุดที่ 58 เดรสยาว ใหญ่ ปาดไหล่ สายเดี่ยว (ตำหนิ) •",
+      "chestSource": "17",
+      "waistSource": "15",
+      "hipSource": "17",
+      "lengthSource": [
+        "53.5 นิ้ว 136 เซน"
+      ],
+      "rawSource": "ชุดที่ 58 เดรสยาว ใหญ่ ปาดไหล่ สายเดี่ยว (ตำหนิ) •\nอก 17\nเอว 15\nสะโพก 17\nยาว 53.5 นิ้ว 136 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 59,
+      "heading": "ชุดที่ 59 •",
+      "chestSource": "21.5",
+      "waistSource": "22",
+      "hipSource": "24.5",
+      "lengthSource": [
+        "37.5 นิ้ว 95.25 ซม"
+      ],
+      "rawSource": "ชุดที่ 59 •\nอก 21.5\nเอว 22\nสะโพก 24.5\nยาว 37.5 นิ้ว 95.25 ซม\n\n\n10/07/69",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 60,
+      "heading": "ชุดที่ 60 เดรสจีบ ดอกไม้ติดเอว ซ้ำ กับ13",
+      "chestSource": "16",
+      "waistSource": "15.5",
+      "hipSource": "17",
+      "lengthSource": [
+        "47 นิ้ว 119.38 ซม."
+      ],
+      "rawSource": "ชุดที่ 60 เดรสจีบ ดอกไม้ติดเอว ซ้ำ กับ13\nอก 16\nเอว 15.5\nสะโพก 17\nยาว 47 นิ้ว 119.38 ซม.",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 61,
+      "heading": "ชุดที่ 61 เดรสแหวกอกคอเพชร (ซ้ำ)",
+      "chestSource": "13.5",
+      "waistSource": "12.5",
+      "hipSource": "13.5",
+      "lengthSource": [
+        "49 นิ้ว 124.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 61 เดรสแหวกอกคอเพชร (ซ้ำ)\nอก 13.5\nเอว 12.5\nสะโพก 13.5\nยาว 49 นิ้ว 124.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 62,
+      "heading": "ชุดที่ 62 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย(ซ้ำ)",
+      "chestSource": "16",
+      "waistSource": "15",
+      "hipSource": "16",
+      "lengthSource": [
+        "37.5 นิ้ว 95.05เซน"
+      ],
+      "rawSource": "ชุดที่ 62 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย(ซ้ำ)\nอก  16\nเอว 15\nสะโพก 16\nยาว 37.5 นิ้ว 95.05เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 63,
+      "heading": "ชุดที่ 63 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย(ซ้ำ)",
+      "chestSource": "14.5",
+      "waistSource": "13.5",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "42.5นิ้ว 106.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 63 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย(ซ้ำ)\nอก 14.5\nเอว 13.5\nสะโพก 15.5\nยาว 42.5นิ้ว 106.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 64,
+      "heading": "ชุดที่ 64 เดรสสั้นอกกว้าง ไหล่จีบ (ซ้ำ)",
+      "chestSource": "15",
+      "waistSource": "14.5",
+      "hipSource": "15",
+      "lengthSource": [
+        "41.5 นิ้ว 104 เซน"
+      ],
+      "rawSource": "ชุดที่ 64 เดรสสั้นอกกว้าง ไหล่จีบ (ซ้ำ)\nอก 15\nเอว 14.5\nสะโพก 15\nยาว 41.5 นิ้ว 104 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 65,
+      "heading": "ชุดที่ 65 เดรสสั้น ตระข่าย (ซ้ำ)",
+      "chestSource": "13",
+      "waistSource": "11.5",
+      "hipSource": "14",
+      "lengthSource": [
+        "34 นิ้ว 86.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 65 เดรสสั้น ตระข่าย (ซ้ำ)\nอก 13\nเอว 11.5\nสะโพก 14\nยาว 34 นิ้ว 86.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 66,
+      "heading": "ชุดที่ 66 สายเดี่ยวตะข่าย (ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "12",
+      "hipSource": "14",
+      "lengthSource": [
+        "54.5 นิ้ว 137.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 66 สายเดี่ยวตะข่าย (ซ้ำ)\nอก 14\nเอว 12\nสะโพก 14\nยาว 54.5 นิ้ว 137.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 67,
+      "heading": "ชุดที่ 67 เดรสปาดไหล่ ตะข่ายแขนเดียว(ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "12",
+      "hipSource": "13",
+      "lengthSource": [
+        "54.5 นิ้ว 137.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 67 เดรสปาดไหล่ ตะข่ายแขนเดียว(ซ้ำ)\nอก 14\nเอว 12\nสะโพก 13\nยาว 54.5 นิ้ว 137.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 68,
+      "heading": "ชุดที่ 68 เดรสยาว จีบกลาง(ซ้ำ)",
+      "chestSource": "18",
+      "waistSource": "14",
+      "hipSource": "17",
+      "lengthSource": [
+        "55 นิ้ว 139.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 68 เดรสยาว จีบกลาง(ซ้ำ)\nอก 18\nเอว 14\nสะโพก 17\nยาว 55 นิ้ว 139.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 69,
+      "heading": "ชุดที่ 69 เดรสแหวกไหล่(ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "13",
+      "hipSource": "15",
+      "lengthSource": [
+        "53 นิ้ว 134.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 69 เดรสแหวกไหล่(ซ้ำ)\nอก 14\nเอว 13\nสะโพก 15\nยาว 53 นิ้ว 134.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 70,
+      "heading": "ชุดที่ 70 เดรสแหวกไหล่ (ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "13",
+      "hipSource": "14.5",
+      "lengthSource": [
+        "49.5 นิ้ว  126 เซน"
+      ],
+      "rawSource": "ชุดที่ 70 เดรสแหวกไหล่ (ซ้ำ)\nอก 14\nเอว 13\nสะโพก 14.5\nยาว 49.5 นิ้ว  126 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 71,
+      "heading": "ชุดที่ 71 เดรสแหวกอกคอเพชร(ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "12",
+      "hipSource": "15",
+      "lengthSource": [
+        "53 นิ้ว 135 เซน"
+      ],
+      "rawSource": "ชุดที่ 71 เดรสแหวกอกคอเพชร(ซ้ำ)\nอก 14\nเอว 12\nสะโพก 15\nยาว 53 นิ้ว 135 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 72,
+      "heading": "ชุดที่ 72  เดรสสั้น อกยางยืด สาวไซส์พลัส(ซ้ำ)(ตำหนิ) •",
+      "chestSource": "14",
+      "waistSource": "13.5",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "37 นิ้ว 94 เซน"
+      ],
+      "rawSource": "ชุดที่ 72  เดรสสั้น อกยางยืด สาวไซส์พลัส(ซ้ำ)(ตำหนิ) •\nอก 14\nเอว 13.5\nสะโพก 15.5\nยาว 37 นิ้ว 94 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 73,
+      "heading": "ชุดที่ 73 ชุดแยกส่วน เสื้อครึ่งตัวมีสายยาว(ซ้ำ)",
+      "chestSource": "13",
+      "waistSource": "13",
+      "hipSource": "16",
+      "lengthSource": [
+        "8.5 นิ้ว 22 เซน เสื้อ",
+        "44.5 นิ้ว113  เซน"
+      ],
+      "rawSource": "ชุดที่ 73 ชุดแยกส่วน เสื้อครึ่งตัวมีสายยาว(ซ้ำ)\nอก 13 ฟรีไซส เสื้อ\nเอว 13 กระโปรง\nสะโพก 16 กระโปรง\nยาว 8.5 นิ้ว 22 เซน เสื้อ\nยาว 44.5 นิ้ว113  เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 74,
+      "heading": "ชุดที่ 74 เดรสสั้น2แขนที่แตกต่าง(ซ้ำ)",
+      "chestSource": "17",
+      "waistSource": "15.5",
+      "hipSource": null,
+      "lengthSource": [
+        "35.5 นิ้ว 90 เซน"
+      ],
+      "rawSource": "ชุดที่ 74 เดรสสั้น2แขนที่แตกต่าง(ซ้ำ)\nอก 17\nเอว 15.5\nสะโพก \nยาว 35.5 นิ้ว 90 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 75,
+      "heading": "ชุดที่ 75 เดรสสั้น2แขนที่แตกต่าง(ซ้ำ)",
+      "chestSource": "17",
+      "waistSource": "14.5",
+      "hipSource": "16",
+      "lengthSource": [
+        "35.5 นิ้ว 90เซน"
+      ],
+      "rawSource": "ชุดที่ 75 เดรสสั้น2แขนที่แตกต่าง(ซ้ำ)\nอก 17\nเอว 14.5\nสะโพก 16\nยาว 35.5 นิ้ว 90เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 76,
+      "heading": "ชุดที่ 76 เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา(ซ้ำ)",
+      "chestSource": "15",
+      "waistSource": "13.5",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "45.5 นิ้ว 114.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 76 เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา(ซ้ำ)\nอก 15\nเอว 13.5\nสะโพก 15.5\nยาว 45.5 นิ้ว 114.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 77,
+      "heading": "ชุดที่ 77 เดรสแขนกุด เอวจับจีบ(ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "14.5",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "50.5 นิ้ว 128 เซน"
+      ],
+      "rawSource": "ชุดที่ 77 เดรสแขนกุด เอวจับจีบ(ซ้ำ)\nอก 14\nเอว 14.5\nสะโพก 15.5\nยาว 50.5 นิ้ว 128 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 78,
+      "heading": "ชุดที่ 78 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย [มีตำหนิ](ซ้ำ)",
+      "chestSource": "15.5",
+      "waistSource": "14",
+      "hipSource": "16",
+      "lengthSource": [
+        "42.5 นิ้ว 107 เซน"
+      ],
+      "rawSource": "ชุดที่ 78 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย [มีตำหนิ](ซ้ำ)\nอก 15.5\nเอว 14\nสะโพก 16\nยาว 42.5 นิ้ว 107 เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 79,
+      "heading": "ชุดที่ 79 เดรสสั้น คนละสี ซ้ำ จีบปล่อย ข้าง ไม่ปล่อยข้าง(ซ้ำ)",
+      "chestSource": "17",
+      "waistSource": "15",
+      "hipSource": "18",
+      "lengthSource": [
+        "34.5 นิ้ว 87.05เซน"
+      ],
+      "rawSource": "ชุดที่ 79 เดรสสั้น คนละสี ซ้ำ จีบปล่อย ข้าง ไม่ปล่อยข้าง(ซ้ำ)\nอก 17\nเอว 15\nสะโพก 18\nยาว 34.5 นิ้ว 87.05เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 80,
+      "heading": "ชุดที่ 80 เดรสแขนกุด เอวจับจีบ(ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "12.5",
+      "hipSource": "14",
+      "lengthSource": [
+        "48.5นิ้ว 123 เซน"
+      ],
+      "rawSource": "ชุดที่ 80 เดรสแขนกุด เอวจับจีบ(ซ้ำ)\nอก 14\nเอว 12.5\nสะโพก 14\nยาว 48.5นิ้ว 123 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 81,
+      "heading": "ชุดที่ 81 เดรสยาว ใหญ่ ปาดไหล่ สายเดี่ยว (ตำหนิ) ซ้ำกับ58",
+      "chestSource": "15.5",
+      "waistSource": "15",
+      "hipSource": "17.5",
+      "lengthSource": [
+        "55 นิ้ว 139.7 ซม"
+      ],
+      "rawSource": "ชุดที่ 81 เดรสยาว ใหญ่ ปาดไหล่ สายเดี่ยว (ตำหนิ) ซ้ำกับ58\nอก 15.5\nเอว 15\nสะโพก 17.5\nยาว 55 นิ้ว 139.7 ซม",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 82,
+      "heading": "ชุดที่ 82  เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา(ซ้ำ)",
+      "chestSource": "15.5",
+      "waistSource": "14.5",
+      "hipSource": "16.5",
+      "lengthSource": [
+        "49.5นิ้ว 126 เซน"
+      ],
+      "rawSource": "ชุดที่ 82  เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา(ซ้ำ)\nอก 15.5\nเอว 14.5\nสะโพก 16.5\nยาว 49.5นิ้ว 126 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 83,
+      "heading": "ชุดที่ 83 สายเดี่ยวตะข่าย(ซ้ำ)",
+      "chestSource": "16",
+      "waistSource": "14.5",
+      "hipSource": "17",
+      "lengthSource": [
+        "54นิ้ว 137เซน"
+      ],
+      "rawSource": "ชุดที่ 83 สายเดี่ยวตะข่าย(ซ้ำ)\nอก 16\nเอว 14.5\nสะโพก 17\nยาว 54นิ้ว 137เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 84,
+      "heading": "ชุดที่ 84 เดรสยาวมีหางพริ้วไหว สีชมพู(ซ้ำ)",
+      "chestSource": "14",
+      "waistSource": "13",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "53.5นิ้ว 136เซน"
+      ],
+      "rawSource": "ชุดที่ 84 เดรสยาวมีหางพริ้วไหว สีชมพู(ซ้ำ)\nอก 14\nเอว 13\nสะโพก 15.5\nยาว 53.5นิ้ว 136เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 85,
+      "heading": "ชุดที่ 85 กระโปรง(ซ้ำ )",
+      "chestSource": null,
+      "waistSource": "14.5",
+      "hipSource": "17",
+      "lengthSource": [
+        "46นิ้ว 107เซน"
+      ],
+      "rawSource": "ชุดที่ 85 กระโปรง(ซ้ำ )\nอก\nเอว 14.5\nสะโพก 17\nยาว 46นิ้ว 107เซน\n\nเก็บตก ตำหนิ",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 86,
+      "heading": "ชุดที่ 86 เดรสไหล่ยางยืด",
+      "chestSource": "16.5",
+      "waistSource": "15",
+      "hipSource": "18",
+      "lengthSource": [
+        "53นิ้ว เซน"
+      ],
+      "rawSource": "ชุดที่ 86 เดรสไหล่ยางยืด\nอก 16.5\nเอว 15 \nสะโพก 18\nยาว 53นิ้ว เซน",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 87,
+      "heading": "ชุดที่ 87 เดรสโบว์ใหหญ่ผูกสำเร็จ",
+      "chestSource": "15",
+      "waistSource": "12.5",
+      "hipSource": "14.5",
+      "lengthSource": [
+        "51 นิ้ว129.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 87 เดรสโบว์ใหหญ่ผูกสำเร็จ\nอก 15\nเอว 12.5\nสะโพก 14.5\nยาว51 นิ้ว129.05 เซน\n\nเก็บตกชุดซ้ำ",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "ชุดที่",
+      "number": 88,
+      "heading": "ชุดที่ 88 เดรสโบว์ใหหญ่ผูกสำเร็จ(ซ้ำ)",
+      "chestSource": "15.5",
+      "waistSource": "14",
+      "hipSource": "15",
+      "lengthSource": [
+        "51.5 นิ้ว 130 เซน"
+      ],
+      "rawSource": "ชุดที่ 88 เดรสโบว์ใหหญ่ผูกสำเร็จ(ซ้ำ)\nอก 15.5\nเอว 14\nสะโพก 15\nยาว 51.5 นิ้ว 130 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 89,
+      "heading": "ชุดที่ 89 เดรสโบว์ใหหญ่ผูกสำเร็จ(ซ้ำ)",
+      "chestSource": "16",
+      "waistSource": "15.5",
+      "hipSource": "16",
+      "lengthSource": [
+        "54.5 นิ้ว 138.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 89 เดรสโบว์ใหหญ่ผูกสำเร็จ(ซ้ำ)\nอก 16\nเอว 15.5\nสะโพก 16\nยาว 54.5 นิ้ว 138.05 เซน\n\nชุดใหม่",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 90,
+      "heading": "ชุดที่ 90 มุก สามดอกตรงกลาง แขนตาข่าย เสื้อคอเซ็ท",
+      "chestSource": "15.5",
+      "waistSource": "13",
+      "hipSource": "14.5",
+      "lengthSource": [
+        "48 นิ้ว 122 เซน"
+      ],
+      "rawSource": "ชุดที่ 90 มุก สามดอกตรงกลาง แขนตาข่าย เสื้อคอเซ็ท\nอก 15.5\nเอว 13\nสะโพก 14.5\nยาว 48 นิ้ว 122 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 91,
+      "heading": "ชุดที่ 91 เดรสสั้นหัวเข่า ปาดไหล่ ด้านขวา หน้าตะข่าย",
+      "chestSource": "15.5",
+      "waistSource": "14.5",
+      "hipSource": "16",
+      "lengthSource": [
+        "37 นิ้ว 94 เซน"
+      ],
+      "rawSource": "ชุดที่ 91 เดรสสั้นหัวเข่า ปาดไหล่ ด้านขวา หน้าตะข่าย\nอก 15.5\nเอว 14.5\nสะโพก 16\nยาว 37 นิ้ว 94 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 92,
+      "heading": "ชุดที่ 92 ปาดไหล่จับจีบ",
+      "chestSource": "15",
+      "waistSource": "14",
+      "hipSource": "15",
+      "lengthSource": [
+        "48.5 นิ้ว 123.19 ซม"
+      ],
+      "rawSource": "ชุดที่ 92 ปาดไหล่จับจีบ\nอก 15\nเอว 14\nสะโพก 15\nยาว 48.5 นิ้ว 123.19 ซม",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 93,
+      "heading": "ชุดที่ 93 พลัสไซส์อกกว้างกระโปรงบาน",
+      "chestSource": "19.5",
+      "waistSource": "18",
+      "hipSource": "19",
+      "lengthSource": [
+        "50.5นิ้ว 127.05 เซน"
+      ],
+      "rawSource": "ชุดที่ 93 พลัสไซส์อกกว้างกระโปรงบาน\nอก 19.5\nเอว 18\nสะโพก 19\nยาว 50.5นิ้ว 127.05 เซน",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "ชุดที่",
+      "number": 94,
+      "heading": "ชุดที่ 94 แขนตุุ๊กตา คอวี จีบซ้าย •",
+      "chestSource": "13.5",
+      "waistSource": "12",
+      "hipSource": "15",
+      "lengthSource": [],
+      "rawSource": "ชุดที่ 94 แขนตุุ๊กตา คอวี จีบซ้าย •\nอก 13.5\nเอว 12\nสะ 15\n47 120",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 1,
+      "heading": "สีชมพู 01",
+      "chestSource": "15",
+      "waistSource": "13",
+      "hipSource": "15",
+      "lengthSource": [
+        "41 นิ้ว 104.14 ซม."
+      ],
+      "rawSource": "สีชมพู 01\nอก 15\nเอว 13\nสะโพก 15\nยาว 41 นิ้ว 104.14 ซม.",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 2,
+      "heading": "สีชมพู 02",
+      "chestSource": "14",
+      "waistSource": "12.5",
+      "hipSource": "15",
+      "lengthSource": [
+        "50 นิ้ว 127 ซม."
+      ],
+      "rawSource": "สีชมพู 02\nอก 14\nเอว 12.5\nสะโพก 15\nยาว 50 นิ้ว 127 ซม.",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 3,
+      "heading": "สีชมพู 03 / ตำหนิ",
+      "chestSource": "15",
+      "waistSource": "14.5",
+      "hipSource": "16",
+      "lengthSource": [
+        "33 นิ้ว 83.82 ซม."
+      ],
+      "rawSource": "สีชมพู 03 / ตำหนิ\nอก 15\nเอว 14.5\nสะโพก 16\nยาว 33 นิ้ว 83.82 ซม.",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 4,
+      "heading": "สีชมพู 04",
+      "chestSource": "16.5",
+      "waistSource": "14.5",
+      "hipSource": "18",
+      "lengthSource": [
+        "40 นิ้ว 101.6 ซม."
+      ],
+      "rawSource": "สีชมพู 04\nอก 16.5\nเอว 14.5\nสะโพก 18\nยาว  40 นิ้ว 101.6 ซม.",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 99,
+      "heading": "สีชมพู 099 ตำหนิ",
+      "chestSource": "15",
+      "waistSource": "16.5",
+      "hipSource": "18",
+      "lengthSource": [
+        "48 นิ้ว 121.92 ซม."
+      ],
+      "rawSource": "สีชมพู 099 ตำหนิ\nอก 15\nเอว 16.5\nสะโพก 18\nยาว 48 นิ้ว 121.92 ซม.",
+      "multiplier": 2,
+      "defective": true
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 100,
+      "heading": "สีชมพู 0100",
+      "chestSource": "14",
+      "waistSource": "12",
+      "hipSource": "15",
+      "lengthSource": [
+        "34.5 นิ้ว 87.63 ซม"
+      ],
+      "rawSource": "สีชมพู 0100\nอก 14\nเอว 12\nสะโพก 15\nยาว 34.5 นิ้ว 87.63 ซม",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 101,
+      "heading": "สีชมพู 0101",
+      "chestSource": "16.5",
+      "waistSource": "13.5",
+      "hipSource": "15.5",
+      "lengthSource": [
+        "50.5 นิ้ว 128.27 ซม"
+      ],
+      "rawSource": "สีชมพู 0101\nอก 16.5\nเอว 13.5\nสะโพก 15.5\nยาว 50.5 นิ้ว 128.27 ซม",
+      "multiplier": 2,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 102,
+      "heading": "สีชมพู 0102",
+      "chestSource": "30 - 36",
+      "waistSource": "26 - 30",
+      "hipSource": "34",
+      "lengthSource": [
+        "55 นิ้ว 139.7 ซม"
+      ],
+      "rawSource": "สีชมพู 0102\nอก 30 - 36\nเอว 26 - 30\nสะโพก 34\nยาว 55 นิ้ว 139.7 ซม",
+      "multiplier": 1,
+      "defective": false
+    },
+    {
+      "family": "สีชมพูท้ายไฟล์",
+      "number": 103,
+      "heading": "สีชมพู 0103  V.1 / ตำหนิ",
+      "chestSource": "30 - 32",
+      "waistSource": "28",
+      "hipSource": "32",
+      "lengthSource": [
+        "57 นิ้ว 144.78 ซม"
+      ],
+      "rawSource": "สีชมพู 0103  V.1 / ตำหนิ\nอก 30 - 32\nเอว 28\nสะโพก 32\nยาว 57 นิ้ว 144.78 ซม",
+      "multiplier": 1,
+      "defective": true
+    }
+  ],
+  "sourceText": "วัดขนาดชุดสีชมพู\n\nชุดที่ 1 เดรสยาวมีหางพริ้วไหว สีชมพู•\nอก 30\nเอว 26\nสะโพก 32\nยาว 53.5 นิ้ว 136เซน\n\nชุดที่ 2 เดรสปาดไหล่ ตะข่ายแขนเดียว •\nอก 32\nเอว 26\nสะโพก 31\nยาว 54 นิ้ว 137 เซน\n\nชุดที่ 3 เดรสสั้นอกกว้าง ไหล่จีบ •\nอก 34\nเอว 27\nสะโพก31\nยาว 42 นิ้ว 107 เซน\n\nชุดที่ 4 เดรสปาดไหล่ จับจีบแหวกข้าง •\nอก 32\nเอว 30\nสะโพก34\nยาว 58 147.5\n\nชุดที่ 5 เดรสสั้นหัวเข่า ปาดไหล่ ด้านซ้าย หน้าตะข่าย [มีตำหนิ]•\nอก 34\nเอว 30\nสะโพก36\nยาว 44 นิ้ว 112 เซน\n\n\nชุดที่ 6 เดรสแขนกุด เอวจับจีบ •\nอก 32\nเอว 26\nสะโพก 36\nยาว 50 นิ้ว 127 เซน\n\nชุดที่ 7 เดรสปาดข้าง ผูกโบว์หัวไหล่ •\nอก 32\nเอว 26\nสะโพก 34\nยาว 49 นิ้ว 124.5 เซน\n\nชุดที่ 8 สายเดี่ยวตะข่าย •\nอก 32\nเอว 30\nสะโพก 32\nยาว 58นิ้ว 147เซน\n\n8/7/2026\n\nชุดที่ 9 เดรสยาว จีบกลาง?+•\nอก 21\nเอว 16.5\nสะโพก 19\nยาว 58.5 นิ้ว 149 เซน\n\nชุดที่ 10 กระโปรง เกาะอก โบว์ใหญ่ +\nอก 16\nเอว 13\nสะโพก 15\nยาว เสื้อ10 ยาว20.54 เซน กระโปรง 37.5 ยาว95\n\nชุดที่ 11 เดรสตะข่ายแนวขวาง +\nอก 18\nเอว 15\nสะโพก 17\nยาว 43.5 นิ้วื111 เซน\n\nชุดที่ 12 ปาดไหล่ มีสายหลัง (ตำหนิ)\nอก 16\nเอว 13\nสะโพก 17\nยาว 56 นิ้ว 143 เซน\n\nชุดที่ 13 เดรสจีบ ดอกไม้ติดเอว •\nอก 18\nเอว 16\nสะโพก 18\nยาว 46.5 นิ้ว 118 เซน\n\nชุดที่ 14 เดรสยาวผูกโบว์คล้องคอ•\nอก 17 (ฟรีไซส์)\nเอว 13\nสะโพก 17\nยาว 57.5นิ้ว 146 เซน\n\nชุดที่ 15 เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา\nอก 18\nเอว 15\nสะโพก 16|\nยาว 46 นิ้ว 117 เซน\n\nชุดที่ 16 เดรสสั้น2แขนที่แตกต่าง\nอก 17\nเอว 15\nสะโพก 16.5 \nยาว 35 นิ้ว 89 เซน\n\nชุดที่ 17 เดรสสั้นผูกโบว์หัวไหล่ (ตำหนิ)•ภ\nอก 18.5\nเอว 16.5\nสะโพก 18.5\nยาว 42นิ้ว 107เซน\nY\nชุดที่ 18 ชุดแหวก แขนโบว์เปิดไหล่ •\nอก 18\nเอว 16\nสะโพก 18\nยาว 39 นิ้ว 99 เซน\n\nชุดที่ 19 จับจีบ เอวซ้ายปาดไหล่ข้างเดียว (ตำหนิ)\nอก 17\nเอว 12\nสะโพก 16\nยาว 56 นิ้ว 143 เซน\n\nชุดที่ 20 เดรสดอกไม้หัวไหล่ ดอกไม้เอว (ตำหนิ) •\nอก 17\nเอว 14\nสะโพก 15.5\nยาว 49.5 นิ้ว 125.5 เซน\n\nชุดที่ 21 เดรสสายเดี่ยวทูโทน  แขนไม่เหมือนกันเดี่ยวข้าง (ตำหนิ) •\nอก 18\nเอว 15\nสะโพก 19\nยาว 59นิ้ว 150เซน\n\nชุดที่ 22 เดรสสั้น อกยางยืด สาวไซส์พลัส +\nอก 18-21\nเอว16.5\nสะโพก 18\nยาว 38นิ้ว 97เซน\n\nชุดที่ 23 เดรส จีบซ้อนจับจีบ ดอกไม้ •\nอก 16\nเอว 14.5\nสะโพก 15\nยาว 48 นิ้ว 122 เซน\n\nชุดที่ 24 เดรสเรียบ เลยเข่า (ตำหนิ) •\nอก 18\nเอว16\nสะโพก20\nยาว 42นิ้ว 107 เซน\n\nชุดที่ 25 เดรส แหวกอก ผูกโบว์ •\nอก 18\nเอว 15\nสะโพก 18\nยาว 50 นิ้ว 127 เซน\n\nชุดที่ 26 เดรสแขนตาข่ายกระดุมเพชรสามเม็ดตรงกลาง •\nอก 16\nเอว 14.5\nสะโพก 16\nยาว 52 นิ้ว 132 เซน\n\nชุดที่ 27 เดรสสายเดี่ยวสายเพชร โบว์เพชร•\nอก 15\nเอว 12\nสะโพก 15\nยาว 48.5 นิ้ว 123 เซน\n\nชุดที่ 28 ชุดเดรสหน้าอกแหวกกุหลาบสามดอก •\nอก 16\nเอว 12.5\nสะโพก 17.5\nยาว 48 นิ้ว 122 เซน\n\n9/7/69\n\nชุดที่ 29 เดรสสั้น ไข่มุก+\nอก 18\nเอว 14\nสะโพก 17\nยาว 40 นิ้ว 102 เซน\n\nชุดที่ 30 เดรสสายเดี่ยวเชือกผูก หวิบหวับกุหลาบ 6ดอก+\nอก 18\nเอว 14.5\nสะโพก 17\nยาว 50 นิ้ว 127 เซน\n\nชุดที่ 31 เดรสแหวกไหล่ •\nอก 16\nเอว 14\nสะโพก 16 \nยาว 51นิ้ว 130เซน\n\nชุดที่ 32 เดรสใส่ได้สองแขน พริวไหว•\nอก 16.5\nเอว 14\nสะโพก 16.5\nยาว 52 นิ้ว 132 เซน\n\nชุดที่ 33 เดรสสั้นคอกลมมีตะข่าย •\nอก 17\nเอว 14\nสะโพก 17\nยาว 36.5 นิ้ว 93 เซน\n\nชุดที่ 34 เดรสสั้นลายสก็อต โบว์ดำใหญ่+•\nอก 14.5\nเอว 13\nสะโพก 14.5\nยาว 31.5 นิ้ว 80 เซน\n\nชุดที่ 35 เดรสแหวกอกคอเพชร•\nอก 13\nเอว 12\nสะโพก 13.5\nยาว 53นิ้ว 135 เซน\n\nชุดที่ 36 เดรสสั้น ตระข่าย (มีตำหนิ เป็นขุยสีเนื้อ) •\nอก 17\nเอว 15 \nสะโพก 17\nยาว 42.5นิ้ว 108 เซน\n\nชุดที่ 37 ชุดเดรสยาว จับจีบ ซ้าย  เพชรสายเดี่ยว•\nอก 16\nเอว 15\nสะโพก 16.5\nยาว 53 นิ้ว 135 เซน\n\nชุดที่ 38 เดรสยาว แหวก อกดอกกุหลาบตรงกลาง สายเดี่ยวไขว้ (มีตำหนิบริเวณปลายกระโปรง)•\nอก 16\nเอว 15\nสะโพก 16\nยาว 56นิ้ว 142 เซน\n\nชุดที่ 39 เดรสสั้นตัวใหญ่ ปักลายลูกไม้ ดอกใหญ่ มีโบว์ตรงกลางเอว •\nอก 20\nเอว 19\nสะโพก 20.5\nยาว 39นิ้ว 99 เซน\n\nชุดที่ 40 เดรส สั้น พรัสไซส์ ครอบชุดลูกไม้ติด ปักเพรชสีเงิน+•\nอก 19\nเอว 20\nสะโพก 19\nยาว 40 นิ้ว 102 เซน\n\nชุดที่ 41 เดรส หางปลา แขนเป็นลูกหมายแขนยาว •\nอก 15\nเอว 13\nสะโพก 15\nยาว 36.5 นิ้ว 93 เซน\n\nชุดที่ 42 เดรสยาวมัดย้อม •\nอก 17\nเอว 15\nสะโพก 17\nยาว 50.5 นิ้ว 128.05เซน\n\nชุดที่ 43 ชุดแยกส่วน เสื้อครึ่งตัวมีสายยาว •\nอก  15\nเอว 13.5\nสะโพก 16\nยาว เสื้อ8 นิ้ว 20 เซน\nกระโปรง 47นิ้ว 119.05เซน\n\n\nชุดที่ 44 เดรส ไซส์ใหญ่ แหวกหน้า แหวกหลัง•\nอก 20.5\nเอว 18\nสะโพก 20.5\nยาว  53 นิ้ว 134.05เซน้อง\n\nชุดที่ 45 เดรสยาว แหวกอก คอผูก จับจีบบนล่าง (ซ้ำ) •\nอก 17\nเอว 14.5\nสะโพก 16.5\nยาว 51 นิ้ว 129.05เซน\n\nชุดที่ 46 เดรส แขนข้าง คอดอกไม้ เรียบๆ •\nอก 13\nเอว 12\nสะโพก 13\nยาว 47นิ้ว 119.05 เซน\n\nชุดที่ 47 เดรสยาวแขนตุ๊กตา ชุดที่จีบเยอะๆ   •\nอก 16  \nเอว 14\nสะโพก 16\nยาว 50 นิ้ว 127 เซน\n\nชุดที่ 48 เดรสยาวแหวกหน้าแหวกหลังคอเชือก กว้างมาก + •\nอก 15\nเอว 14.5\nสะโพก 15\nยาว 55.5 นิ้ว 141 เซน\n\nชุดที่ 49  เดรสสั้น ชุดตาข่ายคุมไหล่สีเนื้อ คอตาข่ายสีชมพู +\nอก 16\nเอว 14\nสะโพก 17\nยาว 36 นิ้ว 91.05 เซน\n\nชุดที่ 50 เดรสยาวค้องคอแบบปมตรงกลาง\nอก 14\nเอว 13\nสะโพก 15\nยาว 52 นิ้ว 132 เซน\n\nชุดที่ 51 เดรสยาวค้องคอแบบปมตรงกลาง (ตัวซ้ำ)\nอก 15\nเอว 13\nสะโพก 15\nยาว 49 นิ้ว 124.05 เซน\n\nชุดที่ 52 เดรสสั้น ค้องคอ เป็นปมมีจับ ข้างกระโปรง •\nอก 13\nเอว 12\nสะโพก 13\nยาว 28นิ้ว 71เซน\n\nชุดที่ 53 ชุดเดรสยาวเกาะอก มีปอกแขนติด\nอก 14\nเอว 15\nสะโพก 16.5\nยาว 47.5นิ้ว 120.07 เซน\n\nชุดที่ 54 ชุดเดรสปาด ข้าง จีบยาวหางปลา •\nอก 14.5 \nเอว 13.5\nสะโพก 14\nยาว 44.5 นิ้ว 113 เซน\n\nชุดที่ 55 เพชรค้องคอเหล็ก มีคอห้อน หน้าแหวกข้างยาว มีจีบ •\nอก 14.5\nเอว 12.5\nสะโพก  14.5\nยาว 59 นิ้ว 150 เซน\n\nชุดที่ 56 ชุดเดรส ไหล่เดียว หางม้า•\nอก 16\nเอว 14\nสะโพก 16\nยาว 53.5 นิ้ว 136 เซน\n\nชุดที่ 57 เดรสสั้น คนละสี ซ้ำ จีบปล่อย ข้าง ไม่ปล่อยข้าง•\nอก 17.5\nเอว 16\nสะโพก 17.5\nยาว 34 นิ้ว 86 เซน\n\nชุดที่ 58 เดรสยาว ใหญ่ ปาดไหล่ สายเดี่ยว (ตำหนิ) •\nอก 17\nเอว 15\nสะโพก 17\nยาว 53.5 นิ้ว 136 เซน\n\nชุดที่ 59 •\nอก 21.5\nเอว 22\nสะโพก 24.5\nยาว 37.5 นิ้ว 95.25 ซม\n\n\n10/07/69\nชุดที่ 60 เดรสจีบ ดอกไม้ติดเอว ซ้ำ กับ13\nอก 16\nเอว 15.5\nสะโพก 17\nยาว 47 นิ้ว 119.38 ซม.\n\nชุดที่ 61 เดรสแหวกอกคอเพชร (ซ้ำ)\nอก 13.5\nเอว 12.5\nสะโพก 13.5\nยาว 49 นิ้ว 124.05 เซน\n\nชุดที่ 62 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย(ซ้ำ)\nอก  16\nเอว 15\nสะโพก 16\nยาว 37.5 นิ้ว 95.05เซน\n\nชุดที่ 63 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย(ซ้ำ)\nอก 14.5\nเอว 13.5\nสะโพก 15.5\nยาว 42.5นิ้ว 106.05 เซน\n\nชุดที่ 64 เดรสสั้นอกกว้าง ไหล่จีบ (ซ้ำ)\nอก 15\nเอว 14.5\nสะโพก 15\nยาว 41.5 นิ้ว 104 เซน\n\nชุดที่ 65 เดรสสั้น ตระข่าย (ซ้ำ)\nอก 13\nเอว 11.5\nสะโพก 14\nยาว 34 นิ้ว 86.05 เซน\n\nชุดที่ 66 สายเดี่ยวตะข่าย (ซ้ำ)\nอก 14\nเอว 12\nสะโพก 14\nยาว 54.5 นิ้ว 137.05 เซน\n\nชุดที่ 67 เดรสปาดไหล่ ตะข่ายแขนเดียว(ซ้ำ)\nอก 14\nเอว 12\nสะโพก 13\nยาว 54.5 นิ้ว 137.05 เซน\n\nชุดที่ 68 เดรสยาว จีบกลาง(ซ้ำ)\nอก 18\nเอว 14\nสะโพก 17\nยาว 55 นิ้ว 139.05 เซน\n\nชุดที่ 69 เดรสแหวกไหล่(ซ้ำ)\nอก 14\nเอว 13\nสะโพก 15\nยาว 53 นิ้ว 134.05 เซน\n\nชุดที่ 70 เดรสแหวกไหล่ (ซ้ำ)\nอก 14\nเอว 13\nสะโพก 14.5\nยาว 49.5 นิ้ว  126 เซน\n\nชุดที่ 71 เดรสแหวกอกคอเพชร(ซ้ำ)\nอก 14\nเอว 12\nสะโพก 15\nยาว 53 นิ้ว 135 เซน\n\nชุดที่ 72  เดรสสั้น อกยางยืด สาวไซส์พลัส(ซ้ำ)(ตำหนิ) •\nอก 14\nเอว 13.5\nสะโพก 15.5\nยาว 37 นิ้ว 94 เซน \n\nชุดที่ 73 ชุดแยกส่วน เสื้อครึ่งตัวมีสายยาว(ซ้ำ)\nอก 13 ฟรีไซส เสื้อ\nเอว 13 กระโปรง\nสะโพก 16 กระโปรง\nยาว 8.5 นิ้ว 22 เซน เสื้อ\nยาว 44.5 นิ้ว113  เซน\n\nชุดที่ 74 เดรสสั้น2แขนที่แตกต่าง(ซ้ำ)\nอก 17\nเอว 15.5\nสะโพก \nยาว 35.5 นิ้ว 90 เซน\n\nชุดที่ 75 เดรสสั้น2แขนที่แตกต่าง(ซ้ำ)\nอก 17\nเอว 14.5\nสะโพก 16\nยาว 35.5 นิ้ว 90เซน\n\nชุดที่ 76 เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา(ซ้ำ)\nอก 15\nเอว 13.5\nสะโพก 15.5\nยาว 45.5 นิ้ว 114.05 เซน\n\nชุดที่ 77 เดรสแขนกุด เอวจับจีบ(ซ้ำ)\nอก 14\nเอว 14.5\nสะโพก 15.5\nยาว 50.5 นิ้ว 128 เซน\n\nชุดที่ 78 เดรสสั้นหัวเข่า ปาดไหล่ หน้าตะข่าย [มีตำหนิ](ซ้ำ)\nอก 15.5\nเอว 14\nสะโพก 16\nยาว 42.5 นิ้ว 107 เซน\n\nชุดที่ 79 เดรสสั้น คนละสี ซ้ำ จีบปล่อย ข้าง ไม่ปล่อยข้าง(ซ้ำ)\nอก 17\nเอว 15\nสะโพก 18\nยาว 34.5 นิ้ว 87.05เซน\n\nชุดที่ 80 เดรสแขนกุด เอวจับจีบ(ซ้ำ)\nอก 14\nเอว 12.5\nสะโพก 14\nยาว 48.5นิ้ว 123 เซน\n\nชุดที่ 81 เดรสยาว ใหญ่ ปาดไหล่ สายเดี่ยว (ตำหนิ) ซ้ำกับ58\nอก 15.5\nเอว 15\nสะโพก 17.5\nยาว 55 นิ้ว 139.7 ซม\n\nชุดที่ 82  เดรสไหล่เดี่ยว ดอกกุหลาบมุมขวา(ซ้ำ)\nอก 15.5\nเอว 14.5\nสะโพก 16.5\nยาว 49.5นิ้ว 126 เซน\n\nชุดที่ 83 สายเดี่ยวตะข่าย(ซ้ำ)\nอก 16\nเอว 14.5\nสะโพก 17\nยาว 54นิ้ว 137เซน\n\nชุดที่ 84 เดรสยาวมีหางพริ้วไหว สีชมพู(ซ้ำ)\nอก 14\nเอว 13\nสะโพก 15.5\nยาว 53.5นิ้ว 136เซน\n\nชุดที่ 85 กระโปรง(ซ้ำ )\nอก\nเอว 14.5\nสะโพก 17\nยาว 46นิ้ว 107เซน\n\nเก็บตก ตำหนิ\nชุดที่ 86 เดรสไหล่ยางยืด\nอก 16.5\nเอว 15 \nสะโพก 18\nยาว 53นิ้ว เซน\n\nชุดที่ 87 เดรสโบว์ใหหญ่ผูกสำเร็จ\nอก 15\nเอว 12.5\nสะโพก 14.5\nยาว51 นิ้ว129.05 เซน\n\nเก็บตกชุดซ้ำ\n\nชุดที่ 88 เดรสโบว์ใหหญ่ผูกสำเร็จ(ซ้ำ)\nอก 15.5\nเอว 14\nสะโพก 15\nยาว 51.5 นิ้ว 130 เซน\n\nชุดที่ 89 เดรสโบว์ใหหญ่ผูกสำเร็จ(ซ้ำ)\nอก 16\nเอว 15.5\nสะโพก 16\nยาว 54.5 นิ้ว 138.05 เซน\n\nชุดใหม่\nชุดที่ 90 มุก สามดอกตรงกลาง แขนตาข่าย เสื้อคอเซ็ท\nอก 15.5\nเอว 13\nสะโพก 14.5\nยาว 48 นิ้ว 122 เซน\n\nชุดที่ 91 เดรสสั้นหัวเข่า ปาดไหล่ ด้านขวา หน้าตะข่าย\nอก 15.5\nเอว 14.5\nสะโพก 16\nยาว 37 นิ้ว 94 เซน\n\nชุดที่ 92 ปาดไหล่จับจีบ\nอก 15\nเอว 14\nสะโพก 15\nยาว 48.5 นิ้ว 123.19 ซม\n\nชุดที่ 93 พลัสไซส์อกกว้างกระโปรงบาน\nอก 19.5\nเอว 18\nสะโพก 19\nยาว 50.5นิ้ว 127.05 เซน\n\nชุดที่ 94 แขนตุุ๊กตา คอวี จีบซ้าย •\nอก 13.5\nเอว 12\nสะ 15\n47 120\n\nสีชมพู 01\nอก 15\nเอว 13\nสะโพก 15\nยาว 41 นิ้ว 104.14 ซม.\n\nสีชมพู 02\nอก 14\nเอว 12.5\nสะโพก 15\nยาว 50 นิ้ว 127 ซม.\n\nสีชมพู 03 / ตำหนิ\nอก 15\nเอว 14.5\nสะโพก 16\nยาว 33 นิ้ว 83.82 ซม.\n\nสีชมพู 04\nอก 16.5\nเอว 14.5\nสะโพก 18\nยาว  40 นิ้ว 101.6 ซม.\n\nสีชมพู 099 ตำหนิ\nอก 15\nเอว 16.5\nสะโพก 18\nยาว 48 นิ้ว 121.92 ซม.\n\nสีชมพู 0100\nอก 14\nเอว 12\nสะโพก 15\nยาว 34.5 นิ้ว 87.63 ซม\n\nสีชมพู 0101\nอก 16.5\nเอว 13.5\nสะโพก 15.5\nยาว 50.5 นิ้ว 128.27 ซม\n\nสีชมพู 0102\nอก 30 - 36\nเอว 26 - 30\nสะโพก 34\nยาว 55 นิ้ว 139.7 ซม\n\nสีชมพู 0103  V.1 / ตำหนิ\nอก 30 - 32\nเอว 28\nสะโพก 32\nยาว 57 นิ้ว 144.78 ซม"
+}
