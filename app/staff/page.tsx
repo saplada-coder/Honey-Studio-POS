@@ -297,7 +297,7 @@ function CustomerSelect({ value, onChange, customers = [] }) {
       setBusy(false);
       if (!res.ok) { setErr(data.error || "เพิ่มไม่สำเร็จ"); return; }
       setExtra((e) => [...e, data.name]);
-      onChange(data.name);
+      onChange(data.name,data);
       setAdding(false); setName(""); setPhone("");
     } catch { setBusy(false); setErr("เพิ่มไม่สำเร็จ"); }
   }
@@ -408,7 +408,14 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
             ) : f.type === "images" ? (
               <div className="mt-1"><MultiImageField value={form[f.key]} onChange={(v) => set(f.key, v)} max={f.max || 10} /></div>
             ) : f.type === "customer" ? (
-              <CustomerSelect value={form[f.key]} onChange={(v) => set(f.key, v)} customers={customers} />
+              <CustomerSelect value={form[f.key]} onChange={(v,created) => {
+                set(f.key,v);
+                if('phone' in form){
+                  const matches=customers.filter(c=>c.name===v),customer=created||(matches.length===1?matches[0]:null);
+                  set('phone',customer?.phone||'');
+                  if(v!==form[f.key]&&'userId' in form)set('userId','');
+                }
+              }} customers={customers} />
             ) : f.type === "combo" ? (
               <ComboField value={form[f.key]} onChange={(v) => set(f.key, v)} options={f.options || []} placeholder={f.placeholder} />
             ) : f.type === "product" ? (
@@ -673,7 +680,7 @@ const NAV = [
     { id: "products-sell", label: "สินค้าขาย" },
   ] },
   { id: "customers", label: "ลูกค้า", icon: Users },
-  { id: "orders", label: "คำสั่งซื้อ", icon: ShoppingBag },
+  { id: "orders", label: "รายการเช่า", icon: CalendarDays },
   { id: "rentals", label: "จองชุดเช่า", icon: CalendarDays },
   { id: "online", label: "หน้าลูกค้า / จองออนไลน์", icon: CalendarDays },
   { id: "laundry", label: "ซัก-ซ่อม", icon: Droplets },
@@ -1642,8 +1649,8 @@ function Customers({ customers, orders, products=[], saveEntity, deleteEntity })
 }
 
 /* ============ 5. ORDERS ============ */
-function Orders({ orders, setReceipt, saveEntity, deleteEntity, canEdit, me, shipments, makeTrack, customers, products = [] }) {
-  const [section, setSection] = useState("orders"); // orders | shipping
+function Orders({ orders, setReceipt, saveEntity, deleteEntity, loadAll, rentals, advanceRental, canEdit, me, shipments, makeTrack, customers, products = [] }) {
+  const [section, setSection] = useState("rentals");
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   // คำสั่งซื้อ = ขายเท่านั้น
@@ -1655,11 +1662,13 @@ function Orders({ orders, setReceipt, saveEntity, deleteEntity, canEdit, me, shi
   // แท็บสลับ คำสั่งซื้อ / การจัดส่ง (เฉพาะพนักงานขึ้นไป)
   const sectionToggle = (
     <div className="flex gap-2 mb-4">
-      {[["orders", "🛒 คำสั่งซื้อ"], ["shipping", "🚚 การจัดส่ง"]].map(([id, label]) => (
+      {[["rentals", "รายการเช่า"], ["orders", "รายการขาย"], ["shipping", "🚚 การจัดส่ง"]].map(([id, label]) => (
         <button key={id} onClick={() => setSection(id)} className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: section === id ? C.gold : "#fff", color: section === id ? "#fff" : C.charcoal, border: "1px solid " + (section === id ? C.gold : C.line) }}>{label}</button>
       ))}
     </div>
   );
+
+  if(section==='rentals')return <div>{canEdit&&sectionToggle}<Rentals rentals={rentals} advanceRental={advanceRental} saveEntity={saveEntity} deleteEntity={deleteEntity} loadAll={loadAll} canEdit={canEdit} me={me} customers={customers} products={products} title="รายการเช่า" addLabel="สร้างรายการเช่า"/></div>;
 
   // โหมดการจัดส่ง
   if (canEdit && section === "shipping") {
@@ -1811,7 +1820,7 @@ function Shipping({ shipments, makeTrack, saveEntity, deleteEntity, canEdit }) {
 }
 
 /* ============ 7. RENTALS ============ */
-function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, canEdit, me, customers, products = [] }) {
+function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, canEdit, me, customers, products = [], title="จองชุดเช่า", addLabel="จองชุด" }) {
   const [view, setView] = useState("board");
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
@@ -1823,7 +1832,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
   const openEdit = (r) => setForm({ mode: "edit", data: r });
   return (
     <div>
-      <PageHead title="จองชุดเช่า" sub={`${visible.length} รายการเช่า`} action={canEdit ? <Btn icon={Plus} onClick={openAdd}>จองชุด</Btn> : null} />
+      <PageHead title={title} sub={`${visible.length} รายการเช่า`} action={canEdit ? <Btn icon={Plus} onClick={openAdd}>{addLabel}</Btn> : null} />
       {canEdit&&<RentalLoyaltyManagement rentals={rentals} onChange={()=>void loadAll()}/>}
       <div className="flex gap-2 mb-4">
         {views.map(([id, label, Icon]) => (
@@ -1894,7 +1903,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
 
       {form && (
         <FormModal
-          title={form.mode === "add" ? "จองชุด/เพิ่มการเช่า" : "แก้ไขการเช่า"}
+          title={form.mode === "add" ? "สร้างรายการเช่า" : "แก้ไขการเช่า"}
           fields={rentalFields(form.mode === "edit")}
           initial={form.data}
           customers={customers}
