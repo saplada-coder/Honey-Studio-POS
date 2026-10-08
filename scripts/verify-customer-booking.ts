@@ -23,6 +23,11 @@ async function main(){
     const before=await request('/api/shop/customer-account',token);assert.equal(before.data.balance,0);assert.ok(before.data.notifications.length>0);const notice=before.data.notifications[0].id;assert.equal((await request('/api/shop/customer-account',token,'PATCH',{ids:[notice]})).status,200);assert.equal((await request('/api/shop/customer-account',token)).data.notifications.find((n:{id:string})=>n.id===notice).read,true);assert.equal((await request('/api/shop/customer-account',other)).data.notifications.length,0);assert.equal(booking.fee,450);assert.equal(booking.deposit,300);assert.equal(booking.stockApplied,false);
     const current=(await client.query('SELECT "stockRent" FROM "Product" WHERE id=$1',[id])).rows[0];assert.equal(current.stockRent,1);
     assert.equal((await request('/api/shop/bookings',other)).data.some((b:{id:string})=>b.id===booking.id),false);
+    assert.equal((await request('/api/shop/products/'+id+'/rentals')).status,401);
+    const staffRenters=await request('/api/shop/products/'+id+'/rentals',owner);assert.equal(staffRenters.status,200);assert.equal(staffRenters.data.staff,true);assert.equal(staffRenters.data.rentals[0].id,booking.id);assert.equal(staffRenters.data.rentals[0].phone,'0891234567');assert.equal(staffRenters.data.rentals[0].start,start);
+    const ownRenters=await request('/api/shop/products/'+id+'/rentals',token);assert.equal(ownRenters.status,200);assert.equal(ownRenters.data.staff,false);assert.equal(ownRenters.data.rentals[0].id,booking.id);
+    assert.deepEqual((await request('/api/shop/products/'+id+'/rentals',other)).data.rentals,[]);
+    assert.deepEqual((await request('/api/shop/products/TEST-NONEXISTENT-'+id+'/rentals',owner)).data.rentals,[]);
     assert.equal((await request('/api/shop/bookings/'+booking.id,other,'PATCH',{action:'cancel'})).status,409);
     assert.equal((await request('/api/shop/bookings/'+booking.id,token,'PATCH',{action:'paid'})).status,409);
     const availability=await request(`/api/shop/products/${id}/availability?start=${start}&end=${end}`);assert.equal(availability.data.remaining,0);assert.ok(!JSON.stringify(availability.data).includes('cust'));
