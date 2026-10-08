@@ -16,10 +16,10 @@ async function main(){
     const register=await req('/api/auth/register','','POST',{name:'สมาชิกหน้าร้านทดสอบ',email,password:'test-'+suffix});assert.equal(register.status,200);memberId=register.data.user.id;
     const cookie=register.cookie!.match(/hs_session=([^;]+)/)![1];
     const joined=await fetch(base+'/join',{headers:{Cookie:'hs_session='+cookie},redirect:'manual'});assert.ok(joined.headers.get('location')?.endsWith('/member'));
-    const memberPage=await fetch(base+'/member',{headers:{Cookie:'hs_session='+cookie}});assert.equal(memberPage.status,200);assert.ok((await memberPage.text()).includes('สมาชิกหน้าร้าน'));
+    const memberPage=await fetch(base+'/member',{headers:{Cookie:'hs_session='+cookie}});assert.equal(memberPage.status,200);assert.ok((await memberPage.text()).includes('ข้อมูลการจอง+สะสมแต้ม'));
     assert.equal((await req('/api/shop/customer-account',cookie)).data.memberId,memberId);
     assert.equal((await req('/api/products',staff,'POST',{id:code,name:'ชุดทดสอบสมาชิกหน้าร้าน',cat:'ชุดราตรี',type:'เช่า',rent:300,stockRent:1,stockSell:0})).status,201);
-    const body={id:'TEST-WALKIN-'+suffix,code,item:'ชุดทดสอบสมาชิกหน้าร้าน',cust:'สมาชิกหน้าร้านทดสอบ',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:300,deposit:300,status:'รับชุดแล้ว'};
+    const body={id:'TEST-WALKIN-'+suffix,code,item:'ชุดทดสอบสมาชิกหน้าร้าน',cust:'สมาชิกหน้าร้านทดสอบ',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:300,deposit:300,status:'รับชุดแล้ว',paymentStatus:'ชำระแล้ว'};
     assert.equal((await req('/api/rentals',staff,'POST',{...body,userId:'unknown-member'})).status,409);
     assert.equal((await req('/api/rentals',staff,'POST',{...body,userId:memberId,start:'16 มิ.ย.'})).status,409);
     const rental=await req('/api/rentals',staff,'POST',{...body,userId:memberId});assert.equal(rental.status,201);assert.equal(rental.data.online,false);
@@ -28,7 +28,7 @@ async function main(){
     assert.equal((await req('/api/rentals/'+body.id,staff,'PATCH',{status:'คืนแล้ว'})).status,200);assert.equal((await req('/api/rentals/'+body.id,staff,'PATCH',{status:'คืนแล้ว'})).status,200);assert.equal((await req('/api/shop/customer-account',cookie)).data.balance,1);
     assert.equal((await req('/api/rentals/'+body.id,staff,'PATCH',{userId:''})).status,409);
     const action='/api/products/'+code+'/rental-actions';
-    const qr=await req(action,staff,'POST',{action:'rent',userId:memberId,cust:'สมาชิกหน้าร้านทดสอบ',start:thaiToday(),days:1});assert.equal(qr.status,201);
+    const qr=await req(action,staff,'POST',{action:'rent',paymentStatus:'ชำระแล้ว',userId:memberId,cust:'สมาชิกหน้าร้านทดสอบ',start:thaiToday(),days:1});assert.equal(qr.status,201);
     assert.equal((await req(action,staff,'POST',{action:'return',rentalId:qr.data.rental.id})).status,200);assert.equal((await req('/api/shop/customer-account',cookie)).data.balance,2);
     console.log('PASS: store QR redirects, signup session, member home, valid member link, walk-in rental privacy, reminders, POS/QR return points and duplicate prevention');
   }finally{

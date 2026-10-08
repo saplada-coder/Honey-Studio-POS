@@ -1,0 +1,9 @@
+'use client';
+import {useState} from 'react';
+type Rental={id:string;cust:string;item:string;userId:string;status:string;paymentStatus:string;paidAmount:number;fee:number;fine:number;damage:number;rewardUsed:boolean};
+export default function RentalLoyaltyManagement({rentals,onChange}:{rentals:Rental[];onChange:()=>void}){
+  const [busy,setBusy]=useState(false),[error,setError]=useState('');
+  async function act(r:Rental,redeem:boolean){if(!window.confirm(redeem?'ใช้ 10 แต้มแลกค่าเช่าฟรี เงินประกันยังตามปกติ?':'ยืนยันรับชำระค่าเช่า ค่าปรับ และค่าเสียหายครบแล้ว?'))return;setBusy(true);setError('');try{const res=await fetch(redeem?'/api/shop/loyalty/redeem':'/api/rentals/'+encodeURIComponent(r.id),{method:redeem?'POST':'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(redeem?{rentalId:r.id}:{action:'settle'})});const data=await res.json();if(!res.ok)throw new Error(data.error);onChange();}catch(e){setError(e instanceof Error?e.message:'ทำรายการไม่สำเร็จ');}finally{setBusy(false);}}
+  const pending=rentals.filter(r=>r.userId&&r.status!=='ยกเลิก'&&(r.paymentStatus!=='ชำระแล้ว'||r.paidAmount<r.fee+r.fine+r.damage));
+  return pending.length>0?<section className="shop-panel mb-5"><h2 className="font-semibold">ยืนยันค่าใช้จ่ายสมาชิก / ใช้สิทธิ์เช่าฟรี</h2>{error&&<p role="alert" className="text-red-600 text-sm">{error}</p>}{pending.map(r=><div key={r.id} className="border-t py-3 mt-3"><p className="text-sm">{r.cust} · {r.item} · ค่าเช่าและค่าใช้จ่าย {(r.fee+r.fine+r.damage).toLocaleString('th-TH')} บาท</p><div className="flex gap-3 mt-2"><button disabled={busy} className="shop-button secondary" onClick={()=>void act(r,false)}>ยืนยันชำระครบ</button>{r.status==='จองแล้ว'&&!r.rewardUsed&&r.fee>0&&r.fee<=350&&<button disabled={busy} className="shop-button secondary" onClick={()=>void act(r,true)}>ใช้ 10 แต้มเช่าฟรี</button>}</div></div>)}</section>:null;
+}

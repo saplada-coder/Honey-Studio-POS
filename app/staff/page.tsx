@@ -18,6 +18,7 @@ import {
 import * as XLSX from "xlsx";
 import QRCode from "qrcode";
 import RentPriceField from '../rent-price-field';
+import RentalLoyaltyManagement from '../rental-loyalty-management';
 import ShopManagement from '../shop-management';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
 
@@ -415,7 +416,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
               <select value={form[f.key]} onChange={(e) => set(f.key, e.target.value)} required={f.required}
                 className="w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: C.line }}>
                 <option value="">— เลือก —</option>
-                {f.options.map((o) => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+                {f.options.map((o) => <option key={o.value ?? o} value={o.value ?? o} disabled={o.disabled}>{o.label ?? o}</option>)}
               </select>
             ) : (
               <input
@@ -572,6 +573,9 @@ const orderFields = (isEdit) => [
 const rentalFields = (isEdit) => [
   { key: "id", label: "เลขที่การเช่า", required: true, readOnly: isEdit, placeholder: "เช่น R-501" },
   { key: "cust", label: "ลูกค้า", type: "customer", required: true },
+  { key: "paymentStatus", label: "สถานะรับชำระค่าใช้จ่าย", type: "select", options: ["รอชำระ", "ชำระแล้ว"] },
+  { key: "loyaltyGroup", label: "เลขที่รายการเช่ารวม (กรณีหลายชุด)", placeholder: "ชุดในรายการเดียวกันใช้เลขเดียวกัน เพื่อรับรวม 1 แต้ม" },
+  { key: "promotion", label: "โปรโมชั่นที่ใช้", type: "select", options: [{value:"",label:"ไม่ใช้โปรโมชั่น"},{value:"bogo",label:"เช่า 1 แถม 1"},{value:"discount10",label:"ส่วนลดค่าเช่า 10%"},{value:"loyalty",label:"ใช้สิทธิ์ 10 แต้ม (ระบบบันทึก)",disabled:true}] },
   { key: "phone", label: "เบอร์โทรลูกค้า", placeholder: "เช่น 081-234-5678" },
   { key: "userId", label: "รหัสสมาชิกจากแอพลูกค้า (ถ้ามี)", placeholder: "ให้ลูกค้าเปิดหน้าสมาชิก แล้วคัดลอกรหัส" },
   { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0, deposit: (p)=>p.rent||0 } },
@@ -852,7 +856,7 @@ export default function App() {
   const ctx = {
     products, customers, orders, rentals, laundry, txns, repays, shipments, users, categories,
     adjustStock, advanceRental, makeTrack, setQrItem, setReceipt, mobile,
-    saveEntity, deleteEntity, me, role, canEdit,
+    saveEntity, deleteEntity, loadAll, me, role, canEdit,
   };
 
   if (loading) {
@@ -1780,7 +1784,7 @@ function Shipping({ shipments, makeTrack, saveEntity, deleteEntity, canEdit }) {
 }
 
 /* ============ 7. RENTALS ============ */
-function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, canEdit, me, customers, products = [] }) {
+function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, canEdit, me, customers, products = [] }) {
   const [view, setView] = useState("board");
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
@@ -1793,6 +1797,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, canEdit, me
   return (
     <div>
       <PageHead title="จองชุดเช่า" sub={`${visible.length} รายการเช่า`} action={canEdit ? <Btn icon={Plus} onClick={openAdd}>จองชุด</Btn> : null} />
+      {canEdit&&<RentalLoyaltyManagement rentals={rentals} onChange={()=>void loadAll()}/>}
       <div className="flex gap-2 mb-4">
         {views.map(([id, label, Icon]) => (
           <button key={id} onClick={() => setView(id)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium" style={{ background: view === id ? C.gold : "#fff", color: view === id ? "#fff" : C.charcoal, border: "1px solid " + (view === id ? C.gold : C.line) }}>

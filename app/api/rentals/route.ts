@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const code = String(body.code || "").trim();
 
   // ไม่ให้ฟอร์มส่ง flag มาเองได้ — ระบบเป็นคนกำหนด
-  const { stockApplied: _a, stockReturned: _b, ...clean } = body;
+  const { stockApplied: _a, stockReturned: _b, rewardUsed:_r,rewardValue:_v,paidAmount:_p,...clean } = body;
   try{
     const created=await prisma.$transaction(async tx=>{
       const userId=await validateMember(tx,body.userId,{name:body.cust,phone:body.phone});
@@ -37,7 +37,10 @@ export async function POST(req: Request) {
         const claimed=await tx.product.updateMany({where:{id:code,type:{in:['เช่า','ทั้งคู่']},stockRent:{gt:0},status:{notIn:['ซัก','ซ่อม','ปลดสต็อก']}},data:{stockRent:{decrement:1}}});
         if(!claimed.count)throw new Error('ชุดนี้ไม่มีสต๊อกพร้อมเช่า');
       }
-      return tx.rental.create({data:{...clean,userId,online:false,code,stockApplied:!!code,stockReturned:false}});
+      const paidAmount=body.paymentStatus==='ชำระแล้ว'?Number(body.fee||0)+Number(body.fine||0)+Number(body.damage||0):0;
+      if(clean.promotion==='loyalty')throw new Error('ใช้สิทธิ์ฟรีผ่านปุ่มแลก10แต้มเท่านั้น');
+      if(clean.loyaltyGroup&&clean.promotion&&await tx.rental.count({where:{userId,loyaltyGroup:clean.loyaltyGroup,rewardUsed:true,status:{not:'ยกเลิก'}}}))throw new Error('รายการเช่านี้ใช้สิทธิ์ฟรีแล้ว ใช้โปรโมชั่นอื่นร่วมกันไม่ได้');
+      return tx.rental.create({data:{...clean,userId,paidAmount,online:false,code,stockApplied:!!code,stockReturned:false}});
     },{timeout:15000});
     return NextResponse.json(created,{status:201});
   }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'บันทึกไม่สำเร็จ'},{status:409});}

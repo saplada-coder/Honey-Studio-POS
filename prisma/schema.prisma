@@ -76,6 +76,11 @@ model Order {
 
 // ===== การเช่า =====
 model Rental {
+  paidAmount Int @default(0)
+  rewardUsed Boolean @default(false)
+  rewardValue Int @default(0)
+  promotion String @default("")
+  loyaltyGroup String @default("")
   id          String   @id // เช่น R-501
   cust        String
   phone       String   @default("")
@@ -200,6 +205,7 @@ model CustomerReview {
 }
 
 model LoyaltyEntry {
+  rewardKey String @unique @default(dbgenerated("gen_random_uuid()::text"))
   id String @id @default(cuid())
   userId String
   rentalId String @unique

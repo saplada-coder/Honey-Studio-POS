@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {chargesPaid} from './loyalty-rules';
+test('loyalty requires rental fee and all extra charges settled',()=>{const r={fee:350,fine:100,damage:200,paidAmount:350,paymentStatus:'ชำระแล้ว'};assert.equal(chargesPaid(r),false);assert.equal(chargesPaid({...r,paidAmount:650}),true);assert.equal(chargesPaid({...r,paidAmount:650,paymentStatus:'รอชำระ'}),false);assert.equal(chargesPaid({...r,fine:-100}),false);});

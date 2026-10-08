@@ -13,7 +13,7 @@ async function main(){
   async function request(path:string,token='',method='GET',body?:object){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Cookie:'hs_session='+token}:{})},...(body?{body:JSON.stringify(body)}:{})});const data=await r.json();return {status:r.status,data};}
   const start=new Date(Date.parse(thaiToday())+10*86400000).toISOString().slice(0,10),end=new Date(Date.parse(start)+3*86400000).toISOString().slice(0,10);
   try{
-    const home=await fetch(base+'/');assert.equal(home.status,200);const html=await home.text();for(const title of ['ชุดเช่าทั้งหมด','ปฏิทินจองชุด','จองชุดออนไลน์','ชำระเงิน','ตรวจสอบการจอง','รีวิวลูกค้า','ติดต่อร้าน'])assert.ok(html.includes(title));
+    const home=await fetch(base+'/');assert.equal(home.status,200);const html=await home.text();for(const title of ['เข้าสู่ระบบลูกค้า','ข้อมูลการจอง+สะสมแต้ม','รายละเอียดชุด','ปฏิทินจองชุด','ชำระเงิน','รีวิวลูกค้า','ติดต่อร้าน'])assert.ok(html.includes(title));
     const staffRedirect=await fetch(base+'/staff',{headers:{Cookie:'hs_session='+customers[0]},redirect:'manual'});assert.equal(staffRedirect.status,307);
     assert.equal((await request('/api/shop/bookings')).status,401);assert.equal((await request('/api/shop/customer-account')).status,401);assert.ok(html.includes('https://lin.ee/OfHxMgW'));
     assert.equal((await request('/api/shop/settings',customers[0],'PUT',{})).status,403);

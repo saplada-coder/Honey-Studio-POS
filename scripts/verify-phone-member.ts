@@ -19,10 +19,10 @@ async function main(){
     const again=await req('/api/auth/member','','POST',{name,phone:'+66'+phone.slice(1)});assert.equal(again.status,200);assert.equal(again.data.user.id,first.data.user.id);
     assert.equal((await req('/api/auth/member','','POST',{name:'ชื่อไม่ตรง',phone})).status,401);
     assert.equal((await req('/api/users',cookie)).status,403);assert.equal((await req('/api/shop/settings',cookie,'PUT',{})).status,403);
-    const html=await (await fetch(base+'/member',{headers:{Cookie:'hs_session='+cookie}})).text();for(const title of ['หน้าแรก','ราคาเช่าชุด','เงินประกัน','กฎระเบียบการเช่า','โปรโมชั่น','ตารางไซซ์','ตรวจสอบรายการเช่า','รีวิวร้าน'])assert.ok(html.includes(title));
+    const html=await (await fetch(base+'/member',{headers:{Cookie:'hs_session='+cookie}})).text();for(const title of ['เข้าสู่ระบบลูกค้า','ข้อมูลการจอง+สะสมแต้ม','รายละเอียดชุด','ปฏิทินจองชุด','ชำระเงิน','รีวิวลูกค้า','ติดต่อร้าน'])assert.ok(html.includes(title));
     assert.equal((await req('/api/products',staff,'POST',{id:code,name:'ชุดทดสอบชื่อเบอร์',cat:'ชุดราตรี',type:'เช่า',rent:150,stockRent:1,stockSell:0})).status,201);
     const rentalId='TEST-RENT-PHONE-'+suffix;
-    const rental=await req('/api/rentals',staff,'POST',{id:rentalId,cust:name,phone,code,item:'ชุดทดสอบชื่อเบอร์',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:150,deposit:150,status:'รับชุดแล้ว'});assert.equal(rental.status,201);assert.equal(rental.data.userId,first.data.user.id);
+    const rental=await req('/api/rentals',staff,'POST',{id:rentalId,cust:name,phone,code,item:'ชุดทดสอบชื่อเบอร์',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:150,deposit:150,status:'รับชุดแล้ว',paymentStatus:'ชำระแล้ว'});assert.equal(rental.status,201);assert.equal(rental.data.userId,first.data.user.id);
     const account=await req('/api/shop/customer-account',cookie);assert.equal(account.data.phone,phone);assert.equal(account.data.rentals[0].deposit,150);assert.ok(account.data.notifications.length>0);
     assert.equal((await req('/api/rentals/'+rentalId,staff,'PATCH',{status:'คืนแล้ว'})).status,200);assert.equal((await req('/api/shop/customer-account',cookie)).data.balance,1);
     const review=await req('/api/shop/reviews',cookie,'POST',{rentalId,text:'รีวิวจากการเช่าหน้าร้านทดสอบ',consent:true});assert.equal(review.status,201);assert.equal(review.data.approved,false);

@@ -37,7 +37,8 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
         if(remainingForDates(product,reservations,start,end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
         const claimed=await tx.product.updateMany({where:{id,stockRent:{gt:0}},data:{stockRent:{decrement:1}}});
         if(!claimed.count)throw new Error('สต๊อกเช่าหมดแล้ว กรุณาตรวจใหม่');
-        return tx.rental.create({data:{id:'R-'+randomUUID(),userId,code:id,item:product.name,cust,phone:String(body.phone||'').slice(0,40),start,end,fee:rentalPrice(product,days),deposit:product.rent,status:'รับชุดแล้ว',inspector:user.name,stockApplied:true,stockReturned:false}});
+        const fee=rentalPrice(product,days),paid=body.paymentStatus==='ชำระแล้ว';
+        return tx.rental.create({data:{id:'R-'+randomUUID(),userId,code:id,item:product.name,cust,phone:String(body.phone||'').slice(0,40),start,end,fee,paidAmount:paid?fee:0,paymentStatus:paid?'ชำระแล้ว':'รอชำระ',loyaltyGroup:String(body.loyaltyGroup||'').slice(0,100),deposit:product.rent,status:'รับชุดแล้ว',inspector:user.name,stockApplied:true,stockReturned:false}});
       },{timeout:15000});
       return NextResponse.json({ok:true,rental},{status:201});
     }
