@@ -690,7 +690,6 @@ const NAV = [
   ] },
   { id: "customers", label: "ลูกค้า", icon: Users },
   { id: "orders", label: "รายการเช่า", icon: CalendarDays },
-  { id: "rentals", label: "จองชุดเช่า", icon: CalendarDays },
   { id: "online", label: "หน้าลูกค้า / จองออนไลน์", icon: CalendarDays },
   { id: "laundry", label: "ซัก-ซ่อม", icon: Droplets },
   { id: "accounting", label: "บัญชีรับจ่าย", icon: Wallet },
@@ -703,8 +702,8 @@ const ALL_PAGES = NAV.map((n) => n.id);
 const ROLE_PAGES = {
   "เจ้าของ": ALL_PAGES,
   "ผู้ดูแลระบบ": ALL_PAGES, // เหมือนเจ้าของ (ต่างแค่ลบบัญชีเจ้าของไม่ได้)
-  "พนักงานขาย": ["dash", "products", "customers", "orders", "rentals", "online", "laundry"],
-  "ลูกค้า": ["dash", "orders", "rentals"],
+  "พนักงานขาย": ["dash", "products", "customers", "orders", "online", "laundry"],
+  "ลูกค้า": ["dash", "orders"],
 };
 const pagesForRole = (role) => ROLE_PAGES[role] || ["dash"]; // บทบาทไม่รู้จัก = เห็นแค่แดชบอร์ด
 // หน้าย่อย products-rent / products-sell ถือเป็นหน้า products หลัก
@@ -966,7 +965,6 @@ export default function App() {
           {baseOf(page) === "products" && <Products {...ctx} mode={page === "products-rent" ? "rent" : page === "products-sell" ? "sell" : "all"} />}
           {page === "customers" && <Customers {...ctx} />}
           {page === "orders" && <Orders {...ctx} />}
-          {page === "rentals" && <Rentals {...ctx} />}
           {page === "online" && <ShopManagement role={role}/>}
           {page === "laundry" && <Laundry {...ctx} />}
           {page === "accounting" && <Accounting {...ctx} />}
@@ -1304,7 +1302,7 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3"><span className="font-bold">คืนที่ต้องติดตาม</span><button onClick={() => go("rentals")} className="text-xs" style={{ color: C.gold }}>ดูทั้งหมด</button></div>
+          <div className="flex items-center justify-between mb-3"><span className="font-bold">คืนที่ต้องติดตาม</span><button onClick={() => go("orders")} className="text-xs" style={{ color: C.gold }}>ดูทั้งหมด</button></div>
           <div className="space-y-2.5">
             {rentals.filter(r => ["กำลังเช่า", "เกินกำหนด", "รับชุดแล้ว"].includes(r.status)).map(r => (
               <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: C.cream }}>
