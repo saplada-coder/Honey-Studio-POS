@@ -204,7 +204,7 @@ function ImageField({ value, onChange }) {
     <div>
       <div className="flex items-center gap-3">
         <div className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden shrink-0" style={{ background: C.cream }}>
-          {value ? <img src={value} alt="" className="w-full h-full object-cover" /> : <Shirt size={24} style={{ color: C.taupe }} />}
+          {value ? <a href={value} target="_blank" rel="noreferrer" className="w-full h-full"><img src={value} alt="รูปที่แนบ" className="w-full h-full object-cover" /></a> : <Shirt size={24} style={{ color: C.taupe }} />}
         </div>
         <label className="text-xs px-3 py-2 rounded-xl cursor-pointer inline-flex items-center gap-1.5" style={{ background: C.cream, color: C.charcoal }}>
           {up ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
@@ -609,6 +609,7 @@ const rentalFields = (isEdit) => [
   { key: "id", label: "เลขที่การเช่า", required: true, readOnly: isEdit, placeholder: "เช่น R-501" },
   { key: "cust", label: "ลูกค้า", type: "customer", required: true },
   { key: "paymentStatus", label: "สถานะรับชำระค่าใช้จ่าย", type: "select", options: ["รอชำระ", "ชำระแล้ว"] },
+  { key: "paymentSlip", label: "แนบรูปใบบิล / สลิปลูกค้า", type: "image" },
   { key: "loyaltyGroup", label: "เลขที่รายการเช่ารวม (กรณีหลายชุด)", placeholder: "ชุดในรายการเดียวกันใช้เลขเดียวกัน เพื่อรับรวม 1 แต้ม" },
   { key: "promotion", label: "โปรโมชั่นที่ใช้", type: "select", options: [{value:"",label:"ไม่ใช้โปรโมชั่น"},{value:"bogo",label:"เช่า 1 แถม 1"},{value:"discount10",label:"ส่วนลดค่าเช่า 10%"},{value:"manual-discount",label:"ส่วนลดจากฟอร์มลูกค้า",disabled:true},{value:"loyalty",label:"ใช้สิทธิ์ 10 แต้ม (ระบบบันทึก)",disabled:true}] },
   { key: "phone", label: "เบอร์โทรลูกค้า", placeholder: "เช่น 081-234-5678" },
@@ -1875,6 +1876,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
                         )}
                       </div>
                       <div className="text-xs mt-1" style={{ color: C.taupe }}>{r.cust}</div>
+                      {r.paymentSlip&&<a href={r.paymentSlip} target="_blank" rel="noreferrer" className="inline-block text-xs underline mt-2" style={{color:C.gold}}>ดูใบบิล / สลิปลูกค้า</a>}
                       <div className="flex items-center gap-1 text-xs mt-1.5" style={{ color: C.taupe }}><Clock size={11} />{r.start} → {r.end}</div>
                       {canEdit && !["คืนแล้ว", "เกินกำหนด"].includes(r.status) && (
                         <button onClick={() => advanceRental(r.id)} className="mt-2 w-full text-xs py-1.5 rounded-lg font-medium" style={{ background: C.cream, color: C.charcoal }}>เลื่อนสถานะถัดไป →</button>
@@ -1898,6 +1900,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: C.cream }}><Shirt size={16} style={{ color: C.taupe }} /></div>
               <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{r.item}</div><div className="text-xs" style={{ color: C.taupe }}>{r.id} · {r.cust} · {r.start}→{r.end}</div></div>
               <Badge s={r.status} />
+              {r.paymentSlip&&<a href={r.paymentSlip} target="_blank" rel="noreferrer" className="text-xs underline shrink-0" style={{color:C.gold}}>ดูบิล / สลิป</a>}
               {canEdit && (
                 <div className="flex gap-1 shrink-0">
                   <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
