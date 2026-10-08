@@ -15,11 +15,16 @@ async function main(){
   try{
     const publicLogin=await fetch(base+'/customer-login');assert.equal(publicLogin.status,200);const loginHtml=await publicLogin.text();assert.ok(loginHtml.includes('เบอร์โทรศัพท์'));assert.ok(!loginHtml.includes('type="password"'));
     assert.equal((await req('/api/auth/member','','POST',{name,phone:'invalid'})).status,400);
-    const customerId='TEST-CUSTOMER-'+suffix,preRentalId='TEST-PRELOGIN-'+suffix;
-    const savedCustomer=await req('/api/customers',staff,'POST',{id:customerId,name,phone:'+66'+phone.slice(1)});assert.equal(savedCustomer.status,201,JSON.stringify(savedCustomer.data));assert.equal(savedCustomer.data.phone,phone);
-    const preMember=await db.query('SELECT id FROM "User" WHERE phone=$1',[phone]);assert.equal(preMember.rowCount,1);users.push(preMember.rows[0].id);
+    const customerId='TEST-CUSTOMER-'+suffix;
     assert.equal((await req('/api/products',staff,'POST',{id:code,name:'ชุดทดสอบชื่อเบอร์',cat:'ชุดราตรี',type:'เช่า',rent:150,stockRent:1,stockSell:0})).status,201);
-    const preRental=await req('/api/rentals',staff,'POST',{id:preRentalId,cust:name,phone,code,item:'เช่าก่อนเข้าสู่ระบบ',start:thaiToday(),end:new Date(Date.parse(thaiToday())+86400000).toISOString().slice(0,10),fee:150,deposit:150,status:'รับชุดแล้ว',paymentStatus:'ชำระแล้ว'});assert.equal(preRental.status,201,JSON.stringify(preRental.data));assert.equal(preRental.data.userId,preMember.rows[0].id);
+    const start=thaiToday(),end=new Date(Date.parse(start)+86400000).toISOString().slice(0,10);
+    const rentalInput={code,start,end,fee:150,deposit:150,paymentStatus:'ชำระแล้ว'};
+    const failedCustomer=await req('/api/customers',staff,'POST',{id:customerId,name,phone,rental:{...rentalInput,end:start}});assert.equal(failedCustomer.status,409);assert.equal((await db.query('SELECT id FROM "Customer" WHERE id=$1',[customerId])).rowCount,0);assert.equal((await db.query('SELECT id FROM "User" WHERE phone=$1',[phone])).rowCount,0);
+    const savedCustomer=await req('/api/customers',staff,'POST',{id:customerId,name,phone:'+66'+phone.slice(1),rental:rentalInput});assert.equal(savedCustomer.status,201,JSON.stringify(savedCustomer.data));assert.equal(savedCustomer.data.phone,phone);
+    const preMember=await db.query('SELECT id FROM "User" WHERE phone=$1',[phone]);assert.equal(preMember.rowCount,1);users.push(preMember.rows[0].id);
+    const preRentals=await db.query('SELECT * FROM "Rental" WHERE "userId"=$1',[preMember.rows[0].id]);assert.equal(preRentals.rowCount,1);const preRentalId=preRentals.rows[0].id;assert.equal(preRentals.rows[0].status,'จองแล้ว');assert.equal(preRentals.rows[0].deposit,150);assert.equal(preRentals.rows[0].code,code);
+    assert.equal((await req('/api/customers/'+customerId,staff,'PATCH',{rental:rentalInput})).status,409);assert.equal((await db.query('SELECT * FROM "Rental" WHERE "userId"=$1',[preMember.rows[0].id])).rowCount,1);
+    assert.equal((await req('/api/rentals/'+preRentalId,staff,'PATCH',{status:'รับชุดแล้ว'})).status,200);
     assert.equal((await req('/api/rentals/'+preRentalId,staff,'PATCH',{status:'คืนแล้ว'})).status,200);
     const first=await req('/api/auth/member','','POST',{name,phone,role:'เจ้าของ'});assert.equal(first.status,200);assert.equal(first.data.user.role,'ลูกค้า');users.push(first.data.user.id);const cookie=first.cookie!.match(/hs_session=([^;]+)/)![1];
     const again=await req('/api/auth/member','','POST',{name,phone:'+66'+phone.slice(1)});assert.equal(again.status,200);assert.equal(again.data.user.id,first.data.user.id);

@@ -358,7 +358,17 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
-  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  const set = (k, v) => setForm((s) => {
+    const next={...s,[k]:v};
+    if(['rentalCode','rentalStart','rentalEnd'].includes(k)){
+      const product=products.find(p=>p.id===next.rentalCode);
+      if(product){
+        const days=Math.max(1,(Date.parse(next.rentalEnd)-Date.parse(next.rentalStart))/86400000||1);
+        next.rentalFee=rentalPrice(product,days);next.rentalDeposit=product.rent||0;
+      }
+    }
+    return next;
+  });
 
   async function handle(e) {
     e.preventDefault();
@@ -555,9 +565,15 @@ const productFields = (isEdit, cats = []) => [
 const customerFields = (isEdit) => [
   { key: "id", label: "รหัสลูกค้า", required: true, readOnly: isEdit, placeholder: "เช่น C001" },
   { key: "name", label: "ชื่อ-นามสกุล", required: true },
-  { key: "phone", label: "เบอร์โทร" },
+  { key: "phone", label: "เบอร์โทร", required:true },
   { key: "line", label: "LINE ID" },
   { key: "addr", label: "ที่อยู่" },
+  { key: "rentalCode", label: "เลือกชุดเช่าให้ลูกค้า (เว้นว่างได้)", type: "product" },
+  { key: "rentalStart", label: "วันรับชุด", type: "date", required:true, showIf:f=>!!f.rentalCode },
+  { key: "rentalEnd", label: "วันคืนชุด", type: "date", required:true, showIf:f=>!!f.rentalCode },
+  { key: "rentalFee", label: "ค่าเช่า (บาท) — เติมตามจำนวนวัน แก้ไขได้", type: "number", showIf:f=>!!f.rentalCode },
+  { key: "rentalDeposit", label: "เงินประกัน (บาท)", type: "number", showIf:f=>!!f.rentalCode },
+  { key: "rentalPayment", label: "สถานะชำระเงิน", type: "select", default:'รอชำระ', options:['รอชำระ','ชำระแล้ว'], required:true, showIf:f=>!!f.rentalCode },
   { key: "orders", label: "จำนวนออเดอร์สะสม", type: "number" },
   { key: "spent", label: "ยอดใช้จ่ายสะสม", type: "number" },
 ];
@@ -1554,7 +1570,7 @@ function StockAdjustModal({ info, adjustStock, onClose }) {
 }
 
 /* ============ 4. CUSTOMERS ============ */
-function Customers({ customers, orders, saveEntity, deleteEntity }) {
+function Customers({ customers, orders, products=[], saveEntity, deleteEntity }) {
   const [sel, setSel] = useState(null);
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
@@ -1606,8 +1622,13 @@ function Customers({ customers, orders, saveEntity, deleteEntity }) {
           title={form.mode === "add" ? "เพิ่มลูกค้า" : "แก้ไขลูกค้า"}
           fields={customerFields(form.mode === "edit")}
           initial={form.data}
+          products={products.filter(p=>['เช่า','ทั้งคู่'].includes(p.type)&&p.stockRent>0&&!['ซัก','ซ่อม','ปลดสต็อก'].includes(p.status))}
           onClose={() => setForm(null)}
-          onSubmit={async (data) => { await saveEntity("customers", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
+          onSubmit={async (data) => {
+            const {rentalCode,rentalStart,rentalEnd,rentalFee,rentalDeposit,rentalPayment,...customer}=data;
+            const rental=rentalCode?{code:rentalCode,start:rentalStart,end:rentalEnd,fee:rentalFee,deposit:rentalDeposit,paymentStatus:rentalPayment}:undefined;
+            await saveEntity("customers", {...customer,rental}, form.mode === "edit" ? form.data.id : null);setForm(null);
+          }}
         />
       )}
       {del && <ConfirmDelete name={del.name} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("customers", del.id); setDel(null); }} />}
