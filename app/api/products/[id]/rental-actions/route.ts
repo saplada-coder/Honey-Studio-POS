@@ -5,6 +5,7 @@ import { currentUser } from '@/lib/session';
 import { rentalPrice } from '@/lib/product-details';
 import {remainingForDates} from '@/lib/booking-availability';
 import {awardReturnPoint} from '@/lib/customer-rewards';
+import {validateMember} from '@/lib/member-link';
 export const dynamic='force-dynamic';
 const staffRoles=['เจ้าของ','ผู้ดูแลระบบ','พนักงานขาย'];
 async function staff(){const user=await currentUser();return user&&staffRoles.includes(user.role)?user:null;}
@@ -28,6 +29,7 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
       if(!Number.isInteger(days)||days<1||days>365||!cust||cust.length>200||!/^\d{4}-\d{2}-\d{2}$/.test(start)||!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==start)return NextResponse.json({error:'กรอกชื่อลูกค้า วันที่รับ และจำนวนวัน 1–365'},{status:400});
       const end=new Date(date.getTime()+days*86400000).toISOString().slice(0,10);
       const rental=await prisma.$transaction(async tx=>{
+        const userId=await validateMember(tx,body.userId);
         await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${id} FOR UPDATE`;
         const product=await tx.product.findUnique({where:{id}});
         if(!product||!['เช่า','ทั้งคู่'].includes(product.type)||['ซัก','ซ่อม','ปลดสต็อก'].includes(product.status))throw new Error('ชุดนี้ยังไม่พร้อมเช่า');
@@ -35,7 +37,7 @@ export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
         if(remainingForDates(product,reservations,start,end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
         const claimed=await tx.product.updateMany({where:{id,stockRent:{gt:0}},data:{stockRent:{decrement:1}}});
         if(!claimed.count)throw new Error('สต๊อกเช่าหมดแล้ว กรุณาตรวจใหม่');
-        return tx.rental.create({data:{id:'R-'+randomUUID(),code:id,item:product.name,cust,phone:String(body.phone||'').slice(0,40),start,end,fee:rentalPrice(product,days),deposit:product.rent,status:'รับชุดแล้ว',inspector:user.name,stockApplied:true,stockReturned:false}});
+        return tx.rental.create({data:{id:'R-'+randomUUID(),userId,code:id,item:product.name,cust,phone:String(body.phone||'').slice(0,40),start,end,fee:rentalPrice(product,days),deposit:product.rent,status:'รับชุดแล้ว',inspector:user.name,stockApplied:true,stockReturned:false}});
       },{timeout:15000});
       return NextResponse.json({ok:true,rental},{status:201});
     }

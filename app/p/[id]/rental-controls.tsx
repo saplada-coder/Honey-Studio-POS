@@ -6,6 +6,7 @@ export default function RentalControls({product}:{product:{id:string;rent:number
   const [stock,setStock]=useState<{stockRent:number;stockSell:number;status:string;rentals:Rental[];bookings?:Rental[]}|null>(null);
   const [cust,setCust]=useState(''),[phone,setPhone]=useState(''),[days,setDays]=useState(1),[start,setStart]=useState(()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10));
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
+  const [userId,setUserId]=useState('');
   const url=`/api/products/${encodeURIComponent(product.id)}/rental-actions`;
   async function load(){const response=await fetch(url,{cache:'no-store'});const data=await response.json();if(!response.ok)throw new Error(data.error||'โหลดสต๊อกไม่สำเร็จ');setStock(data);}
   useEffect(()=>{load().catch(e=>setError(e.message));},[url]);
@@ -14,7 +15,8 @@ export default function RentalControls({product}:{product:{id:string;rent:number
     <h2 className="font-bold">เช็คสต๊อก · เช่า · คืน</h2>
     {stock?<p>คลังเช่า {stock.stockRent} ตัว · คลังขาย {stock.stockSell} ตัว · {stock.status}</p>:<p>กำลังตรวจสต๊อก…</p>}
     <button disabled={busy} type="button" onClick={()=>load().catch(e=>setError(e.message))} className="underline text-sm">ตรวจสต๊อกล่าสุด</button>
-    {['เช่า','ทั้งคู่'].includes(product.type)&&<form className="space-y-2" onSubmit={e=>{e.preventDefault();act({action:'rent',cust,phone,days,start});}}>
+    {['เช่า','ทั้งคู่'].includes(product.type)&&<form className="space-y-2" onSubmit={e=>{e.preventDefault();act({action:'rent',cust,phone,days,start,userId});}}>
+      <label className="block text-sm">รหัสสมาชิกจากแอพลูกค้า (ถ้ามี)<input maxLength={200} value={userId} onChange={e=>setUserId(e.target.value)} placeholder="ผูกบัญชีเพื่อสะสมแต้มและแจ้งเตือน" className="w-full border rounded-lg p-2"/></label>
       <label className="block text-sm">ชื่อลูกค้า<input required maxLength={200} value={cust} onChange={e=>setCust(e.target.value)} className="w-full border rounded-lg p-2"/></label>
       <label className="block text-sm">โทรศัพท์<input maxLength={40} value={phone} onChange={e=>setPhone(e.target.value)} className="w-full border rounded-lg p-2"/></label>
       <label className="block text-sm">วันที่รับ<input required type="date" value={start} onChange={e=>setStart(e.target.value)} className="w-full border rounded-lg p-2"/></label>

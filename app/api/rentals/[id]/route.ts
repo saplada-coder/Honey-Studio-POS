@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {awardReturnPoint} from '@/lib/customer-rewards';
+import {validateMember} from '@/lib/member-link';
+import {isDate} from '@/lib/booking-availability';
 export const dynamic='force-dynamic';
 export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
   const {id}=await params;
@@ -9,6 +11,11 @@ export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
     const updated=await prisma.$transaction(async tx=>{
       await tx.$queryRaw`SELECT id FROM "Rental" WHERE id = ${id} FOR UPDATE`;
       const cur=await tx.rental.findUniqueOrThrow({where:{id}});
+      if(clean.userId!==undefined&&clean.userId!==cur.userId){
+        if(cur.online||cur.stockReturned)throw new Error('เปลี่ยนสมาชิกไม่ได้สำหรับรายการออนไลน์หรือคืนแล้ว');
+        clean.userId=await validateMember(tx,clean.userId);
+        if(clean.userId&&(!isDate(String(clean.start??cur.start))||!isDate(String(clean.end??cur.end))||(clean.end??cur.end)<=(clean.start??cur.start)))throw new Error('กรอกวันรับและวันคืนรูปแบบ YYYY-MM-DD เพื่อแจ้งเตือนสมาชิก');
+      }
       if(cur.stockApplied&&clean.code!==undefined&&clean.code!==cur.code)throw new Error('เปลี่ยนรหัสชุดไม่ได้หลังตัดสต๊อก กรุณาคืนรายการเดิมก่อน');
       if(cur.stockReturned&&clean.status&&clean.status!=='คืนแล้ว')throw new Error('รายการคืนแล้ว กรุณาสร้างการเช่าใหม่');
       if(cur.online&&['รับชุดแล้ว','กำลังเช่า'].includes(clean.status)&&!cur.stockApplied){

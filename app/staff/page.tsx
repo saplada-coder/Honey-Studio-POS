@@ -49,6 +49,7 @@ const baht = (n) => {
 // ที่อยู่เว็บจริง — ใช้ทำลิงก์ใน QR บนสติกเกอร์ (ต้องเป็นเว็บจริงเสมอ ไม่ใช่ localhost ไม่งั้นสติกเกอร์ที่พิมพ์ไปใช้ไม่ได้)
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://honey-studio-opal.vercel.app";
 // ลิงก์หน้าสินค้าสาธารณะ (ไม่ต้องล็อกอิน) — ปลายทางของ QR
+const MEMBER_URL = SITE_URL.replace(/\/$/,'')+'/join';
 const productUrl = (id) => `${SITE_URL}/p/${encodeURIComponent(id)}`;
 const ICONS = { Crown, Shield, UserCog, Users };
 const genId = (prefix) => prefix + Math.floor(1000 + Math.random() * 9000);
@@ -572,10 +573,11 @@ const rentalFields = (isEdit) => [
   { key: "id", label: "เลขที่การเช่า", required: true, readOnly: isEdit, placeholder: "เช่น R-501" },
   { key: "cust", label: "ลูกค้า", type: "customer", required: true },
   { key: "phone", label: "เบอร์โทรลูกค้า", placeholder: "เช่น 081-234-5678" },
+  { key: "userId", label: "รหัสสมาชิกจากแอพลูกค้า (ถ้ามี)", placeholder: "ให้ลูกค้าเปิดหน้าสมาชิก แล้วคัดลอกรหัส" },
   { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0, deposit: (p)=>p.rent||0 } },
   { key: "item", label: "รายการที่เช่า (แก้ไขได้)", required: true },
-  { key: "start", label: "วันรับ", placeholder: "เช่น 16 มิ.ย." },
-  { key: "end", label: "วันคืน", placeholder: "เช่น 18 มิ.ย." },
+  { key: "start", label: "วันรับ", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
+  { key: "end", label: "วันคืน", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "fee", label: "ค่าเช่า (บาท)", type: "number" },
   { key: "deposit", label: "เงินมัดจำ (บาท)", type: "number" },
   { key: "fine", label: "ค่าปรับล่าช้า (บาท)", type: "number" },
@@ -974,12 +976,12 @@ export default function App() {
       {appQrOpen&&<Modal title="QR เข้าสู่แอพสำหรับลูกค้า" onClose={()=>setAppQrOpen(false)}>
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="font-bold">HONEY STUDIO</div>
-          <QR value={SITE_URL.replace(/\/$/,'')+'/'} size={220} onData={setAppQrPng}/>
-          <p className="text-sm">สแกนเพื่อเข้าสู่แอพ สมัครสมาชิก หรือเข้าสู่ระบบ<br/>ติดตั้งแอพจากปุ่ม “ติดตั้งแอป” ได้</p>
-          <a href={SITE_URL} target="_blank" rel="noreferrer" className="underline text-xs break-all">{SITE_URL}</a>
+          <QR value={MEMBER_URL} size={220} onData={setAppQrPng}/>
+          <p className="text-sm">ลูกค้าหน้าร้าน: สแกนสมัครสมาชิก / เข้าสู่ระบบ เพื่อสะสมแต้มและรับแจ้งเตือน<br/>ติดตั้งแอพจากปุ่ม “ติดตั้งแอป” ได้</p>
+          <a href={MEMBER_URL} target="_blank" rel="noreferrer" className="underline text-xs break-all">{MEMBER_URL}</a>
           <div className="flex gap-2 flex-wrap justify-center">
             <Btn onClick={()=>{if(!appQrPng)return;const a=document.createElement('a');a.href=appQrPng;a.download='HONEY-STUDIO-app-QR.png';a.click();}}>ดาวน์โหลด QR</Btn>
-            <Btn variant="outline" onClick={()=>{if(!appQrPng)return;openPrintWindow('QR แอพ HONEY STUDIO',`<div class="wrap box center"><div class="big">HONEY STUDIO</div><p>สแกนเพื่อเข้าสู่แอพ</p><img src="${appQrPng}" width="240" height="240" alt="QR แอพ"/><p>สมัครสมาชิก / เข้าสู่ระบบ</p><div class="muted" style="font-size:11px">${esc(SITE_URL)}</div></div>`);}}>พิมพ์ QR</Btn>
+            <Btn variant="outline" onClick={()=>{if(!appQrPng)return;openPrintWindow('QR แอพ HONEY STUDIO',`<div class="wrap box center"><div class="big">HONEY STUDIO</div><p>สแกนเพื่อเข้าสู่แอพ</p><img src="${appQrPng}" width="240" height="240" alt="QR แอพ"/><p>สมัครสมาชิก / เข้าสู่ระบบ</p><div class="muted" style="font-size:11px">${esc(MEMBER_URL)}</div></div>`);}}>พิมพ์ QR</Btn>
           </div>
         </div>
       </Modal>}
