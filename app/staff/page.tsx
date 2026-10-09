@@ -445,7 +445,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
               <select value={form[f.key]} onChange={(e) => set(f.key, e.target.value)} required={f.required}
                 className="w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: C.line }}>
                 <option value="">— เลือก —</option>
-                {f.options.map((o) => <option key={o.value ?? o} value={o.value ?? o} disabled={o.disabled}>{o.label ?? o}</option>)}
+                {(typeof f.options === 'function' ? f.options(form) : f.options).map((o) => <option key={o.value ?? o} value={o.value ?? o} disabled={o.disabled}>{o.label ?? o}</option>)}
               </select>
             ) : (
               <input
@@ -555,19 +555,20 @@ const ORDER_STATUS = ["รอชำระ", "เตรียมของ", "ก�
 const RENTAL_STATUS = ["จองแล้ว", "รับชุดแล้ว", "กำลังเช่า", "คืนแล้ว", "เกินกำหนด"];
 const LAUNDRY_STATUS = ["รอดำเนินการ", "กำลังดำเนินการ", "รอซ่อม", "เสร็จแล้ว"];
 const CARRIERS = ["Kerry", "Flash", "ไปรษณีย์ไทย", "J&T"];
+const AUSTRALIA_CATEGORIES = ["ครีม", "อาหารเสริม", "วิตามิน", "สกินแคร์", "มาสก์หน้า", "อุปกรณ์ดูแลช่องปาก", "ของใช้ส่วนตัว", "อื่น ๆ"];
 
 const productFields = (isEdit, cats = []) => [
   { key: "id", label: "รหัสสินค้า", required: true, readOnly: isEdit, placeholder: "เช่น HS-D001" },
   { key: "name", label: "ชื่อสินค้า", required: true },
-  { key: "cat", label: "หมวดหมู่", type: "select", required: true, options: cats },
+  { key: "cat", label: "หมวดหมู่", type: "select", required: true, options: f=>f.importedAustralia?[...new Set([...AUSTRALIA_CATEGORIES,...(f.cat?[f.cat]:[])])]:cats },
   { key: "type", label: "ประเภท", type: "select", options: ["เช่า", "ขาย", "ทั้งคู่"], required: true, showIf:f=>!f.importedAustralia },
   { key: "importedAustralia", label: "สินค้านำเข้าจากออสเตรเลีย", type: "check", default: false },
-  { key: "size", label: "ไซส์", placeholder: "เช่น S / M / L / Free" },
+  { key: "size", label: "ไซส์", placeholder: "เช่น S / M / L / Free", showIf:f=>!f.importedAustralia },
   { key: "color", label: "สี", placeholder: "เช่น แดง, ทอง" },
-  { key: "chest", label: "อก (นิ้ว)", type: "number" },
-  { key: "waist", label: "เอว (นิ้ว)", type: "number" },
-  { key: "hip", label: "สะโพก (นิ้ว)", type: "number" },
-  { key: "length", label: "ความยาว (นิ้ว)", type: "number" },
+  { key: "chest", label: "อก (นิ้ว)", type: "number", showIf:f=>!f.importedAustralia },
+  { key: "waist", label: "เอว (นิ้ว)", type: "number", showIf:f=>!f.importedAustralia },
+  { key: "hip", label: "สะโพก (นิ้ว)", type: "number", showIf:f=>!f.importedAustralia },
+  { key: "length", label: "ความยาว (นิ้ว)", type: "number", showIf:f=>!f.importedAustralia },
   { key: "rent", label: "ราคาเช่า 1 วัน / มัดจำ (บาท)", type: "number", showIf:f=>!f.importedAustralia },
   { key: "rentPrices", label: "ราคาเช่าตามจำนวนวัน", type: "rentPrices", showIf:f=>!f.importedAustralia },
   { key: "cost", label: "ราคาทุน (บาท)", type: "number", required:true },
@@ -575,7 +576,7 @@ const productFields = (isEdit, cats = []) => [
   { key: "stockRent", label: "สต็อกเช่า (ชิ้น)", type: "number", showIf:f=>!f.importedAustralia },
   { key: "stockSell", label: "สต็อกขาย (ชิ้น)", type: "number" },
   { key: "loc", label: "ตำแหน่งเก็บ", placeholder: "เช่น ราว A1" },
-  { key: "value", label: "มูลค่าชุด (บาท)", type: "number" },
+  { key: "value", label: "มูลค่าชุด (บาท)", type: "number", showIf:f=>!f.importedAustralia },
   { key: "acquired", label: "วันที่ได้มา", placeholder: "เช่น 16 มิ.ย. 68" },
   { key: "note", label: "หมายเหตุ", placeholder: "รายละเอียดเพิ่มเติม เช่น ตำหนิ/ที่มา" },
   { key: "status", label: "สถานะ", type: "select", options: PROD_STATUS },
@@ -1404,7 +1405,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   const [del, setDel] = useState(null);
   const [catOpen, setCatOpen] = useState(false);
   const [stockAdj, setStockAdj] = useState(null); // { product, field, sign, label }
-  const catNames = categories.map(c => c.name);
+  const catNames = mode === "australia" ? [...new Set([...AUSTRALIA_CATEGORIES,...products.filter(p=>p.importedAustralia).map(p=>p.cat).filter(Boolean)])] : categories.map(c => c.name);
 
   // กรองตามโหมด: เช่า = type เช่า/ทั้งคู่, ขาย = type ขาย/ทั้งคู่
   const inMode = (p) => mode === "rent" ? (p.type === "เช่า" || p.type === "ทั้งคู่")
