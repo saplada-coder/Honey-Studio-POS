@@ -15,6 +15,6 @@ export async function POST(req:Request){
     if(products.length!==ids.length)return NextResponse.json({error:'บางชุดถูกลบแล้ว กรุณาโหลดรายการใหม่'},{status:404});
     const site=(process.env.NEXT_PUBLIC_SITE_URL||'https://honey-studio-opal.vercel.app').replace(/\/$/,'');
     const labels=ids.map(id=>({id,modules:QRCode.create(`${site}/p/${encodeURIComponent(id)}`,{errorCorrectionLevel:'M'}).modules}));
-    return new Response(qrLabelsPdf(labels),{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="HONEY-STUDIO-QR-labels.pdf"','Cache-Control':'no-store'}});
+    return new Response(qrLabelsPdf(labels),{headers:{'Content-Type':'application/pdf','Content-Disposition':'inline; filename="HONEY-STUDIO-QR-labels.pdf"','Cache-Control':'no-store'}});
   }catch{return NextResponse.json({error:'ส่งออกป้ายไม่สำเร็จ กรุณาลองอีกครั้ง'},{status:400});}
 }

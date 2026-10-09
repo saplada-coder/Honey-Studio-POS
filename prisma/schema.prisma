@@ -16,6 +16,8 @@ model Product {
   name      String
   cat       String // หมวดหมู่
   type      String // เช่า / ขาย / ทั้งคู่
+  importedAustralia Boolean @default(false)
+  cost      Int      @default(0) // ราคาทุนสินค้า (บาท)
   rent      Int      @default(0) // ค่าเช่า (บาท)
   rentPrices String  @default("") // JSON: [{days,price}] ราคาเช่าตามจำนวนวัน
   sell      Int      @default(0) // ราคาขาย (บาท)

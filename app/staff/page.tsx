@@ -369,6 +369,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
   const [err, setErr] = useState("");
   const set = (k, v) => setForm((s) => {
     const next={...s,[k]:v};
+    if(k==='importedAustralia'&&v)next.type='ขาย';
     if(['rentalCode','rentalStart','rentalEnd'].includes(k)){
       const product=products.find(p=>p.id===next.rentalCode);
       if(product){
@@ -559,24 +560,26 @@ const productFields = (isEdit, cats = []) => [
   { key: "id", label: "รหัสสินค้า", required: true, readOnly: isEdit, placeholder: "เช่น HS-D001" },
   { key: "name", label: "ชื่อสินค้า", required: true },
   { key: "cat", label: "หมวดหมู่", type: "select", required: true, options: cats },
-  { key: "type", label: "ประเภท", type: "select", options: ["เช่า", "ขาย", "ทั้งคู่"], required: true },
+  { key: "type", label: "ประเภท", type: "select", options: ["เช่า", "ขาย", "ทั้งคู่"], required: true, showIf:f=>!f.importedAustralia },
+  { key: "importedAustralia", label: "สินค้านำเข้าจากออสเตรเลีย", type: "check", default: false },
   { key: "size", label: "ไซส์", placeholder: "เช่น S / M / L / Free" },
   { key: "color", label: "สี", placeholder: "เช่น แดง, ทอง" },
   { key: "chest", label: "อก (นิ้ว)", type: "number" },
   { key: "waist", label: "เอว (นิ้ว)", type: "number" },
   { key: "hip", label: "สะโพก (นิ้ว)", type: "number" },
   { key: "length", label: "ความยาว (นิ้ว)", type: "number" },
-  { key: "rent", label: "ราคาเช่า 1 วัน / มัดจำ (บาท)", type: "number" },
-  { key: "rentPrices", label: "ราคาเช่าตามจำนวนวัน", type: "rentPrices" },
+  { key: "rent", label: "ราคาเช่า 1 วัน / มัดจำ (บาท)", type: "number", showIf:f=>!f.importedAustralia },
+  { key: "rentPrices", label: "ราคาเช่าตามจำนวนวัน", type: "rentPrices", showIf:f=>!f.importedAustralia },
+  { key: "cost", label: "ราคาทุน (บาท)", type: "number", required:true },
   { key: "sell", label: "ราคาขาย (บาท)", type: "number" },
-  { key: "stockRent", label: "สต็อกเช่า (ชิ้น)", type: "number" },
+  { key: "stockRent", label: "สต็อกเช่า (ชิ้น)", type: "number", showIf:f=>!f.importedAustralia },
   { key: "stockSell", label: "สต็อกขาย (ชิ้น)", type: "number" },
   { key: "loc", label: "ตำแหน่งเก็บ", placeholder: "เช่น ราว A1" },
   { key: "value", label: "มูลค่าชุด (บาท)", type: "number" },
   { key: "acquired", label: "วันที่ได้มา", placeholder: "เช่น 16 มิ.ย. 68" },
   { key: "note", label: "หมายเหตุ", placeholder: "รายละเอียดเพิ่มเติม เช่น ตำหนิ/ที่มา" },
   { key: "status", label: "สถานะ", type: "select", options: PROD_STATUS },
-  { key: "image", label: "รูปด้านหน้า", type: "image" },
+  { key: "image", label: "แนบรูปสินค้า / ด้านหน้า", type: "image" },
   { key: "imageBack", label: "รูปด้านหลัง", type: "image" },
   { key: "defects", label: "รูปตำหนิ (สูงสุด 10 รูป)", type: "images" },
 ];
@@ -688,6 +691,7 @@ const NAV = [
   { id: "products", label: "สต็อกสินค้า", icon: Shirt, children: [
     { id: "products-rent", label: "สินค้าเช่า" },
     { id: "products-sell", label: "สินค้าขาย" },
+    { id: "products-australia", label: "สินค้านำเข้าจากออสเตรเลีย" },
   ] },
   { id: "customers", label: "ลูกค้า", icon: Users },
   { id: "orders", label: "รายการเช่า", icon: CalendarDays },
@@ -975,7 +979,7 @@ export default function App() {
 
         <main className="flex-1 px-4 md:px-7 py-5 md:py-7 pb-24 md:pb-7 max-w-7xl w-full mx-auto">
           {page === "dash" && <Dashboard {...ctx} go={go} />}
-          {baseOf(page) === "products" && <Products {...ctx} mode={page === "products-rent" ? "rent" : page === "products-sell" ? "sell" : "all"} />}
+          {baseOf(page) === "products" && <Products {...ctx} mode={page === "products-rent" ? "rent" : page === "products-sell" ? "sell" : page === "products-australia" ? "australia" : "all"} />}
           {page === "customers" && <Customers {...ctx} />}
           {page === "orders" && <Orders {...ctx} />}
           {page === "online" && <ShopManagement role={role}/>}
@@ -1404,8 +1408,8 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
 
   // กรองตามโหมด: เช่า = type เช่า/ทั้งคู่, ขาย = type ขาย/ทั้งคู่
   const inMode = (p) => mode === "rent" ? (p.type === "เช่า" || p.type === "ทั้งคู่")
-    : mode === "sell" ? (p.type === "ขาย" || p.type === "ทั้งคู่") : true;
-  const modeLabel = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : "ทั้งหมด";
+    : mode === "sell" ? (p.type === "ขาย" || p.type === "ทั้งคู่") : mode === "australia" ? p.importedAustralia === true : true;
+  const modeLabel = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : mode === "australia" ? "สินค้านำเข้าจากออสเตรเลีย" : "ทั้งหมด";
 
   const text = q.trim();
   const list = products.filter(p => {
@@ -1414,23 +1418,24 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
     return inMode(p) && matchText && matchCat;
   });
 
-  const defaultType = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : "ทั้งคู่";
+  const defaultType = mode === "rent" ? "เช่า" : mode === "sell" || mode === "australia" ? "ขาย" : "ทั้งคู่";
   const selectedIds = qrSelected.filter(id=>products.some(p=>p.id===id));
   const toggleQr = (id:string) => setQrSelected(ids=>ids.includes(id)?ids.filter(value=>value!==id):[...ids,id]);
   async function exportQrLabels(){
     if(!selectedIds.length||qrExporting)return;
+    const printTab=window.open('', '_blank');
     setQrExporting(true);setQrError("");
     try{
       const response=await fetch('/api/products/qr-labels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:selectedIds})});
       if(!response.ok){const data=await response.json();throw new Error(data.error||'ส่งออกไม่สำเร็จ');}
       const url=URL.createObjectURL(await response.blob());
-      const link=document.createElement('a');link.href=url;link.download='HONEY-STUDIO-QR-labels.pdf';
-      document.body.appendChild(link);link.click();link.remove();
-      window.setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }catch(error){setQrError(error instanceof Error?error.message:'ส่งออกไม่สำเร็จ');}
+      if(printTab){printTab.location.replace(url);}
+      else{window.location.assign(url);}
+      window.setTimeout(()=>URL.revokeObjectURL(url),600000);
+    }catch(error){printTab?.close();setQrError(error instanceof Error?error.message:'เตรียมป้ายพิมพ์ไม่สำเร็จ');}
     finally{setQrExporting(false);}
   }
-  const openAdd = () => setForm({ mode: "add", data: { id: genId("HS-"), type: defaultType, status: "ว่าง", cat: catNames[0] || "" } });
+  const openAdd = () => setForm({ mode: "add", data: { id: genId("HS-"), type: defaultType, importedAustralia: mode === "australia", status: "ว่าง", cat: catNames[0] || "" } });
   const openEdit = (p) => setForm({ mode: "edit", data: p });
 
   // สรุปสต็อก (ยุบจากหน้าคลังสินค้าเดิม) — คิดจากรายการที่กรองอยู่
@@ -1443,6 +1448,8 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   }).length;
   const exportProducts = () => exportExcel([{ name: "สินค้า", rows: list.map(p => ({
     รหัส: p.id, ชื่อ: p.name, หมวด: p.cat, ประเภท: p.type, ไซส์: p.size, สี: p.color,
+    "นำเข้าจากออสเตรเลีย": p.importedAustralia ? "ใช่" : "ไม่ใช่",
+    "ราคาทุน": p.cost || 0,
     อก: p.chest, เอว: p.waist, สะโพก: p.hip, ความยาว: p.length,
     "ค่าเช่า": p.rent, "ราคาขาย": p.sell, "สต็อกเช่า": p.stockRent, "สต็อกขาย": p.stockSell, "ตำแหน่ง": p.loc, สถานะ: p.status,
   })) }], `honey-studio-สินค้า-${modeLabel}.xlsx`);
@@ -1480,9 +1487,10 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={list.length>0&&list.every(p=>selectedIds.includes(p.id))} onChange={e=>setQrSelected(ids=>e.target.checked?[...new Set([...ids,...list.map(p=>p.id)])]:ids.filter(id=>!list.some(p=>p.id===id)))}/>เลือกทั้งหมดที่แสดง</label>
         <span className="text-xs">เลือก {selectedIds.length} ชุด</span>
         <button type="button" className="text-xs underline" onClick={()=>setQrSelected([])}>ล้างการเลือก</button>
-        <Btn icon={Download} onClick={exportQrLabels} disabled={!selectedIds.length||selectedIds.length>500||qrExporting}>{qrExporting?'กำลังส่งออก…':'Export QR + รหัสชุด (PDF)'}</Btn>
+        <Btn icon={Printer} onClick={exportQrLabels} disabled={!selectedIds.length||selectedIds.length>500||qrExporting}>{qrExporting?'กำลังเตรียมป้าย…':`พิมพ์ QR ที่เลือก (${selectedIds.length} ชุด)`}</Btn>
       </div>
       <p className="text-xs mb-3" style={{color:C.taupe}}>รวมป้าย 50 × 70 มม. เฉพาะ QR กับรหัสชุด ในไฟล์เดียว ชุดละ 1 หน้า เลือกได้สูงสุด 500 ชุด แล้วสั่งพิมพ์ทั้งหมดพร้อมกัน</p>
+      <p className="text-xs mb-3" style={{color:C.taupe}}>เลือกชุด → กดพิมพ์ QR ที่เลือก → กดพิมพ์ใน PDF บน iPhone เลือกแชร์ → พิมพ์</p>
       {qrError&&<p className="text-sm mb-3" style={{color:C.red}}>{qrError}</p>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {list.map(p => {
@@ -1499,6 +1507,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
                 <div className="text-xs mt-0.5" style={{ color: C.taupe }}>{p.id} · {p.cat}</div>
                 <div className="flex gap-1 mt-1 flex-wrap">
                   <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: C.goldBg, color: "#8a6d1f" }}>{p.type}</span>
+                  {p.importedAustralia&&<span className="text-[10px] px-2 py-0.5 rounded-full" style={{background:C.cream,color:C.charcoal}}>นำเข้าจากออสเตรเลีย</span>}
                   {p.size && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: C.cream, color: C.charcoal }}>ไซส์ {p.size}</span>}
                   {p.color && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: C.cream, color: C.charcoal }}>{p.color}</span>}
                 </div>
@@ -1520,7 +1529,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
               </div>
             )}
             <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-              <div className="p-2 rounded-lg" style={{ background: C.cream }}><div style={{ color: C.taupe }}>ค่าเช่า</div><div className="font-bold">{p.rent ? baht(p.rent) : "—"}</div></div>
+              <div className="p-2 rounded-lg" style={{ background: C.cream }}><div style={{ color: C.taupe }}>{p.importedAustralia?'ราคาทุน':'ค่าเช่า'}</div><div className="font-bold">{p.importedAustralia?baht(p.cost||0):p.rent ? baht(p.rent) : "—"}</div></div>
               <div className="p-2 rounded-lg" style={{ background: C.cream }}><div style={{ color: C.taupe }}>ราคาขาย</div><div className="font-bold">{p.sell ? baht(p.sell) : "—"}</div></div>
             </div>
             {/* คลังเช่า */}

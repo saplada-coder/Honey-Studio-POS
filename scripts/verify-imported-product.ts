@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {normalizeImportedProduct} from '../lib/product-import';
+assert.equal(normalizeImportedProduct({importedAustralia:true,type:'เช่า',cost:250,sell:450}).type,'ขาย');
+assert.equal(normalizeImportedProduct({stockSell:2},true).type,'ขาย');
+assert.equal(normalizeImportedProduct({importedAustralia:false,type:'เช่า'},true).type,'เช่า');
+assert.equal(normalizeImportedProduct({type:'ทั้งคู่'}).type,'ทั้งคู่');
+for(const cost of [-1,1.5,'250',2147483648])assert.throws(()=>normalizeImportedProduct({cost}));
+assert.throws(()=>normalizeImportedProduct({sell:-1}));
+assert.throws(()=>normalizeImportedProduct({importedAustralia:'true'}));
+console.log('PASS: Australian imports are sale products, partial updates preserve classification, cost and sale price validation');
