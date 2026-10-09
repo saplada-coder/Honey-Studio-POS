@@ -732,8 +732,8 @@ export default function App() {
 
   const [qrItem, setQrItem] = useState(null);
   const [qrPng, setQrPng] = useState(""); // รูป QR (PNG data URL) ไว้ดาวน์โหลด/พิมพ์สติกเกอร์
-  const [labelWidth, setLabelWidth] = useState(70);
-  const [labelHeight, setLabelHeight] = useState(100);
+  const [labelWidth, setLabelWidth] = useState(58);
+  const [labelHeight, setLabelHeight] = useState(88);
   const [receipt, setReceipt] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [appQrOpen,setAppQrOpen]=useState(false);
@@ -892,26 +892,7 @@ export default function App() {
         <img src="${qrPng}" alt="QR ${esc(qrItem.id)}" />
         <div class="qr-code">${esc(qrItem.id)}</div>
       </div>`,
-      `@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}body{padding:0}.qr-only{width:${labelWidth}mm;height:${labelHeight}mm;padding:4mm;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid}.qr-only img{width:${qrSize}mm;height:${qrSize}mm;image-rendering:pixelated;margin:0}.qr-code{font-family:monospace;font-size:14px;letter-spacing:1px;margin-top:2mm;max-width:100%;overflow-wrap:anywhere}`);
-  };
-
-  const printSticker = () => {
-    if (!qrItem || !qrPng) return;
-    const p = qrItem;
-    const specs = [...productMeasurements(p), ["มัดจำ", baht(p.rent)], ...[1,3,5].map(days=>[`${days} วัน`,baht(rentalPrice(p,days))]), ["เพิ่มวัน", "+50 บาท/วัน"]]
-      .filter(([, v]) => v)
-      .map(([k, v]) => `<div class="row"><span class="muted">${esc(k)}</span><span>${esc(v)}</span></div>`)
-      .join("");
-    openPrintWindow(`สติกเกอร์ ${p.id}`,
-      `<div class="wrap box center sticker">
-        <div class="big">${esc(p.name)}</div>
-        <div class="muted" style="font-size:12px;margin-bottom:10px">${esc(p.cat || "")}</div>
-        <img class="label-qr" src="${qrPng}" alt="QR" />
-        <div style="font-family:monospace;font-size:16px;letter-spacing:1px;margin-top:8px">${esc(p.id)}</div>
-        <div class="line"></div>
-        <div style="text-align:left"><b style="font-size:10px">ขนาด / ราคาเช่า</b>${specs}</div>
-        <div class="muted" style="font-size:11px;margin-top:10px">HONEY STUDIO</div>
-      </div>`, `@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}body{padding:0}.sticker{width:${labelWidth}mm;max-width:none;min-height:${labelHeight}mm;padding:3mm;border:0;border-radius:0}.label-qr{width:${Math.min(labelWidth-8, labelHeight*.26)}mm;height:auto;image-rendering:pixelated}.sticker .big{font-size:12px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.sticker .row{font-size:10px;line-height:1.1;margin-bottom:1px}.sticker .line{margin:4px 0}.sticker img{max-width:100%}`);
+      `@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}@media print{@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}}body{padding:0}.qr-only{width:${labelWidth}mm;height:${labelHeight}mm;padding:4mm;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid}.qr-only img{width:${qrSize}mm;height:${qrSize}mm;image-rendering:pixelated;margin:0}.qr-code{font-family:monospace;font-size:14px;letter-spacing:1px;margin-top:2mm;max-width:100%;overflow-wrap:anywhere}`);
   };
 
   // ===== สิทธิ์ตามบทบาท =====
@@ -1104,14 +1085,14 @@ export default function App() {
               <div>เพิ่มวัน +50 บาท/วัน</div>
             </div>
             <div className="flex gap-2 text-xs items-center">
-              <label>ป้ายกว้าง <input aria-label="ความกว้างป้าย มม." type="number" min="50" max="150" value={labelWidth} onChange={e=>setLabelWidth(Math.max(50,Math.min(150,Number(e.target.value)||70)))} className="border rounded p-1 w-16"/> มม.</label>
-              <label>สูง <input aria-label="ความสูงป้าย มม." type="number" min="90" max="200" value={labelHeight} onChange={e=>setLabelHeight(Math.max(90,Math.min(200,Number(e.target.value)||100)))} className="border rounded p-1 w-16"/> มม.</label>
+              <label>ป้ายกว้าง <input aria-label="ความกว้างป้าย มม." type="number" min="50" max="150" value={labelWidth} onChange={e=>setLabelWidth(Math.max(50,Math.min(150,Number(e.target.value)||58)))} className="border rounded p-1 w-16"/> มม.</label>
+              <label>สูง <input aria-label="ความสูงป้าย มม." type="number" min="50" max="200" value={labelHeight} onChange={e=>setLabelHeight(Math.max(50,Math.min(200,Number(e.target.value)||88)))} className="border rounded p-1 w-16"/> มม.</label>
             </div>
             <div className="flex flex-wrap gap-2 w-full">
-              <Btn icon={Printer} variant="outline" onClick={printSticker}>พิมพ์สติกเกอร์</Btn>
-              <Btn icon={Printer} variant="outline" onClick={printQrOnly}>พิมพ์ QR อย่างเดียว</Btn>
+              <Btn icon={Printer} variant="outline" onClick={printQrOnly}>พิมพ์ QR + รหัสชุด</Btn>
               <Btn icon={Download} onClick={downloadQR}>ดาวน์โหลด QR</Btn>
             </div>
+            <p className="text-xs w-full" style={{ color: C.taupe }}>ตั้งกระดาษเครื่องพิมพ์ให้ตรงขนาดป้าย ใช้มาตราส่วน 100% และปิด “ส่วนหัวและส่วนท้าย” (Headers and footers) เพื่อไม่ให้พิมพ์ URL วันที่ และเลขหน้า</p>
             <p className="text-xs text-center" style={{ color: C.taupe }}>
               สแกนดูสินค้าได้ทันที · พนักงานล็อกอินเพื่อเช็คสต๊อก เช่า และคืนจาก QR เดียว
               <br /><a href={productUrl(qrItem.id)} target="_blank" rel="noreferrer" className="underline break-all" style={{ color: C.gold }}>{productUrl(qrItem.id)}</a>
