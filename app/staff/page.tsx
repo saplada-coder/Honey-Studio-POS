@@ -884,6 +884,17 @@ export default function App() {
     }
   };
 
+  const printQrOnly = () => {
+    if (!qrItem || !qrPng) return;
+    const qrSize = Math.min(labelWidth - 8, labelHeight - 20);
+    openPrintWindow(`QR ${qrItem.id}`,
+      `<div class="qr-only center">
+        <img src="${qrPng}" alt="QR ${esc(qrItem.id)}" />
+        <div class="qr-code">${esc(qrItem.id)}</div>
+      </div>`,
+      `@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}body{padding:0}.qr-only{width:${labelWidth}mm;height:${labelHeight}mm;padding:4mm;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid}.qr-only img{width:${qrSize}mm;height:${qrSize}mm;image-rendering:pixelated;margin:0}.qr-code{font-family:monospace;font-size:14px;letter-spacing:1px;margin-top:2mm;max-width:100%;overflow-wrap:anywhere}`);
+  };
+
   const printSticker = () => {
     if (!qrItem || !qrPng) return;
     const p = qrItem;
@@ -1096,8 +1107,9 @@ export default function App() {
               <label>ป้ายกว้าง <input aria-label="ความกว้างป้าย มม." type="number" min="50" max="150" value={labelWidth} onChange={e=>setLabelWidth(Math.max(50,Math.min(150,Number(e.target.value)||70)))} className="border rounded p-1 w-16"/> มม.</label>
               <label>สูง <input aria-label="ความสูงป้าย มม." type="number" min="90" max="200" value={labelHeight} onChange={e=>setLabelHeight(Math.max(90,Math.min(200,Number(e.target.value)||100)))} className="border rounded p-1 w-16"/> มม.</label>
             </div>
-            <div className="flex gap-2 w-full">
+            <div className="flex flex-wrap gap-2 w-full">
               <Btn icon={Printer} variant="outline" onClick={printSticker}>พิมพ์สติกเกอร์</Btn>
+              <Btn icon={Printer} variant="outline" onClick={printQrOnly}>พิมพ์ QR อย่างเดียว</Btn>
               <Btn icon={Download} onClick={downloadQR}>ดาวน์โหลด QR</Btn>
             </div>
             <p className="text-xs text-center" style={{ color: C.taupe }}>
