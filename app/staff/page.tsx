@@ -886,13 +886,9 @@ export default function App() {
 
   const printQrOnly = () => {
     if (!qrItem || !qrPng) return;
-    const qrSize = Math.min(labelWidth - 8, labelHeight - 20);
-    openPrintWindow(`QR ${qrItem.id}`,
-      `<div class="qr-only center">
-        <img src="${qrPng}" alt="QR ${esc(qrItem.id)}" />
-        <div class="qr-code">${esc(qrItem.id)}</div>
-      </div>`,
-      `@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}@media print{@page{size:${labelWidth}mm ${labelHeight}mm;margin:0}}body{padding:0}.qr-only{width:${labelWidth}mm;height:${labelHeight}mm;padding:4mm;display:flex;flex-direction:column;align-items:center;justify-content:center;break-inside:avoid}.qr-only img{width:${qrSize}mm;height:${qrSize}mm;image-rendering:pixelated;margin:0}.qr-code{font-family:monospace;font-size:14px;letter-spacing:1px;margin-top:2mm;max-width:100%;overflow-wrap:anywhere}`);
+    const url = `/api/products/${encodeURIComponent(qrItem.id)}/qr-label?width=${labelWidth}&height=${labelHeight}`;
+    const tab = window.open(url, "_blank");
+    if (!tab) window.location.assign(url);
   };
 
   // ===== สิทธิ์ตามบทบาท =====
@@ -1092,7 +1088,7 @@ export default function App() {
               <Btn icon={Printer} variant="outline" onClick={printQrOnly}>พิมพ์ QR + รหัสชุด</Btn>
               <Btn icon={Download} onClick={downloadQR}>ดาวน์โหลด QR</Btn>
             </div>
-            <p className="text-xs w-full" style={{ color: C.taupe }}>ตั้งกระดาษเครื่องพิมพ์ให้ตรงขนาดป้าย ใช้มาตราส่วน 100% และปิด “ส่วนหัวและส่วนท้าย” (Headers and footers) เพื่อไม่ให้พิมพ์ URL วันที่ และเลขหน้า</p>
+            <p className="text-xs w-full" style={{ color: C.taupe }}>เปิดป้าย PDF หน้าเดียวเพื่อพิมพ์ บน iPhone เลือกแชร์ → พิมพ์ ตั้งกระดาษเครื่องพิมพ์ให้ตรงขนาดป้าย</p>
             <p className="text-xs text-center" style={{ color: C.taupe }}>
               สแกนดูสินค้าได้ทันที · พนักงานล็อกอินเพื่อเช็คสต๊อก เช่า และคืนจาก QR เดียว
               <br /><a href={productUrl(qrItem.id)} target="_blank" rel="noreferrer" className="underline break-all" style={{ color: C.gold }}>{productUrl(qrItem.id)}</a>
