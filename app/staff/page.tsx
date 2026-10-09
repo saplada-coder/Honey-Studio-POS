@@ -20,6 +20,7 @@ import QRCode from "qrcode";
 import RentPriceField from '../rent-price-field';
 import RentalLoyaltyManagement from '../rental-loyalty-management';
 import ShopManagement from '../shop-management';
+import {memberName,memberPhone} from '@/lib/member-identity';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
@@ -1589,12 +1590,16 @@ function StockAdjustModal({ info, adjustStock, onClose }) {
 }
 
 /* ============ 4. CUSTOMERS ============ */
-function Customers({ customers, orders, products=[], saveEntity, deleteEntity }) {
+function Customers({ customers, orders, rentals=[], products=[], saveEntity, deleteEntity }) {
   const [sel, setSel] = useState(null);
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const openAdd = () => setForm({ mode: "add", data: { id: genId("C") } });
   const openEdit = (c) => setForm({ mode: "edit", data: c });
+  const customerRentals = (c) => rentals.filter(r => {
+    const phone=memberPhone(c.phone);
+    return phone ? memberPhone(r.phone)===phone : !memberPhone(r.phone)&&memberName(r.cust)===memberName(c.name);
+  });
   return (
     <div>
       <PageHead title="ลูกค้า" sub={`${customers.length} รายชื่อ`} action={<Btn icon={Plus} onClick={openAdd}>เพิ่มลูกค้า</Btn>} />
@@ -1614,6 +1619,7 @@ function Customers({ customers, orders, products=[], saveEntity, deleteEntity })
               <div className="flex items-center gap-2"><MapPin size={13} style={{ color: C.taupe }} />{c.addr}</div>
             </div>
             <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: C.line }}>
+              <div className="flex-1 text-center"><div className="text-sm font-bold">{customerRentals(c).length}</div><div className="text-[10px]" style={{ color: C.taupe }}>รายการเช่า</div></div>
               <div className="flex-1 text-center"><div className="text-sm font-bold">{c.orders}</div><div className="text-[10px]" style={{ color: C.taupe }}>ออเดอร์</div></div>
               <div className="flex-1 text-center"><div className="text-sm font-bold" style={{ color: C.gold }}>{baht(c.spent)}</div><div className="text-[10px]" style={{ color: C.taupe }}>ยอดสะสม</div></div>
             </div>
@@ -1629,6 +1635,13 @@ function Customers({ customers, orders, products=[], saveEntity, deleteEntity })
             <div className="flex justify-between"><span style={{ color: C.taupe }}>ยอดใช้จ่ายสะสม</span><span className="font-bold" style={{ color: C.gold }}>{baht(sel.spent)}</span></div>
             <div className="pt-2 border-t" style={{ borderColor: C.line }}>
               <div className="font-semibold mb-2">ประวัติล่าสุด</div>
+              {customerRentals(sel).map(r => (
+                <div key={r.id} className="flex justify-between items-center gap-3 py-2">
+                  <div className="text-xs"><div className="font-medium">{r.item} · {r.id}</div><div style={{color:C.taupe}}>รับ {r.start} · คืน {r.end}</div><div>ค่าเช่า {baht(r.fee)} · มัดจำ {baht(r.deposit)} · {r.paymentStatus}</div></div>
+                  <Badge s={r.status} />
+                </div>
+              ))}
+              {!customerRentals(sel).length&&<p className="text-xs mb-2" style={{color:C.taupe}}>ยังไม่มีรายการเช่า</p>}
               {orders.filter(o => o.cust === sel.name).map(o => (
                 <div key={o.id} className="flex justify-between items-center py-1.5"><span className="text-xs">{o.items}</span><Badge s={o.status} /></div>
               ))}

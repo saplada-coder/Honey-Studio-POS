@@ -1,11 +1,20 @@
 import type {Prisma} from '@/app/generated/prisma/client';
 import {validateMember} from './member-link';
 import {isDate,remainingForDates} from './booking-availability';
+import {memberName,memberPhone} from './member-identity';
+import {randomUUID} from 'node:crypto';
 
 export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<string,any>){
   const code=String(body.code||'').trim();
   const {stockApplied:_a,stockReturned:_b,rewardUsed:_r,rewardValue:_v,paidAmount:_p,...clean}=body;
   const userId=await validateMember(tx,body.userId,{name:body.cust,phone:body.phone});
+  const name=memberName(body.cust),phone=memberPhone(body.phone);
+  if(body.phone&&!phone)throw new Error('กรุณากรอกเบอร์โทรลูกค้าให้ถูกต้อง');
+  if(name.length<2||name.length>200)throw new Error('กรุณาระบุชื่อลูกค้าให้ครบถ้วน');
+  // Serialize records for the same phone so simultaneous rentals create one customer.
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${phone||name}))`;
+  const customer=await tx.customer.findFirst({where:phone?{phone}:{name,phone:''}});
+  if(!customer)await tx.customer.create({data:{id:'C-'+randomUUID(),name,phone}});
   if(userId&&(!isDate(String(body.start||''))||!isDate(String(body.end||''))||body.end<=body.start))throw new Error('รายการสมาชิกต้องระบุวันรับและวันคืนเป็นวันที่จริง โดยวันคืนหลังวันรับ');
   if(code){
     await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${code} FOR UPDATE`;
@@ -21,5 +30,5 @@ export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<
   const paidAmount=body.paymentStatus==='ชำระแล้ว'?Number(body.fee||0)+Number(body.fine||0)+Number(body.damage||0):0;
   if(clean.promotion==='loyalty')throw new Error('ใช้สิทธิ์ฟรีผ่านปุ่มแลก10แต้มเท่านั้น');
   if(clean.loyaltyGroup&&clean.promotion&&await tx.rental.count({where:{userId,loyaltyGroup:clean.loyaltyGroup,rewardUsed:true,status:{not:'ยกเลิก'}}}))throw new Error('รายการเช่านี้ใช้สิทธิ์ฟรีแล้ว ใช้โปรโมชั่นอื่นร่วมกันไม่ได้');
-  return tx.rental.create({data:{...clean,id:body.id,cust:body.cust,item:body.item,start:body.start,end:body.end,userId,paidAmount,online:false,code,stockApplied:!!code,stockReturned:false}});
+  return tx.rental.create({data:{...clean,id:body.id,cust:name,phone,item:body.item,start:body.start,end:body.end,userId,paidAmount,online:false,code,stockApplied:!!code,stockReturned:false}});
 }
