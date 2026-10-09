@@ -7,4 +7,11 @@ assert.equal(normalizeImportedProduct({type:'ทั้งคู่'}).type,'ท�
 for(const cost of [-1,1.5,'250',2147483648])assert.throws(()=>normalizeImportedProduct({cost}));
 assert.throws(()=>normalizeImportedProduct({sell:-1}));
 assert.throws(()=>normalizeImportedProduct({importedAustralia:'true'}));
+const details=normalizeImportedProduct({packageSize:' 60 แคปซูล ',unit:'ขวด',lotNumber:' LOT-001 ',manufactureDate:'2026-01-01',expiryDate:'2027-01-01',minStock:5},true);
+assert.equal(details.packageSize,'60 แคปซูล');assert.equal(details.lotNumber,'LOT-001');
+assert.throws(()=>normalizeImportedProduct({manufactureDate:'2026-02-30'}));
+assert.throws(()=>normalizeImportedProduct({expiryDate:'2025-01-01'},true,{manufactureDate:'2026-01-01'}));
+assert.throws(()=>normalizeImportedProduct({minStock:-1}));
+assert.throws(()=>normalizeImportedProduct({minStock:1.5}));
+assert.doesNotThrow(()=>normalizeImportedProduct({manufactureDate:'',expiryDate:''}));
 console.log('PASS: Australian imports are sale products, partial updates preserve classification, cost and sale price validation');

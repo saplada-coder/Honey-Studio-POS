@@ -20,6 +20,7 @@ import QRCode from "qrcode";
 import RentPriceField from '../rent-price-field';
 import RentalLoyaltyManagement from '../rental-loyalty-management';
 import ShopManagement from '../shop-management';
+import StockTrash from '../stock-trash';
 import {memberName,memberPhone} from '@/lib/member-identity';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
 
@@ -586,12 +587,18 @@ const productFields = (isEdit, cats = []) => [
 const australiaProductFields = (isEdit, currentCategory = "") => [
   { key: "id", label: "รหัสสินค้าออสเตรเลีย", required: true, readOnly: isEdit, placeholder: "เช่น AU-001" },
   { key: "name", label: "ชื่อสินค้า", required: true },
-  { key: "cat", label: "หมวดหมู่สินค้าออสเตรเลีย", type: "select", required: true, options: [...new Set([...AUSTRALIA_CATEGORIES,...(currentCategory?[currentCategory]:[])])] },
+  { key: "cat", label: "ประเภทสินค้า / หมวดหมู่", type: "select", required: true, options: [...new Set([...AUSTRALIA_CATEGORIES,...(currentCategory?[currentCategory]:[])])] },
+  { key: "packageSize", label: "ขนาด / ปริมาณ", placeholder: "เช่น 50 มล. / 100 กรัม / 60 แคปซูล" },
+  { key: "unit", label: "หน่วยนับ", type: "combo", options: ["ชิ้น", "ขวด", "กระปุก", "กล่อง", "ซอง", "หลอด", "แพ็ก"], default: "ชิ้น" },
+  { key: "lotNumber", label: "หมายเลขล็อต", placeholder: "เช่น LOT-A001" },
+  { key: "manufactureDate", label: "วันที่ผลิต", type: "date" },
+  { key: "expiryDate", label: "วันหมดอายุ", type: "date" },
+  { key: "minStock", label: "สต็อกขั้นต่ำ", type: "number" },
   { key: "image", label: "แนบรูปสินค้า", type: "image" },
   { key: "imageBack", label: "รูปเพิ่มเติม / ฉลากสินค้า", type: "image" },
   { key: "cost", label: "ราคาทุน (บาท)", type: "number", required: true },
   { key: "sell", label: "ราคาขาย (บาท)", type: "number", required: true },
-  { key: "stockSell", label: "จำนวนสินค้า (ชิ้น)", type: "number", required: true },
+  { key: "stockSell", label: "จำนวนสินค้า (ตามหน่วยนับ)", type: "number", required: true },
   { key: "loc", label: "ตำแหน่งเก็บสินค้า", placeholder: "เช่น ชั้น A1" },
   { key: "acquired", label: "วันที่รับสินค้า", type: "date" },
   { key: "note", label: "รายละเอียดสินค้า / หมายเหตุ" },
@@ -708,6 +715,7 @@ const NAV = [
     { id: "products-australia", label: "สินค้านำเข้าจากออสเตรเลีย" },
   ] },
   { id: "customers", label: "ลูกค้า", icon: Users },
+  { id: "trash", label: "ถังขยะ / รูปที่กู้คืน", icon: Trash2 },
   { id: "orders", label: "รายการเช่า", icon: CalendarDays },
   { id: "online", label: "หน้าลูกค้า / จองออนไลน์", icon: CalendarDays },
   { id: "laundry", label: "ซัก-ซ่อม", icon: Droplets },
@@ -721,7 +729,7 @@ const ALL_PAGES = NAV.map((n) => n.id);
 const ROLE_PAGES = {
   "เจ้าของ": ALL_PAGES,
   "ผู้ดูแลระบบ": ALL_PAGES, // เหมือนเจ้าของ (ต่างแค่ลบบัญชีเจ้าของไม่ได้)
-  "พนักงานขาย": ["dash", "products", "customers", "orders", "online", "laundry"],
+  "พนักงานขาย": ["dash", "products", "customers", "orders", "online", "laundry", "trash"],
   "ลูกค้า": ["dash", "orders"],
 };
 const pagesForRole = (role) => ROLE_PAGES[role] || ["dash"]; // บทบาทไม่รู้จัก = เห็นแค่แดชบอร์ด
@@ -995,6 +1003,7 @@ export default function App() {
           {page === "dash" && <Dashboard {...ctx} go={go} />}
           {baseOf(page) === "products" && <Products key={page} {...ctx} mode={page === "products-rent" ? "rent" : page === "products-sell" ? "sell" : page === "products-australia" ? "australia" : "all"} />}
           {page === "customers" && <Customers {...ctx} />}
+          {page === "trash" && <StockTrash products={products} onChange={loadAll}/>}
           {page === "orders" && <Orders {...ctx} />}
           {page === "online" && <ShopManagement role={role}/>}
           {page === "laundry" && <Laundry {...ctx} />}
@@ -1351,7 +1360,7 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
           <div className="space-y-2.5">
             {products.filter(p => {
               const lowRent = (p.type === "เช่า" || p.type === "ทั้งคู่") && p.stockRent <= 1;
-              const lowSell = (p.type === "ขาย" || p.type === "ทั้งคู่") && p.stockSell <= 1;
+              const lowSell = (p.type === "ขาย" || p.type === "ทั้งคู่") && p.stockSell <= (p.importedAustralia ? p.minStock || 0 : 1);
               return lowRent || lowSell;
             }).map(p => {
               const parts = [];
@@ -1426,7 +1435,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
 
   const text = q.trim();
   const list = products.filter(p => {
-    const matchText = !text || p.name.includes(text) || p.id.includes(text) || (p.cat || "").includes(text);
+    const matchText = !text || p.name.includes(text) || p.id.includes(text) || (p.cat || "").includes(text) || (p.lotNumber || "").includes(text);
     const matchCat = !catFilter || p.cat === catFilter;
     return inMode(p) && matchText && matchCat;
   });
@@ -1456,13 +1465,15 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   const totalSell = list.filter(p => p.type === "ขาย" || p.type === "ทั้งคู่").reduce((s, p) => s + (p.stockSell || 0), 0);
   const lowCount = list.filter(p => {
     const lowR = (p.type === "เช่า" || p.type === "ทั้งคู่") && p.stockRent <= 1;
-    const lowS = (p.type === "ขาย" || p.type === "ทั้งคู่") && p.stockSell <= 1;
+    const lowS = (p.type === "ขาย" || p.type === "ทั้งคู่") && p.stockSell <= (p.importedAustralia ? p.minStock || 0 : 1);
     return lowR || lowS;
   }).length;
   const exportProducts = () => exportExcel([{ name: "สินค้า", rows: list.map(p => ({
     รหัส: p.id, ชื่อ: p.name, หมวด: p.cat, ประเภท: p.type, ไซส์: p.size, สี: p.color,
     "นำเข้าจากออสเตรเลีย": p.importedAustralia ? "ใช่" : "ไม่ใช่",
     "ราคาทุน": p.cost || 0,
+    "ขนาด / ปริมาณ": p.packageSize || "", "หน่วยนับ": p.unit || "", "หมายเลขล็อต": p.lotNumber || "",
+    "วันที่ผลิต": p.manufactureDate || "", "วันหมดอายุ": p.expiryDate || "", "สต็อกขั้นต่ำ": p.minStock || 0,
     อก: p.chest, เอว: p.waist, สะโพก: p.hip, ความยาว: p.length,
     "ค่าเช่า": p.rent, "ราคาขาย": p.sell, "สต็อกเช่า": p.stockRent, "สต็อกขาย": p.stockSell, "ตำแหน่ง": p.loc, สถานะ: p.status,
   })) }], `honey-studio-สินค้า-${modeLabel}.xlsx`);
@@ -1528,6 +1539,13 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
               <button onClick={() => setQrItem(p)} className="shrink-0 p-1.5 rounded-lg" style={{ background: C.cream }}><QrCode size={18} style={{ color: C.charcoal }} /></button>
             </div>
             {measures && <div className="text-[11px] mb-2" style={{ color: C.taupe }}>{measures} (นิ้ว)</div>}
+            {p.importedAustralia&&<div className="text-xs space-y-1 mb-3" style={{color:C.charcoal}}>
+              {p.packageSize&&<div>ขนาด / ปริมาณ: {p.packageSize}</div>}
+              {p.lotNumber&&<div>ล็อต: {p.lotNumber}</div>}
+              {p.manufactureDate&&<div>วันที่ผลิต: {p.manufactureDate}</div>}
+              {p.expiryDate&&<div>วันหมดอายุ: {p.expiryDate}</div>}
+              <div style={{color:p.stockSell<=(p.minStock||0)?C.red:C.taupe}}>สต็อกขั้นต่ำ: {p.minStock||0} {p.unit||'ชิ้น'}{p.stockSell<=(p.minStock||0)?' · ถึงขั้นต่ำแล้ว':''}</div>
+            </div>}
             {parseUrls(p.defects).length > 0 && (
               <div className="mb-2">
                 <div className="text-[11px] mb-1 flex items-center gap-1" style={{ color: C.red }}><AlertTriangle size={11} />ตำหนิ {parseUrls(p.defects).length} จุด</div>
@@ -1558,7 +1576,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
             {/* คลังขาย */}
             {(p.type === "ขาย" || p.type === "ทั้งคู่") && (
               <div className="flex items-center justify-between text-xs mb-2">
-                <span style={{ color: C.taupe }}>🛍️ คลังขาย: <b style={{ color: p.stockSell === 0 ? C.red : C.charcoal }}>{p.stockSell}</b> ชิ้น</span>
+                <span style={{ color: C.taupe }}>🛍️ คลังขาย: <b style={{ color: p.stockSell === 0 ? C.red : C.charcoal }}>{p.stockSell}</b> {p.importedAustralia?p.unit||'ชิ้น':'ชิ้น'}</span>
                 <div className="flex gap-1">
                   <button onClick={() => setStockAdj({ product: p, field: "stockSell", sign: -1, label: "ตัดสต็อกขายออก (คลังขาย)" })} className="px-2 py-1 rounded-lg font-medium" style={{ background: C.roseBg, color: C.charcoal }}>ขายออก</button>
                   <button onClick={() => setStockAdj({ product: p, field: "stockSell", sign: 1, label: "รับสินค้าเข้า (คลังขาย)" })} className="px-2 py-1 rounded-lg font-medium" style={{ background: C.greenBg, color: C.charcoal }}>รับเข้า</button>

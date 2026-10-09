@@ -18,6 +18,12 @@ model Product {
   type      String // เช่า / ขาย / ทั้งคู่
   importedAustralia Boolean @default(false)
   cost      Int      @default(0) // ราคาทุนสินค้า (บาท)
+  packageSize String @default("")
+  unit String @default("")
+  lotNumber String @default("")
+  manufactureDate String @default("")
+  expiryDate String @default("")
+  minStock Int @default(0)
   rent      Int      @default(0) // ค่าเช่า (บาท)
   rentPrices String  @default("") // JSON: [{days,price}] ราคาเช่าตามจำนวนวัน
   sell      Int      @default(0) // ราคาขาย (บาท)
@@ -223,4 +229,16 @@ model NotificationRead {
   key String
   createdAt DateTime @default(now())
   @@unique([userId, key])
+}
+
+model StockTrash {
+  id String @id @default(cuid())
+  sourceKey String? @unique
+  kind String
+  productId String @default("")
+  name String
+  snapshot String
+  createdAt DateTime @default(now())
+  restoredAt DateTime?
+  @@index([restoredAt, createdAt])
 }

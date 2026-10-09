@@ -48,3 +48,4 @@ next-env.d.ts
 # Local stock import reports and database snapshots
 /scripts/*-result.json
 /scripts/*-before-update.json
+/recovery/
