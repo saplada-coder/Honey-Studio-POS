@@ -153,7 +153,7 @@ const PageHead = ({ title, sub, action }) => (
     {action}
   </div>
 );
-const Btn = ({ children, onClick, variant = "solid", icon: Icon, size = "md", type = "button" }) => {
+const Btn = ({ children, onClick, variant = "solid", icon: Icon, size = "md", type = "button", disabled = false }) => {
   const base = "inline-flex items-center gap-1.5 rounded-xl font-medium transition active:scale-95 " + (size === "sm" ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm");
   const styles = variant === "solid"
     ? { background: C.gold, color: "#fff" }
@@ -162,7 +162,7 @@ const Btn = ({ children, onClick, variant = "solid", icon: Icon, size = "md", ty
     : variant === "danger"
     ? { background: C.redBg, color: C.red }
     : { background: "#fff", color: C.charcoal, border: "1px solid " + C.line };
-  return <button type={type} onClick={onClick} className={base} style={styles}>{Icon && <Icon size={16} />}{children}</button>;
+  return <button type={type} onClick={onClick} disabled={disabled} className={base + " disabled:opacity-50 disabled:cursor-not-allowed"} style={styles}>{Icon && <Icon size={16} />}{children}</button>;
 };
 
 /* ============ MODAL ============ */
@@ -732,8 +732,8 @@ export default function App() {
 
   const [qrItem, setQrItem] = useState(null);
   const [qrPng, setQrPng] = useState(""); // รูป QR (PNG data URL) ไว้ดาวน์โหลด/พิมพ์สติกเกอร์
-  const [labelWidth, setLabelWidth] = useState(58);
-  const [labelHeight, setLabelHeight] = useState(88);
+  const [labelWidth, setLabelWidth] = useState(50);
+  const [labelHeight, setLabelHeight] = useState(70);
   const [receipt, setReceipt] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [appQrOpen,setAppQrOpen]=useState(false);
@@ -1081,8 +1081,8 @@ export default function App() {
               <div>เพิ่มวัน +50 บาท/วัน</div>
             </div>
             <div className="flex gap-2 text-xs items-center">
-              <label>ป้ายกว้าง <input aria-label="ความกว้างป้าย มม." type="number" min="50" max="150" value={labelWidth} onChange={e=>setLabelWidth(Math.max(50,Math.min(150,Number(e.target.value)||58)))} className="border rounded p-1 w-16"/> มม.</label>
-              <label>สูง <input aria-label="ความสูงป้าย มม." type="number" min="50" max="200" value={labelHeight} onChange={e=>setLabelHeight(Math.max(50,Math.min(200,Number(e.target.value)||88)))} className="border rounded p-1 w-16"/> มม.</label>
+              <label>ป้ายกว้าง <input aria-label="ความกว้างป้าย มม." type="number" min="50" max="150" value={labelWidth} onChange={e=>setLabelWidth(Math.max(50,Math.min(150,Number(e.target.value)||50)))} className="border rounded p-1 w-16"/> มม.</label>
+              <label>สูง <input aria-label="ความสูงป้าย มม." type="number" min="50" max="200" value={labelHeight} onChange={e=>setLabelHeight(Math.max(50,Math.min(200,Number(e.target.value)||70)))} className="border rounded p-1 w-16"/> มม.</label>
             </div>
             <div className="flex flex-wrap gap-2 w-full">
               <Btn icon={Printer} variant="outline" onClick={printQrOnly}>พิมพ์ QR + รหัสชุด</Btn>
@@ -1391,6 +1391,9 @@ function CategoryManager({ categories, saveEntity, deleteEntity, onClose }) {
 
 /* ============ 2. PRODUCTS ============ */
 function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, categories, mode = "all" }) {
+  const [qrSelected, setQrSelected] = useState<string[]>([]);
+  const [qrExporting, setQrExporting] = useState(false);
+  const [qrError, setQrError] = useState("");
   const [q, setQ] = useState("");
   const [catFilter, setCatFilter] = useState("");
   const [form, setForm] = useState(null); // {mode, data}
@@ -1412,6 +1415,21 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   });
 
   const defaultType = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : "ทั้งคู่";
+  const selectedIds = qrSelected.filter(id=>products.some(p=>p.id===id));
+  const toggleQr = (id:string) => setQrSelected(ids=>ids.includes(id)?ids.filter(value=>value!==id):[...ids,id]);
+  async function exportQrLabels(){
+    if(!selectedIds.length||qrExporting)return;
+    setQrExporting(true);setQrError("");
+    try{
+      const response=await fetch('/api/products/qr-labels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:selectedIds})});
+      if(!response.ok){const data=await response.json();throw new Error(data.error||'ส่งออกไม่สำเร็จ');}
+      const url=URL.createObjectURL(await response.blob());
+      const link=document.createElement('a');link.href=url;link.download='HONEY-STUDIO-QR-labels.pdf';
+      document.body.appendChild(link);link.click();link.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }catch(error){setQrError(error instanceof Error?error.message:'ส่งออกไม่สำเร็จ');}
+    finally{setQrExporting(false);}
+  }
   const openAdd = () => setForm({ mode: "add", data: { id: genId("HS-"), type: defaultType, status: "ว่าง", cat: catNames[0] || "" } });
   const openEdit = (p) => setForm({ mode: "edit", data: p });
 
@@ -1458,11 +1476,20 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
         </select>
       </div>
       <div className="text-xs mb-3" style={{ color: C.taupe }}>พบ {list.length} รายการ</div>
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={list.length>0&&list.every(p=>selectedIds.includes(p.id))} onChange={e=>setQrSelected(ids=>e.target.checked?[...new Set([...ids,...list.map(p=>p.id)])]:ids.filter(id=>!list.some(p=>p.id===id)))}/>เลือกทั้งหมดที่แสดง</label>
+        <span className="text-xs">เลือก {selectedIds.length} ชุด</span>
+        <button type="button" className="text-xs underline" onClick={()=>setQrSelected([])}>ล้างการเลือก</button>
+        <Btn icon={Download} onClick={exportQrLabels} disabled={!selectedIds.length||selectedIds.length>500||qrExporting}>{qrExporting?'กำลังส่งออก…':'Export QR + รหัสชุด (PDF)'}</Btn>
+      </div>
+      <p className="text-xs mb-3" style={{color:C.taupe}}>รวมป้าย 50 × 70 มม. เฉพาะ QR กับรหัสชุด ในไฟล์เดียว ชุดละ 1 หน้า เลือกได้สูงสุด 500 ชุด แล้วสั่งพิมพ์ทั้งหมดพร้อมกัน</p>
+      {qrError&&<p className="text-sm mb-3" style={{color:C.red}}>{qrError}</p>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {list.map(p => {
           const measures = [p.chest && `อก ${p.chest}`, p.waist && `เอว ${p.waist}`, p.hip && `สะโพก ${p.hip}`, p.length && `ยาว ${p.length}`].filter(Boolean).join(" · ");
           return (
           <Card key={p.id} className="p-4">
+            <label className="flex items-center gap-2 text-xs mb-3"><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={()=>toggleQr(p.id)}/>เลือกพิมพ์ QR · {p.id}</label>
             <div className="flex items-start gap-3 mb-3">
               <button onClick={() => setQrItem(p)} className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden" style={{ background: C.cream }}>
                 {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <Shirt size={24} style={{ color: C.taupe }} />}

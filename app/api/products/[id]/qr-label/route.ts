@@ -15,7 +15,7 @@ export async function GET(req:Request,{params}:{params:Promise<{id:string}>}){
   const site=(process.env.NEXT_PUBLIC_SITE_URL||'https://honey-studio-opal.vercel.app').replace(/\/$/,'');
   try{
     const qr=QRCode.create(`${site}/p/${encodeURIComponent(id)}`,{errorCorrectionLevel:'M'});
-    const pdf=qrLabelPdf(id,qr.modules,dimension('width',58,150),dimension('height',88,200));
+    const pdf=qrLabelPdf(id,qr.modules,dimension('width',50,150),dimension('height',70,200));
     return new Response(pdf,{headers:{'Content-Type':'application/pdf','Content-Disposition':'inline; filename="QR-label.pdf"','Cache-Control':'no-store'}});
   }catch{return NextResponse.json({error:'สร้างป้ายไม่สำเร็จ กรุณาตรวจรหัสชุด'},{status:400});}
 }
