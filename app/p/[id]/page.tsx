@@ -116,7 +116,7 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
               <div style={{ flex: 1, background: C.goldBg, borderRadius: 12, padding: "10px 12px" }}>
                 <div style={{ fontSize: 11, color: "#8a6d1f" }}>ราคาเช่า</div>
                 {[1,3,5].map(days=><div key={days}>{days} วัน = {baht(rentalPrice(p,days))}</div>)}
-                <div>เพิ่มวัน +50 บาท/วัน</div><div>มัดจำ {baht(p.rent)} (ราคาเช่า 1 วัน)</div>
+                <div>เพิ่มวัน +50 บาท/วัน</div><div>มัดจำ {baht(p.rent)} (ราคาเช่าวันแรก คงที่ทุกจำนวนวัน)</div>
               </div>
             )}
             {p.sell > 0 && (

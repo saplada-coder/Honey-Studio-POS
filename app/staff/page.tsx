@@ -592,7 +592,7 @@ const customerFields = (isEdit) => [
   { key: "rentalFee", label: "ค่าเช่า (บาท) — เติมตามจำนวนวัน แก้ไขได้", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalDiscount", label: "ส่วนลดค่าเช่า (บาท)", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalNet", label: "ยอดหลังส่วนลด", type: "summary", showIf:f=>!!f.rentalCode, value:f=>`ค่าเช่าสุทธิ ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0)))} + เงินประกัน ${baht(Number(f.rentalDeposit||0))} = ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0))+Number(f.rentalDeposit||0))}` },
-  { key: "rentalDeposit", label: "เงินประกัน = ค่าเช่าชุด 1 วัน (อัตโนมัติ)", type: "number", readOnly:true, showIf:f=>!!f.rentalCode },
+  { key: "rentalDeposit", label: "เงินประกัน = ราคาเช่าวันแรกของชุด (คงที่ ไม่เพิ่มตามจำนวนวัน)", type: "number", readOnly:true, showIf:f=>!!f.rentalCode },
   { key: "rentalPayment", label: "สถานะชำระเงิน", type: "select", default:'รอชำระ', options:['รอชำระ','ชำระแล้ว'], required:true, showIf:f=>!!f.rentalCode },
   { key: "orders", label: "จำนวนออเดอร์สะสม", type: "number" },
   { key: "spent", label: "ยอดใช้จ่ายสะสม", type: "number" },
@@ -621,7 +621,7 @@ const rentalFields = (isEdit) => [
   { key: "end", label: "วันคืน", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "fee", label: "ค่าเช่าสุทธิ (บาท)", type: "number" },
   { key: "discount", label: "ส่วนลดที่บันทึกจากฟอร์มลูกค้า (บาท)", type: "number", readOnly:true },
-  { key: "deposit", label: "เงินประกัน = ค่าเช่าชุด 1 วัน (อัตโนมัติ)", type: "number", readOnly:true },
+  { key: "deposit", label: "เงินประกัน = ราคาเช่าวันแรกของชุด (คงที่ ไม่เพิ่มตามจำนวนวัน)", type: "number", readOnly:true },
   { key: "fine", label: "ค่าปรับล่าช้า (บาท)", type: "number" },
   { key: "damage", label: "ค่าเสียหาย/ค่าซ่อม (บาท)", type: "number" },
   { key: "status", label: "สถานะ", type: "select", options: RENTAL_STATUS },
@@ -850,14 +850,38 @@ export default function App() {
   // เคลียร์รูปเก่าเมื่อเปิดสินค้าชิ้นใหม่ กันดาวน์โหลดรูปของชิ้นก่อนหน้า
   useEffect(() => { setQrPng(""); }, [qrItem?.id]);
 
-  const downloadQR = () => {
+  const downloadQR = async () => {
     if (!qrItem || !qrPng) return;
-    const a = document.createElement("a");
-    a.href = qrPng;
-    a.download = `QR-${qrItem.id}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const productId = qrItem.id;
+    try {
+      const qrCanvas = document.createElement("canvas");
+      await QRCode.toCanvas(qrCanvas, productUrl(productId), {
+        width: 640, margin: 4, errorCorrectionLevel: "M",
+        color: { dark: C.charcoal, light: "#FFFFFF" },
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = qrCanvas.width;
+      canvas.height = qrCanvas.height + 100;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("ไม่สามารถสร้างภาพ QR ได้");
+      context.fillStyle = "#FFFFFF";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(qrCanvas, 0, 0);
+      context.fillStyle = C.charcoal;
+      context.font = "36px monospace";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(productId, canvas.width / 2, qrCanvas.height + 35, canvas.width - 64);
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `QR-${productId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (error) {
+      console.error("ดาวน์โหลด QR ไม่สำเร็จ", error);
+      alert("ดาวน์โหลด QR ไม่สำเร็จ กรุณาลองอีกครั้ง");
+    }
   };
 
   const printSticker = () => {
@@ -1062,6 +1086,7 @@ export default function App() {
               </div>
             )}
             <QR value={productUrl(qrItem.id)} size={140} onData={setQrPng} />
+            <div className="font-mono text-sm tracking-wider">{qrItem.id}</div>
             <div className="text-sm w-full rounded-lg p-3" style={{background:C.cream}}>
               <div>มัดจำ {baht(qrItem.rent)} (ราคาเช่า 1 วัน)</div>
               {[1,3,5].map(days=><div key={days}>{days} วัน = {baht(rentalPrice(qrItem,days))}</div>)}
