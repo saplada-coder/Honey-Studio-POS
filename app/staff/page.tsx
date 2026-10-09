@@ -560,9 +560,8 @@ const AUSTRALIA_CATEGORIES = ["ครีม", "อาหารเสริม", 
 const productFields = (isEdit, cats = []) => [
   { key: "id", label: "รหัสสินค้า", required: true, readOnly: isEdit, placeholder: "เช่น HS-D001" },
   { key: "name", label: "ชื่อสินค้า", required: true },
-  { key: "cat", label: "หมวดหมู่", type: "select", required: true, options: f=>f.importedAustralia?[...new Set([...AUSTRALIA_CATEGORIES,...(f.cat?[f.cat]:[])])]:cats },
+  { key: "cat", label: "หมวดหมู่", type: "select", required: true, options: cats },
   { key: "type", label: "ประเภท", type: "select", options: ["เช่า", "ขาย", "ทั้งคู่"], required: true, showIf:f=>!f.importedAustralia },
-  { key: "importedAustralia", label: "สินค้านำเข้าจากออสเตรเลีย", type: "check", default: false },
   { key: "size", label: "ไซส์", placeholder: "เช่น S / M / L / Free", showIf:f=>!f.importedAustralia },
   { key: "color", label: "สี", placeholder: "เช่น แดง, ทอง" },
   { key: "chest", label: "อก (นิ้ว)", type: "number", showIf:f=>!f.importedAustralia },
@@ -583,6 +582,20 @@ const productFields = (isEdit, cats = []) => [
   { key: "image", label: "แนบรูปสินค้า / ด้านหน้า", type: "image" },
   { key: "imageBack", label: "รูปด้านหลัง", type: "image" },
   { key: "defects", label: "รูปตำหนิ (สูงสุด 10 รูป)", type: "images" },
+];
+const australiaProductFields = (isEdit, currentCategory = "") => [
+  { key: "id", label: "รหัสสินค้าออสเตรเลีย", required: true, readOnly: isEdit, placeholder: "เช่น AU-001" },
+  { key: "name", label: "ชื่อสินค้า", required: true },
+  { key: "cat", label: "หมวดหมู่สินค้าออสเตรเลีย", type: "select", required: true, options: [...new Set([...AUSTRALIA_CATEGORIES,...(currentCategory?[currentCategory]:[])])] },
+  { key: "image", label: "แนบรูปสินค้า", type: "image" },
+  { key: "imageBack", label: "รูปเพิ่มเติม / ฉลากสินค้า", type: "image" },
+  { key: "cost", label: "ราคาทุน (บาท)", type: "number", required: true },
+  { key: "sell", label: "ราคาขาย (บาท)", type: "number", required: true },
+  { key: "stockSell", label: "จำนวนสินค้า (ชิ้น)", type: "number", required: true },
+  { key: "loc", label: "ตำแหน่งเก็บสินค้า", placeholder: "เช่น ชั้น A1" },
+  { key: "acquired", label: "วันที่รับสินค้า", type: "date" },
+  { key: "note", label: "รายละเอียดสินค้า / หมายเหตุ" },
+  { key: "status", label: "สถานะสินค้า", type: "select", options: ["ว่าง", "สินค้าหมด", "ปลดสต็อก"] },
 ];
 const customerFields = (isEdit) => [
   { key: "id", label: "รหัสลูกค้า", required: true, readOnly: isEdit, placeholder: "เช่น C001" },
@@ -980,7 +993,7 @@ export default function App() {
 
         <main className="flex-1 px-4 md:px-7 py-5 md:py-7 pb-24 md:pb-7 max-w-7xl w-full mx-auto">
           {page === "dash" && <Dashboard {...ctx} go={go} />}
-          {baseOf(page) === "products" && <Products {...ctx} mode={page === "products-rent" ? "rent" : page === "products-sell" ? "sell" : page === "products-australia" ? "australia" : "all"} />}
+          {baseOf(page) === "products" && <Products key={page} {...ctx} mode={page === "products-rent" ? "rent" : page === "products-sell" ? "sell" : page === "products-australia" ? "australia" : "all"} />}
           {page === "customers" && <Customers {...ctx} />}
           {page === "orders" && <Orders {...ctx} />}
           {page === "online" && <ShopManagement role={role}/>}
@@ -1408,8 +1421,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   const catNames = mode === "australia" ? [...new Set([...AUSTRALIA_CATEGORIES,...products.filter(p=>p.importedAustralia).map(p=>p.cat).filter(Boolean)])] : categories.map(c => c.name);
 
   // กรองตามโหมด: เช่า = type เช่า/ทั้งคู่, ขาย = type ขาย/ทั้งคู่
-  const inMode = (p) => mode === "rent" ? (p.type === "เช่า" || p.type === "ทั้งคู่")
-    : mode === "sell" ? (p.type === "ขาย" || p.type === "ทั้งคู่") : mode === "australia" ? p.importedAustralia === true : true;
+  const inMode = (p) => mode === "australia" ? p.importedAustralia === true : !p.importedAustralia && (mode === "rent" ? (p.type === "เช่า" || p.type === "ทั้งคู่") : mode === "sell" ? (p.type === "ขาย" || p.type === "ทั้งคู่") : true);
   const modeLabel = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : mode === "australia" ? "สินค้านำเข้าจากออสเตรเลีย" : "ทั้งหมด";
 
   const text = q.trim();
@@ -1436,7 +1448,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
     }catch(error){printTab?.close();setQrError(error instanceof Error?error.message:'เตรียมป้ายพิมพ์ไม่สำเร็จ');}
     finally{setQrExporting(false);}
   }
-  const openAdd = () => setForm({ mode: "add", data: { id: genId("HS-"), type: defaultType, importedAustralia: mode === "australia", status: "ว่าง", cat: catNames[0] || "" } });
+  const openAdd = () => setForm({ mode: "add", data: { id: genId(mode === "australia" ? "AU-" : "HS-"), type: defaultType, importedAustralia: mode === "australia", status: "ว่าง", cat: mode === "australia" ? AUSTRALIA_CATEGORIES[0] : catNames[0] || "" } });
   const openEdit = (p) => setForm({ mode: "edit", data: p });
 
   // สรุปสต็อก (ยุบจากหน้าคลังสินค้าเดิม) — คิดจากรายการที่กรองอยู่
@@ -1460,7 +1472,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
       <PageHead title={mode === "all" ? "สต็อกสินค้า" : `สต็อกสินค้า — ${modeLabel}`} sub={`${list.length} รายการ · ${categories.length} หมวดหมู่`} action={
         <div className="flex gap-2">
           <Btn variant="outline" icon={Download} onClick={exportProducts}>ส่งออก</Btn>
-          <Btn variant="outline" icon={Tag} onClick={() => setCatOpen(true)}>หมวดหมู่</Btn>
+          {mode !== "australia" && <Btn variant="outline" icon={Tag} onClick={() => setCatOpen(true)}>หมวดหมู่</Btn>}
           <Btn icon={Plus} onClick={openAdd}>เพิ่มสินค้า</Btn>
         </div>
       } />
@@ -1566,11 +1578,11 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
 
       {form && (
         <FormModal
-          title={form.mode === "add" ? "เพิ่มสินค้า" : "แก้ไขสินค้า"}
-          fields={productFields(form.mode === "edit", catNames)}
+          title={mode === "australia" ? (form.mode === "add" ? "เพิ่มสินค้าออสเตรเลีย" : "แก้ไขสินค้าออสเตรเลีย") : form.mode === "add" ? "เพิ่มสินค้า" : "แก้ไขสินค้า"}
+          fields={mode === "australia" ? australiaProductFields(form.mode === "edit", form.mode === "edit" ? form.data.cat : "") : productFields(form.mode === "edit", catNames)}
           initial={form.data}
           onClose={() => setForm(null)}
-          onSubmit={async (data) => { await saveEntity("products", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
+          onSubmit={async (data) => { await saveEntity("products", {...data,importedAustralia:mode === "australia",...(mode === "australia" ? {type:"ขาย"} : {})}, form.mode === "edit" ? form.data.id : null); setForm(null); }}
         />
       )}
       {del && <ConfirmDelete name={del.name} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("products", del.id); setDel(null); }} />}
