@@ -962,9 +962,9 @@ export default function App() {
                   <NavItem n={n} active={page === n.id} onClick={() => go(n.id)} />
                 )}
                 {n.children && productsOpen && n.children.map(ch => (
-                  <button key={ch.id} onClick={() => go(ch.id)} className="w-full flex items-center gap-2 pl-11 pr-3 py-2 rounded-xl text-sm transition"
+                  <button key={ch.id} onClick={() => go(ch.id)} className="w-full flex items-center gap-2 pl-11 pr-3 py-2 rounded-xl text-left text-sm transition"
                     style={{ background: page === ch.id ? C.goldBg : "transparent", color: page === ch.id ? "#8a6d1f" : C.taupe }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: page === ch.id ? C.gold : C.line }} />{ch.label}
+                    <span className="w-1.5 h-1.5 shrink-0 rounded-full" style={{ background: page === ch.id ? C.gold : C.line }} /><span className="min-w-0">{ch.label}</span>
                   </button>
                 ))}
               </div>
