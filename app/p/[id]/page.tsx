@@ -91,9 +91,9 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
   return shell(
     <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, overflow: "hidden" }}>
       {(p.image || p.imageBack) && (
-        <div style={{ display: "flex", gap: 8, padding: 12, background: C.cream, justifyContent: "center" }}>
-          {p.image && <img src={p.image} alt={p.name} style={{ width: "48%", maxWidth: 190, aspectRatio: "3/4", objectFit: "cover", borderRadius: 12 }} />}
-          {p.imageBack && <img src={p.imageBack} alt={`${p.name} (ด้านหลัง)`} style={{ width: "48%", maxWidth: 190, aspectRatio: "3/4", objectFit: "cover", borderRadius: 12 }} />}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: 12, background: C.cream, justifyContent: "center" }}>
+          {p.image && <img src={p.image} alt={p.name} style={{ width: p.imageBack ? "48%" : "100%", maxWidth: p.imageBack ? 190 : 380, height: "auto", objectFit: "contain", borderRadius: 12 }} />}
+          {p.imageBack && <img src={p.imageBack} alt={`${p.name} (ด้านหลัง)`} style={{ width: p.image ? "48%" : "100%", maxWidth: p.image ? 190 : 380, height: "auto", objectFit: "contain", borderRadius: 12 }} />}
         </div>
       )}
 
