@@ -12,7 +12,8 @@ export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<
   if(body.phone&&!phone)throw new Error('กรุณากรอกเบอร์โทรลูกค้าให้ถูกต้อง');
   if(name.length<2||name.length>200)throw new Error('กรุณาระบุชื่อลูกค้าให้ครบถ้วน');
   // Serialize records for the same phone so simultaneous rentals create one customer.
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${phone||name}))`;
+  // PostgreSQL returns void for the lock; cast it so Prisma can deserialize it.
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${phone||name}))::text`;
   const customer=await tx.customer.findFirst({where:phone?{phone}:{name,phone:''}});
   if(!customer)await tx.customer.create({data:{id:'C-'+randomUUID(),name,phone}});
   if(userId&&(!isDate(String(body.start||''))||!isDate(String(body.end||''))||body.end<=body.start))throw new Error('รายการสมาชิกต้องระบุวันรับและวันคืนเป็นวันที่จริง โดยวันคืนหลังวันรับ');
