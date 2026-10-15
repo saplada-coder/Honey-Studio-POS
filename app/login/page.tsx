@@ -100,11 +100,6 @@ export default function LoginPage() {
             {loading ? "กำลังดำเนินการ..." : isReg ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}
           </button>
 
-          {!isReg && (
-            <div className="text-[11px] text-center pt-2 border-t" style={{ borderColor: C.line, color: C.taupe }}>
-              บัญชีทดสอบ: <b>test@test.com</b> / <b>admin123</b>
-            </div>
-          )}
           {isReg && (
             <div className="text-[11px] text-center pt-2 border-t" style={{ borderColor: C.line, color: C.taupe }}>
               สมัครแล้วจะได้สิทธิ์ <b>ลูกค้า</b> — ดูออเดอร์/การเช่าของตัวเองได้
