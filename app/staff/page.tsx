@@ -21,6 +21,7 @@ import RentPriceField from '../rent-price-field';
 import RentalLoyaltyManagement from '../rental-loyalty-management';
 import ShopManagement from '../shop-management';
 import StockTrash from '../stock-trash';
+import ProductSelect from '../product-select';
 import {memberName,memberPhone} from '@/lib/member-identity';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
 
@@ -430,18 +431,13 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
             ) : f.type === "combo" ? (
               <ComboField value={form[f.key]} onChange={(v) => set(f.key, v)} options={f.options || []} placeholder={f.placeholder} />
             ) : f.type === "product" ? (
-              <select value={form[f.key]} required={f.required}
-                onChange={(e) => {
-                  const pid = e.target.value;
+              <ProductSelect value={form[f.key]} required={f.required} products={products} title={f.label}
+                onChange={(pid) => {
                   set(f.key, pid);
                   // เลือกสินค้าแล้วเติมช่องอื่นให้อัตโนมัติ (เช่น ชื่อ/ราคา) ตาม f.fill
                   const prod = products.find((p) => p.id === pid);
                   if (prod && f.fill) Object.entries(f.fill).forEach(([k, src]) => set(k, typeof src === "function" ? src(prod) : (prod[src] ?? "")));
-                }}
-                className="w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: C.line }}>
-                <option value="">— เลือกสินค้าจากคลัง —</option>
-                {products.map((p) => <option key={p.id} value={p.id}>{p.id} — {p.name} (เช่า {p.stockRent}/ขาย {p.stockSell})</option>)}
-              </select>
+                }} />
             ) : f.type === "select" ? (
               <select value={form[f.key]} onChange={(e) => set(f.key, e.target.value)} required={f.required}
                 className="w-full py-2.5 px-3 mt-1 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: C.line }}>
