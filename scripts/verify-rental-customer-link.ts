@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createStaffRental} from '../lib/staff-rental';
 import {addCustomerRental} from '../lib/customer-rental';
+import {linkMemberRentals,validateMember} from '../lib/member-link';
 
 async function main(){
   const customers: any[]=[];
@@ -12,7 +13,7 @@ async function main(){
       findFirst:async({where}:any)=>customers.find(c=>Object.entries(where).every(([k,v])=>c[k]===v)),
       create:async({data}:any)=>{customers.push(data);return data;},
     },
-    rental:{create:async({data}:any)=>{rentals.push(data);return data;}},
+    rental:{create:async({data}:any)=>{rentals.push(data);return data;},updateMany:async()=>({count:0})},
     product:{findUnique:async()=>({name:'ชุดทดสอบ',type:'เช่า',rent:250,stockRent:10,status:'ว่าง'}),updateMany:async()=>({count:1})},
   };
   const body={id:'R-test',cust:'  ลูกค้า   ทดสอบ  ',phone:'+66 89 123 4567',item:'ชุดทดสอบ',start:'2026-10-10',end:'2026-10-12',fee:300};
@@ -41,6 +42,28 @@ async function main(){
   assert.equal(rentals.at(-1).phone,'');
   assert.equal(rentals.at(-1).userId,'','No member account is linked without a phone');
   assert.equal(customers.length,2,'The booking reuses the phone-less customer');
+  const claims=[
+    {userId:'',online:false,cust:'ลูกค้า ทดสอบ',phone:'0891234567'},
+    {userId:'',online:false,cust:'ชื่ออื่น',phone:'0891234567'},
+    {userId:'',online:false,cust:'ลูกค้า ทดสอบ',phone:'0899999999'},
+    {userId:'another-member',online:false,cust:'ลูกค้า ทดสอบ',phone:'0891234567'},
+    {userId:'',online:true,cust:'ลูกค้า ทดสอบ',phone:'0891234567'},
+    {userId:'',online:false,cust:'ลูกค้า ทดสอบ',phone:''},
+  ];
+  const claimTx:any={rental:{updateMany:async({where,data}:any)=>{
+    let count=0;
+    claims.forEach(r=>{if(Object.entries(where).every(([k,v])=>r[k]===v)){Object.assign(r,data);count++;}});
+    return {count};
+  }}};
+  await linkMemberRentals(claimTx,{id:'member-1',name:'  ลูกค้า   ทดสอบ ',phone:'+66 89 123 4567'});
+  assert.deepEqual(claims.map(r=>r.userId),['member-1','','','another-member','',''],'Claim only unlinked staff rentals with both matching name and phone');
+  await linkMemberRentals(claimTx,{id:'member-2',name:'ลูกค้า ทดสอบ',phone:''});
+  assert.equal(claims[5].userId,'','Never claim bookings by name alone during login');
+  const staffMemberTx:any={...claimTx,user:{upsert:async({create}:any)=>({...create,id:'staff-created-member'})}};
+  claims[0].userId='';
+  const staffMemberId=await validateMember(staffMemberTx,'',{name:'ลูกค้า ทดสอบ',phone:'0891234567'});
+  assert.equal(staffMemberId,'staff-created-member','Staff saving a phone creates membership without customer login');
+  assert.equal(claims[0].userId,staffMemberId,'Existing bookings are linked immediately by the staff action');
   console.log('PASS: customer creation, phone normalization, member linking, customer reuse, invalid phone rejection and booking without a phone');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

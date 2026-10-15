@@ -634,7 +634,7 @@ const rentalFields = (isEdit) => [
   { key: "loyaltyGroup", label: "เลขที่รายการเช่ารวม (กรณีหลายชุด)", placeholder: "ชุดในรายการเดียวกันใช้เลขเดียวกัน เพื่อรับรวม 1 แต้ม" },
   { key: "promotion", label: "โปรโมชั่นที่ใช้", type: "select", options: [{value:"",label:"ไม่ใช้โปรโมชั่น"},{value:"bogo",label:"เช่า 1 แถม 1"},{value:"discount10",label:"ส่วนลดค่าเช่า 10%"},{value:"manual-discount",label:"ส่วนลดจากฟอร์มลูกค้า",disabled:true},{value:"loyalty",label:"ใช้สิทธิ์ 10 แต้ม (ระบบบันทึก)",disabled:true}] },
   { key: "phone", label: "เบอร์โทรลูกค้า", placeholder: "เช่น 081-234-5678" },
-  { key: "userId", label: "รหัสสมาชิกจากแอพลูกค้า (ถ้ามี)", placeholder: "ให้ลูกค้าเปิดหน้าสมาชิก แล้วคัดลอกรหัส" },
+  { key: "userId", label: "รหัสสมาชิก (เชื่อมอัตโนมัติเมื่อมีชื่อและเบอร์)", placeholder: "เว้นว่างได้ ระบบสมัคร/เชื่อมสมาชิกให้เมื่อบันทึก" },
   { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0, deposit: (p)=>p.rent||0 } },
   { key: "item", label: "รายการที่เช่า (แก้ไขได้)", required: true },
   { key: "start", label: "วันรับ", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },

@@ -14,7 +14,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const current=await tx.customer.findUniqueOrThrow({where:{id}});
       const identity={name:memberName(body.name??current.name),phone:body.phone??current.phone};
       if(identity.phone&&!memberPhone(identity.phone))throw new Error('กรุณากรอกเบอร์โทรลูกค้าให้ถูกต้อง');
-      await ensureMember(tx,identity);
+      const userId=await ensureMember(tx,identity);
+      // Only claim earlier phone-less bookings when the original customer is unambiguous.
+      if(userId&&await tx.customer.count({where:{name:current.name}})===1){
+        await tx.rental.updateMany({where:{userId:'',online:false,cust:current.name,phone:current.phone},data:{userId,cust:identity.name,phone:memberPhone(identity.phone)}});
+      }
       const customer=await tx.customer.update({where:{id},data:{...body,name:identity.name,phone:memberPhone(identity.phone)}});
       await addCustomerRental(tx,customer,rental);
       return customer;

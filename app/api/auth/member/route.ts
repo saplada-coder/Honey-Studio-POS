@@ -3,6 +3,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {prisma} from '@/lib/prisma';
 import {createSession,SESSION_COOKIE} from '@/lib/auth';
 import {memberName,memberPhone} from '@/lib/member-identity';
+import {linkMemberRentals} from '@/lib/member-link';
 export const dynamic='force-dynamic';
 export async function POST(req:Request){
   try{
@@ -16,6 +17,7 @@ export async function POST(req:Request){
     await prisma.memberLoginLimit.deleteMany({where:{expiresAt:{lt:new Date(now-86400000)}}});
     const user=await prisma.user.upsert({where:{phone},update:{},create:{phone,name,email:'member-'+randomUUID()+'@member.invalid',role:'ลูกค้า',icon:'Users',color:'#A8978E'}});
     if(user.role!=='ลูกค้า'||memberName(user.name)!==name)return NextResponse.json({error:'ชื่อหรือเบอร์โทรไม่ตรงกับข้อมูลสมาชิก กรุณาติดต่อร้านหากต้องการแก้ไข'},{status:401});
+    await linkMemberRentals(prisma,{id:user.id,name,phone});
     const token=await createSession({id:user.id,name:user.name,email:user.email,role:user.role});
     const res=NextResponse.json({user:{id:user.id,name:user.name,phone:user.phone,role:user.role}},{headers:{'Cache-Control':'no-store'}});
     res.cookies.set(SESSION_COOKIE,token,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:7*86400});return res;

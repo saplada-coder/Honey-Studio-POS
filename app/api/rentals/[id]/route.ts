@@ -23,9 +23,9 @@ export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
       if(action==='settle'||clean.paymentStatus==='ชำระแล้ว'&&cur.paymentStatus!=='ชำระแล้ว'){
         clean.paymentStatus='ชำระแล้ว';clean.paidAmount=(clean.fee??cur.fee)+(clean.fine??cur.fine)+(clean.damage??cur.damage);
       }
-      if(clean.userId!==undefined&&clean.userId!==cur.userId){
+      if(clean.userId!==undefined&&clean.userId!==cur.userId||!cur.userId&&(clean.phone!==undefined||clean.cust!==undefined)){
         if(cur.online||cur.stockReturned||cur.rewardUsed)throw new Error('เปลี่ยนสมาชิกไม่ได้สำหรับรายการออนไลน์ คืนแล้ว หรือใช้สิทธิ์ฟรี');
-        clean.userId=await validateMember(tx,clean.userId);
+        clean.userId=await validateMember(tx,clean.userId??'',!cur.userId?{name:clean.cust??cur.cust,phone:clean.phone??cur.phone}:undefined);
         if(clean.userId&&(!isDate(String(clean.start??cur.start))||!isDate(String(clean.end??cur.end))||(clean.end??cur.end)<=(clean.start??cur.start)))throw new Error('กรอกวันรับและวันคืนรูปแบบ YYYY-MM-DD เพื่อแจ้งเตือนสมาชิก');
       }
       if(cur.stockApplied&&clean.code!==undefined&&clean.code!==cur.code)throw new Error('เปลี่ยนรหัสชุดไม่ได้หลังตัดสต๊อก กรุณาคืนรายการเดิมก่อน');
