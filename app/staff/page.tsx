@@ -603,7 +603,7 @@ const australiaProductFields = (isEdit, currentCategory = "") => [
 const customerFields = (isEdit) => [
   { key: "id", label: "รหัสลูกค้า", required: true, readOnly: isEdit, placeholder: "เช่น C001" },
   { key: "name", label: "ชื่อ-นามสกุล", required: true },
-  { key: "phone", label: "เบอร์โทร", required:true },
+  { key: "phone", label: "เบอร์โทร (เพิ่มภายหลังได้)", placeholder: "เว้นว่างได้" },
   { key: "line", label: "LINE ID" },
   { key: "addr", label: "ที่อยู่" },
   { key: "rentalCode", label: "เลือกชุดเช่าให้ลูกค้า (เว้นว่างได้)", type: "product" },

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import {createStaffRental} from '../lib/staff-rental';
+import {addCustomerRental} from '../lib/customer-rental';
 
 async function main(){
   const customers: any[]=[];
+  const rentals: any[]=[];
   const tx:any={
     $queryRaw:async()=>[],
     user:{upsert:async({create}:any)=>({...create,id:'member-1'})},
@@ -10,8 +12,8 @@ async function main(){
       findFirst:async({where}:any)=>customers.find(c=>Object.entries(where).every(([k,v])=>c[k]===v)),
       create:async({data}:any)=>{customers.push(data);return data;},
     },
-    rental:{create:async({data}:any)=>data},
-    product:{findUnique:async()=>({rent:250,stockRent:10,status:'ว่าง'}),updateMany:async()=>({count:1})},
+    rental:{create:async({data}:any)=>{rentals.push(data);return data;}},
+    product:{findUnique:async()=>({name:'ชุดทดสอบ',type:'เช่า',rent:250,stockRent:10,status:'ว่าง'}),updateMany:async()=>({count:1})},
   };
   const body={id:'R-test',cust:'  ลูกค้า   ทดสอบ  ',phone:'+66 89 123 4567',item:'ชุดทดสอบ',start:'2026-10-10',end:'2026-10-12',fee:300};
   const rental=await createStaffRental(tx,body);
@@ -33,6 +35,12 @@ async function main(){
     assert.equal(priced.deposit,250,'Deposit must equal the first-day price regardless of duration or submitted deposit');
     assert.equal(priced.fee,fee);
   }
-  console.log('PASS: customer creation, phone normalization, member linking, customer reuse and invalid phone rejection');
+  const count=rentals.length;
+  await addCustomerRental(tx,{name:'ลูกค้าไม่มีเบอร์',phone:''},{code:'dress-test',start:'2026-10-10',end:'2026-10-12',fee:300,paymentStatus:'รอชำระ'});
+  assert.equal(rentals.length,count+1,'A customer can book a dress before providing a phone');
+  assert.equal(rentals.at(-1).phone,'');
+  assert.equal(rentals.at(-1).userId,'','No member account is linked without a phone');
+  assert.equal(customers.length,2,'The booking reuses the phone-less customer');
+  console.log('PASS: customer creation, phone normalization, member linking, customer reuse, invalid phone rejection and booking without a phone');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
