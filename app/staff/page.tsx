@@ -1429,9 +1429,9 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   const inMode = (p) => mode === "australia" ? p.importedAustralia === true : !p.importedAustralia && (mode === "rent" ? (p.type === "เช่า" || p.type === "ทั้งคู่") : mode === "sell" ? (p.type === "ขาย" || p.type === "ทั้งคู่") : true);
   const modeLabel = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : mode === "australia" ? "สินค้านำเข้าจากออสเตรเลีย" : "ทั้งหมด";
 
-  const text = q.trim();
+  const text = q.trim().toLowerCase();
   const list = products.filter(p => {
-    const matchText = !text || p.name.includes(text) || p.id.includes(text) || (p.cat || "").includes(text) || (p.lotNumber || "").includes(text);
+    const matchText = !text || [p.name,p.id,p.cat,p.lotNumber].some(value => String(value || "").toLowerCase().includes(text));
     const matchCat = !catFilter || p.cat === catFilter;
     return inMode(p) && matchText && matchCat;
   });

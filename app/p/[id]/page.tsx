@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { currentUser } from '@/lib/session';
 import { productMeasurements, rentalPrice } from '@/lib/product-details';
+import { productSize } from '@/lib/product-size';
 import RentalControls from './rental-controls';
 import LineContact from '@/app/shop/line-contact';
 
@@ -83,8 +84,9 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
   const canRent = (p.type === "เช่า" || p.type === "ทั้งคู่") && (p.stockRent ?? 0) > 0 && !['ซัก','ซ่อม','ปลดสต็อก'].includes(p.status);
   const canSell = (p.type === "ขาย" || p.type === "ทั้งคู่") && (p.stockSell ?? 0) > 0;
   const available = canRent || canSell;
+  const size = productSize(p);
   const specs: [string, string][] = [
-    ["ไซส์", p.size], ["สี", p.color],
+    ["สี", p.color],
     ...productMeasurements(p),
   ].filter(([, v]) => v) as [string, string][];
 
@@ -108,6 +110,12 @@ export default async function PublicProductPage({ params }: { params: Promise<{ 
           <span style={{ whiteSpace: "nowrap", fontSize: 12, fontWeight: 600, padding: "5px 10px", borderRadius: 999, color: available ? C.green : C.red, background: available ? C.greenBg : C.redBg }}>
             {available ? "พร้อมให้บริการ" : "ไม่ว่างตอนนี้"}
           </span>
+        </div>
+
+        <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 12, background: C.cream }}>
+          <div style={{ fontSize: 12, color: C.taupe }}>ไซซ์ชุด</div>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>{size.label}{size.estimated ? ' (ประมาณ)' : ''}</div>
+          {size.estimated && <div style={{ fontSize: 12, color: C.taupe, marginTop: 4 }}>อ้างอิงป้ายไซซ์โดยประมาณ กรุณาเทียบสัดส่วนหรือลองชุดก่อนเช่า</div>}
         </div>
 
         {(canRent || canSell || p.rent > 0 || p.sell > 0) && (
