@@ -1164,6 +1164,8 @@ const IconBtn = ({ icon: Icon, onClick, color }) => (
 // ถ้าไม่ได้กรอกปี = ถือว่าเป็นปีปัจจุบัน (ข้อมูลเดิมในระบบกรอกแบบไม่ใส่ปี)
 const thMonthOf = (date) => {
   const s = String(date || "");
+  const iso=/^(\d{4})-(\d{2})-\d{2}/.exec(s);
+  if(iso){const mi=Number(iso[2])-1;if(mi<0||mi>11)return null;const be=(Number(iso[1])+543)%100;return {key:`${TH_MONTHS[mi]} ${be}`,sort:be*100+mi};}
   const mi = TH_MONTHS.findIndex((m) => s.includes(m));
   if (mi < 0) return null;
   const after = s.slice(s.indexOf(TH_MONTHS[mi]) + TH_MONTHS[mi].length);
@@ -2232,7 +2234,7 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
 
   return (
     <div>
-      <PageHead title="บัญชีรับจ่าย" sub="รายรับ–รายจ่าย · บันทึกด้วยมือ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
+      <PageHead title="บัญชีรับจ่าย" sub="รวมรายรับค่าเช่าที่ชำระแล้วอัตโนมัติ · ไม่รวมเงินมัดจำ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
 
       {/* เลือกเดือน + ส่งออก */}
       <Card className="p-3 mb-5">
@@ -2489,18 +2491,14 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
               {/* จอใหญ่ — ยอดเงินและปุ่มอยู่ขวาของแถวเดียวกัน */}
               <div className="hidden md:flex items-center gap-3 shrink-0">
                 <div className="font-bold text-sm">{amount}</div>
-                {sourcePick}
-                <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
-                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
+                {t.sourceRentalId ? <span className="text-xs" style={{color:C.taupe}}>แก้ไขที่รายการเช่า</span> : <>{sourcePick}<IconBtn icon={Pencil} onClick={() => openEdit(t)} /><IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} /></>}
               </div>
             </div>
             {/* มือถือ — ยอดเงินและปุ่มลงมาอยู่บรรทัดล่าง ตัวใหญ่ กดง่าย ไม่เบียดกัน */}
             <div className="flex md:hidden items-center gap-2 mt-2 pt-2" style={{ borderTop: "1px dashed " + C.line }}>
               <div className="font-bold text-base">{amount}</div>
               <div className="ml-auto flex items-center gap-1.5">
-                {sourcePick}
-                <IconBtn icon={Pencil} onClick={() => openEdit(t)} />
-                <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} />
+                {t.sourceRentalId ? <span className="text-xs" style={{color:C.taupe}}>แก้ไขที่รายการเช่า</span> : <>{sourcePick}<IconBtn icon={Pencil} onClick={() => openEdit(t)} /><IconBtn icon={Trash2} color={C.red} onClick={() => setDel(t)} /></>}
               </div>
             </div>
           </div>
