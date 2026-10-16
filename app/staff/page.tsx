@@ -24,6 +24,8 @@ import StockTrash from '../stock-trash';
 import ProductSelect from '../product-select';
 import {memberName,memberPhone} from '@/lib/member-identity';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
+import { dashboardTotals } from '@/lib/dashboard-totals';
+import { thaiToday } from '@/lib/booking-availability';
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
 function exportExcel(sheets, filename) {
@@ -1219,31 +1221,24 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
   const totalIn = monthAsc.reduce((s, r) => s + r.in, 0);
   const totalOut = monthAsc.reduce((s, r) => s + r.out, 0);
   // ===== ตัวเลขทั้งหมดคิดจากข้อมูลจริง (เดิมเป็นค่าฮาร์ดโค้ด) =====
-  const today = todayTH();
-  const sellToday = orders.filter(o => o.type === "ขาย" && sameDayTH(o.date, today));
-  const rentToday = rentals.filter(r => sameDayTH(r.start, today) && (!r.online || r.paymentStatus === 'ชำระแล้ว'));
-  const pending = orders.filter(o => o.type === "ขาย" && o.status !== "สำเร็จ").length;
+  const totals = dashboardTotals(rentals,orders,thaiToday());
+  const {sellToday,rentToday} = totals;
+  const pending = orders.filter(o => o.type === "ขาย" && !["สำเร็จ","ยกเลิก"].includes(o.status)).length;
   const overdue = rentals.filter(r => r.status === "เกินกำหนด").length;
   const sum = (list, f) => list.reduce((s, x) => s + (Number(x[f]) || 0), 0);
 
   const kpis = [
-    { label: "ยอดขายวันนี้", val: baht(sum(sellToday, "total")), sub: `${sellToday.length} ออเดอร์`, up: null, icon: Coins, color: C.gold, bg: C.goldBg },
-    { label: "ยอดเช่าวันนี้", val: baht(sum(rentToday, "fee")), sub: `${rentToday.length} รายการ`, up: null, icon: CalendarDays, color: C.rose, bg: C.roseBg },
+    { label: "ยอดเช่า + ขายวันนี้", val: baht(totals.total), sub: "ไม่รวมเงินมัดจำ", up: null, icon: Coins, color: C.gold, bg: C.goldBg },
+    { label: "ยอดขายสินค้าวันนี้", val: baht(totals.sellTotal), sub: `${sellToday.length} ออเดอร์ ตามวันขาย`, up: null, icon: ShoppingBag, color: C.gold, bg: C.goldBg },
+    { label: "ยอดเช่าวันนี้", val: baht(totals.rentTotal), sub: `${rentToday.length} รายการ ชำระแล้ว ตามวันรับชุด`, up: null, icon: CalendarDays, color: C.rose, bg: C.roseBg },
+    { label: "มัดจำรอคืนลูกค้า", val: baht(totals.depositTotal), sub: `${totals.held.length} รายการที่ชำระแล้ว ยังไม่คืนชุด`, up: null, icon: Wallet, color: C.blue, bg: C.blueBg },
+    { label: "มัดจำครบกำหนดคืน", val: baht(totals.depositDue), sub: `${totals.due.length} รายการ วันนี้และก่อนหน้า`, up: null, icon: Clock, color: C.rose, bg: C.roseBg },
     { label: "ออเดอร์ค้าง", val: String(pending), sub: "ยังไม่สำเร็จ", up: null, icon: ShoppingBag, color: C.blue, bg: C.blueBg },
     { label: "เกินกำหนดคืน", val: String(overdue), sub: "ต้องติดตาม", up: null, icon: AlertTriangle, color: C.red, bg: C.redBg },
   ];
 
   // กราฟรายรับ 7 วันล่าสุด — ไล่วันย้อนหลังแล้วจับคู่กับวันที่ (ข้อความไทย) ในข้อมูลจริง
-  const revData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const key = thShort(d);
-    return {
-      d: TH_WEEKDAYS[d.getDay()],
-      เช่า: sum(rentals.filter(r => sameDayTH(r.start, key) && (!r.online || r.paymentStatus === 'ชำระแล้ว')), "fee"),
-      ขาย: sum(orders.filter(o => o.type === "ขาย" && sameDayTH(o.date, key)), "total"),
-    };
-  });
+  const revData = totals.revenue;
 
   // สัดส่วนหมวดสินค้า — นับจากสินค้าจริงในคลัง แล้วคิดเป็น %
   const catCount = products.reduce((m, p) => { const k = p.cat || "ไม่ระบุหมวด"; m[k] = (m[k] || 0) + 1; return m; }, {});
@@ -1268,6 +1263,12 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
           </Card>
         ))}
       </div>
+
+      <Card className="p-4 mb-5">
+        <div className="flex justify-between items-center gap-2 mb-3"><span className="font-bold">เงินมัดจำที่ต้องคืนลูกค้า</span><button className="text-xs underline" onClick={()=>go('orders')}>ดูรายการเช่า</button></div>
+        <p className="text-xs mb-3" style={{color:C.taupe}}>คืนมัดจำพร้อมรับคืนชุด ยอดก่อนหักค่าปรับหรือค่าเสียหาย เมื่อบันทึกคืนชุดจะนำออกจากรายการนี้</p>
+        {totals.held.length ? <div className="space-y-2">{[...totals.held].sort((a,b)=>a.end.localeCompare(b.end)).map(r=><div key={r.id} className="flex justify-between items-center gap-3 p-3 rounded-xl" style={{background:C.cream}}><div className="min-w-0"><div className="text-sm font-medium">{r.cust} · {r.item}</div><div className="text-xs" style={{color:C.taupe}}>{r.id} · กำหนดคืน {r.end}</div></div><div className="font-semibold shrink-0">{baht(r.deposit)}</div></div>)}</div> : <p className="text-sm" style={{color:C.taupe}}>ไม่มีเงินมัดจำรอคืน</p>}
+      </Card>
 
       <div className="grid lg:grid-cols-3 gap-4 mb-5">
         <Card className="p-4 lg:col-span-2">
