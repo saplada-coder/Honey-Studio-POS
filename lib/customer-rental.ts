@@ -14,5 +14,5 @@ export async function addCustomerRental(tx:Prisma.TransactionClient,customer:{na
   if(!Number.isSafeInteger(discount)||Number(discount)<0||Number(discount)>Number(r.fee))throw new Error('ส่วนลดต้องเป็นจำนวนเต็มตั้งแต่ 0 บาท และไม่เกินค่าเช่า');
   const code=String(r.code||'').trim(),product=await tx.product.findUnique({where:{id:code}});
   if(!product||!['เช่า','ทั้งคู่'].includes(product.type))throw new Error('กรุณาเลือกชุดเช่าจากคลัง');
-  await createStaffRental(tx,{id:'R-'+randomUUID(),cust:customer.name,phone:customer.phone,code,item:product.name,start:r.start,end:r.end,fee:Number(r.fee)-Number(discount),discount,promotion:Number(discount)>0?'manual-discount':'',deposit:product.rent,paymentStatus:r.paymentStatus,status:'จองแล้ว'});
+  await createStaffRental(tx,{id:'R-'+randomUUID(),cust:customer.name,phone:customer.phone,code,item:product.name,start:r.start,end:r.end,fee:Number(r.fee)-Number(discount),discount,promotion:Number(discount)>0?'manual-discount':'',deposit:r.deposit===undefined?product.rent:r.deposit,paymentStatus:r.paymentStatus,status:'จองแล้ว'});
 }

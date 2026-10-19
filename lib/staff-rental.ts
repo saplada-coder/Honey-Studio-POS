@@ -20,7 +20,7 @@ export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<
   if(code){
     await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${code} FOR UPDATE`;
     const product=await tx.product.findUnique({where:{id:code}});
-    if(product)clean.deposit=product.rent;
+    if(clean.deposit===undefined&&product)clean.deposit=product.rent;
     if(isDate(String(body.start||''))&&isDate(String(body.end||''))){
       const reservations=await tx.rental.findMany({where:{code,stockReturned:false,status:{notIn:['คืนแล้ว','ยกเลิก']}}});
       if(!product||remainingForDates(product,reservations,body.start,body.end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
@@ -28,6 +28,7 @@ export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<
     const claimed=await tx.product.updateMany({where:{id:code,type:{in:['เช่า','ทั้งคู่']},stockRent:{gt:0},status:{notIn:['ซัก','ซ่อม','ปลดสต็อก']}},data:{stockRent:{decrement:1}}});
     if(!claimed.count)throw new Error('ชุดนี้ไม่มีสต๊อกพร้อมเช่า');
   }
+  if(!Number.isInteger(clean.deposit??0)||Number(clean.deposit??0)<0||Number(clean.deposit??0)>2147483647)throw new Error('เงินมัดจำต้องเป็นจำนวนเต็มตั้งแต่ 0 ถึง 2,147,483,647 บาท');
   const paidAmount=body.paymentStatus==='ชำระแล้ว'?Number(body.fee||0)+Number(body.fine||0)+Number(body.damage||0):0;
   if(clean.promotion==='loyalty')throw new Error('ใช้สิทธิ์ฟรีผ่านปุ่มแลก10แต้มเท่านั้น');
   if(clean.loyaltyGroup&&clean.promotion&&await tx.rental.count({where:{userId,loyaltyGroup:clean.loyaltyGroup,rewardUsed:true,status:{not:'ยกเลิก'}}}))throw new Error('รายการเช่านี้ใช้สิทธิ์ฟรีแล้ว ใช้โปรโมชั่นอื่นร่วมกันไม่ได้');

@@ -11,11 +11,12 @@ export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
     const updated=await prisma.$transaction(async tx=>{
       await tx.$queryRaw`SELECT id FROM "Rental" WHERE id = ${id} FOR UPDATE`;
       const cur=await tx.rental.findUniqueOrThrow({where:{id}});
-      if(clean.deposit!==undefined||clean.code!==undefined&&clean.code!==cur.code){
+      if(clean.deposit===undefined&&clean.code!==undefined&&clean.code!==cur.code){
         const product=await tx.product.findUnique({where:{id:String(clean.code??cur.code)}});
         if(product)clean.deposit=product.rent;
         else clean.deposit=cur.deposit;
       }
+      if(clean.deposit!==undefined&&(!Number.isInteger(clean.deposit)||clean.deposit<0||clean.deposit>2147483647))throw new Error('เงินมัดจำต้องเป็นจำนวนเต็มตั้งแต่ 0 ถึง 2,147,483,647 บาท');
       if(clean.promotion==='loyalty'&&!cur.rewardUsed)throw new Error('ใช้สิทธิ์เช่าฟรีผ่านปุ่มใช้10แต้มเท่านั้น');
       if(clean.promotion&&clean.promotion!=='loyalty'&&(clean.loyaltyGroup||cur.loyaltyGroup)&&await tx.rental.count({where:{userId:cur.userId,loyaltyGroup:clean.loyaltyGroup||cur.loyaltyGroup,rewardUsed:true,status:{not:'ยกเลิก'}}}))throw new Error('ใช้โปรโมชั่นอื่นร่วมกับสิทธิ์เช่าฟรีไม่ได้');
       if(cur.rewardUsed&&(clean.fee!==undefined&&clean.fee!==0||clean.promotion!==undefined&&clean.promotion!=='loyalty'))throw new Error('รายการใช้สิทธิ์ฟรีเปลี่ยนค่าเช่าหรือโปรโมชั่นไม่ได้');

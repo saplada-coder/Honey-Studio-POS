@@ -362,14 +362,6 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
     return base;
   });
   const [saving, setSaving] = useState(false);
-  useEffect(()=>{
-    const product=products.find(p=>p.id===(form.rentalCode||form.code));
-    if(!product)return;
-    setForm(s=>{
-      const key='rentalDeposit' in s?'rentalDeposit':'deposit' in s?'deposit':null;
-      return key&&s[key]!==product.rent?{...s,[key]:product.rent}:s;
-    });
-  },[form.rentalCode,form.code,products]);
   const [err, setErr] = useState("");
   const set = (k, v) => setForm((s) => {
     const next={...s,[k]:v};
@@ -378,7 +370,8 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
       const product=products.find(p=>p.id===next.rentalCode);
       if(product){
         const days=Math.max(1,(Date.parse(next.rentalEnd)-Date.parse(next.rentalStart))/86400000||1);
-        next.rentalFee=rentalPrice(product,days);next.rentalDeposit=product.rent||0;
+        next.rentalFee=rentalPrice(product,days);
+        if(k==='rentalCode')next.rentalDeposit=product.rent||0;
       }
     }
     return next;
@@ -448,10 +441,11 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
               </select>
             ) : (
               <input
-                type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+                type={f.numericText ? "text" : f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
                 value={form[f.key]}
                 onChange={(e) => set(f.key, e.target.value)}
-                inputMode={f.type === "number" ? "decimal" : undefined}
+                inputMode={f.numericText ? "numeric" : f.type === "number" ? "decimal" : undefined}
+                pattern={f.numericText ? "[0-9]+" : undefined}
                 min={f.type === "number" ? 0 : undefined}
                 step={f.type === "number" ? "any" : undefined} // ไม่ใส่ = เบราว์เซอร์ไม่ยอมรับสตางค์ (step ปริยาย = 1)
                 onFocus={(e) => { if (f.type === "number") e.target.select(); }} // แตะช่องตัวเลขแล้วเลือกทั้งหมด พิมพ์ทับได้เลย
@@ -614,7 +608,7 @@ const customerFields = (isEdit) => [
   { key: "rentalFee", label: "ค่าเช่า (บาท) — เติมตามจำนวนวัน แก้ไขได้", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalDiscount", label: "ส่วนลดค่าเช่า (บาท)", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalNet", label: "ยอดหลังส่วนลด", type: "summary", showIf:f=>!!f.rentalCode, value:f=>`ค่าเช่าสุทธิ ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0)))} + เงินประกัน ${baht(Number(f.rentalDeposit||0))} = ${baht(Math.max(0,Number(f.rentalFee||0)-Number(f.rentalDiscount||0))+Number(f.rentalDeposit||0))}` },
-  { key: "rentalDeposit", label: "เงินประกัน = ราคาเช่าวันแรกของชุด (คงที่ ไม่เพิ่มตามจำนวนวัน)", type: "number", readOnly:true, showIf:f=>!!f.rentalCode },
+  { key: "rentalDeposit", label: "เงินมัดจำ / เงินประกัน (บาท) — แก้ไขได้", type: "number", showIf:f=>!!f.rentalCode },
   { key: "rentalPayment", label: "สถานะชำระเงิน", type: "select", default:'รอชำระ', options:['รอชำระ','ชำระแล้ว'], required:true, showIf:f=>!!f.rentalCode },
   { key: "orders", label: "จำนวนออเดอร์สะสม", type: "number" },
   { key: "spent", label: "ยอดใช้จ่ายสะสม", type: "number" },
@@ -641,9 +635,9 @@ const rentalFields = (isEdit) => [
   { key: "item", label: "รายการที่เช่า (แก้ไขได้)", required: true },
   { key: "start", label: "วันรับ", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "end", label: "วันคืน", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
-  { key: "fee", label: "ค่าเช่าสุทธิ (บาท)", type: "number" },
+  { key: "fee", label: "ค่าเช่าสุทธิ (บาท)", type: "number", numericText:true, required:true },
   { key: "discount", label: "ส่วนลดที่บันทึกจากฟอร์มลูกค้า (บาท)", type: "number", readOnly:true },
-  { key: "deposit", label: "เงินประกัน = ราคาเช่าวันแรกของชุด (คงที่ ไม่เพิ่มตามจำนวนวัน)", type: "number", readOnly:true },
+  { key: "deposit", label: "เงินมัดจำ / เงินประกัน (บาท) — แก้ไขได้", type: "number" },
   { key: "fine", label: "ค่าปรับล่าช้า (บาท)", type: "number" },
   { key: "damage", label: "ค่าเสียหาย/ค่าซ่อม (บาท)", type: "number" },
   { key: "status", label: "สถานะ", type: "select", options: RENTAL_STATUS },
