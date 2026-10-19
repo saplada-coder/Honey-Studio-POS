@@ -7,3 +7,4 @@ test('numeric suffix lists and legacy IDs work',()=>assert.deepEqual(find('013 0
 test('ordinary single-code and phrase searches retain substring behavior',()=>{assert.deepEqual(find('เดรส แขนยาว'),['HS-X']);assert.deepEqual(find('013'),['HS-RED-013','HS-RED-013-2']);assert.deepEqual(find('lot-abc'),['HS-X']);});
 test('empty query and unknown codes',()=>{assert.equal(find('').length,products.length);assert.deepEqual(find('HS-RED-999, HS-NONE-000'),[]);});
 test('trailing list separators are ignored',()=>assert.deepEqual(find('HS-RED-013,'),['HS-RED-013']));
+test('slash-separated product codes accept spaces and trailing slashes',()=>{for(const query of ['HS-RED-013/ HS-RED-025/ HS-8839','HS-RED-013/HS-RED-025/HS-8839/'])assert.deepEqual(find(query),['HS-RED-013','HS-RED-025','HS-8839']);});
