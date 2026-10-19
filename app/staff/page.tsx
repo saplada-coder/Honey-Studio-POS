@@ -26,6 +26,7 @@ import {memberName,memberPhone} from '@/lib/member-identity';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
 import { dashboardTotals } from '@/lib/dashboard-totals';
 import { thaiToday } from '@/lib/booking-availability';
+import { productSearch } from '@/lib/product-search';
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
 function exportExcel(sheets, filename) {
@@ -1426,9 +1427,9 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   const inMode = (p) => mode === "australia" ? p.importedAustralia === true : !p.importedAustralia && (mode === "rent" ? (p.type === "เช่า" || p.type === "ทั้งคู่") : mode === "sell" ? (p.type === "ขาย" || p.type === "ทั้งคู่") : true);
   const modeLabel = mode === "rent" ? "เช่า" : mode === "sell" ? "ขาย" : mode === "australia" ? "สินค้านำเข้าจากออสเตรเลีย" : "ทั้งหมด";
 
-  const text = q.trim().toLowerCase();
+  const matchesSearch = productSearch(q);
   const list = products.filter(p => {
-    const matchText = !text || [p.name,p.id,p.cat,p.lotNumber].some(value => String(value || "").toLowerCase().includes(text));
+    const matchText = matchesSearch(p);
     const matchCat = !catFilter || p.cat === catFilter;
     return inMode(p) && matchText && matchCat;
   });
@@ -1492,7 +1493,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
       <div className="flex gap-2 mb-3 flex-wrap">
         <div className="flex-1 min-w-[200px] flex items-center gap-2 px-3 rounded-xl border" style={{ background: "#fff", borderColor: C.line }}>
           <Search size={18} style={{ color: C.taupe }} />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="ค้นหาชื่อ / รหัส / หมวดหมู่" className="flex-1 py-2.5 text-sm outline-none bg-transparent" />
+          <input value={q} onChange={e => setQ(e.target.value)} onPaste={e=>{const pasted=e.clipboardData.getData('text');if(/[\r\n\t]/.test(pasted)){e.preventDefault();const input=e.currentTarget;const start=input.selectionStart??q.length,end=input.selectionEnd??q.length;setQ(q.slice(0,start)+pasted.trim().replace(/[\r\n\t]+/g,', ')+q.slice(end));}}} aria-label="ค้นหาชื่อ รหัส หรือหลายรหัส" placeholder="ค้นหาชื่อ / รหัส · หลายรหัสคั่นด้วย , หรือเว้นวรรค" className="flex-1 min-w-0 py-2.5 text-sm outline-none bg-transparent" />
         </div>
         <select value={catFilter} onChange={e => setCatFilter(e.target.value)} className="px-3 py-2.5 text-sm rounded-xl border bg-white outline-none" style={{ borderColor: C.line }}>
           <option value="">ทุกหมวดหมู่</option>
