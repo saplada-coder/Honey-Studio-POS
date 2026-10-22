@@ -28,6 +28,8 @@ import { dashboardTotals } from '@/lib/dashboard-totals';
 import { thaiToday } from '@/lib/booking-availability';
 import { productSearch } from '@/lib/product-search';
 import { rentalReceipt } from '@/lib/rental-receipt';
+import DressFinder from '../dress-finder';
+import { emptyDressCriteria, matchesDress } from '@/lib/dress-finder';
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
 function exportExcel(sheets, filename) {
@@ -1413,6 +1415,7 @@ function CategoryManager({ categories, saveEntity, deleteEntity, onClose }) {
 
 /* ============ 2. PRODUCTS ============ */
 function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, categories, mode = "all" }) {
+  const [dressCriteria, setDressCriteria] = useState({...emptyDressCriteria});
   const [qrSelected, setQrSelected] = useState<string[]>([]);
   const [qrExporting, setQrExporting] = useState(false);
   const [qrError, setQrError] = useState("");
@@ -1432,7 +1435,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
   const list = products.filter(p => {
     const matchText = matchesSearch(p);
     const matchCat = !catFilter || p.cat === catFilter;
-    return inMode(p) && matchText && matchCat;
+    return inMode(p) && matchText && matchCat && (mode === 'australia' || matchesDress(p, dressCriteria));
   });
 
   const defaultType = mode === "rent" ? "เช่า" : mode === "sell" || mode === "australia" ? "ขาย" : "ทั้งคู่";
@@ -1482,6 +1485,7 @@ function Products({ products, adjustStock, setQrItem, saveEntity, deleteEntity, 
           <Btn icon={Plus} onClick={openAdd}>เพิ่มสินค้า</Btn>
         </div>
       } />
+      {mode !== 'australia' && <DressFinder value={dressCriteria} onChange={value=>{setDressCriteria(value);setQ('');setCatFilter('');}} />}
       {/* สรุปสต็อกรวม */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         {[["📦 รวมสต็อกเช่า", totalRent, C.gold], ["🛍️ รวมสต็อกขาย", totalSell, C.rose], ["⚠️ ใกล้หมด", lowCount, C.red]].map(([l, v, c]) => (
