@@ -27,6 +27,7 @@ import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/prod
 import { dashboardTotals } from '@/lib/dashboard-totals';
 import { thaiToday } from '@/lib/booking-availability';
 import { productSearch } from '@/lib/product-search';
+import { rentalReceipt } from '@/lib/rental-receipt';
 
 // ===== ส่งออกไฟล์ Excel จริง (.xlsx) =====
 function exportExcel(sheets, filename) {
@@ -1917,6 +1918,7 @@ function Shipping({ shipments, makeTrack, saveEntity, deleteEntity, canEdit }) {
 /* ============ 7. RENTALS ============ */
 function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, canEdit, me, customers, products = [], title="จองชุดเช่า", addLabel="จองชุด" }) {
   const [view, setView] = useState("board");
+  const [receipt, setReceipt] = useState(null);
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const statuses = RENTAL_STATUS;
@@ -1962,6 +1964,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
                         )}
                       </div>
                       <div className="text-xs mt-1" style={{ color: C.taupe }}>{r.cust}</div>
+                      {canEdit && <button onClick={() => setReceipt(r)} className="flex items-center gap-1 text-xs mt-2 underline"><Printer size={13} />ใบเสร็จ / สรุปค่าเช่า</button>}
                       {r.paymentSlip&&<a href={r.paymentSlip} target="_blank" rel="noreferrer" className="inline-block text-xs underline mt-2" style={{color:C.gold}}>ดูใบบิล / สลิปลูกค้า</a>}
                       <div className="flex items-center gap-1 text-xs mt-1.5" style={{ color: C.taupe }}><Clock size={11} />{r.start} → {r.end}</div>
                       {canEdit && !["คืนแล้ว", "เกินกำหนด"].includes(r.status) && (
@@ -1986,6 +1989,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
               <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: C.cream }}><Shirt size={16} style={{ color: C.taupe }} /></div>
               <div className="flex-1 min-w-0"><div className="text-sm font-medium truncate">{r.item}</div><div className="text-xs" style={{ color: C.taupe }}>{r.id} · {r.cust} · {r.start}→{r.end}</div></div>
               <Badge s={r.status} />
+              {canEdit && <button onClick={() => setReceipt(r)} className="text-xs underline shrink-0" aria-label={`ใบเสร็จ ${r.id}`}><Printer size={16} /></button>}
               {r.paymentSlip&&<a href={r.paymentSlip} target="_blank" rel="noreferrer" className="text-xs underline shrink-0" style={{color:C.gold}}>ดูบิล / สลิป</a>}
               {canEdit && (
                 <div className="flex gap-1 shrink-0">
@@ -2009,9 +2013,22 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
           onSubmit={async (data) => { await saveEntity("rentals", data, form.mode === "edit" ? form.data.id : null); setForm(null); }}
         />
       )}
+      {receipt && <RentalReceipt rental={receipt} onClose={() => setReceipt(null)} />}
       {del && <ConfirmDelete name={del.item} onClose={() => setDel(null)} onConfirm={async () => { await deleteEntity("rentals", del.id); setDel(null); }} />}
     </div>
   );
+}
+
+function RentalReceipt({ rental, onClose }) {
+  const issuedOn = new Intl.DateTimeFormat('th-TH', {timeZone:'Asia/Bangkok',dateStyle:'long'}).format(new Date());
+  const receipt = rentalReceipt(rental, issuedOn);
+  const print = () => openPrintWindow(`${receipt.title} ${rental.id}`, receipt.html);
+  return <Modal title={receipt.title} onClose={onClose} wide>
+    <div className="rental-receipt-preview" dangerouslySetInnerHTML={{__html:receipt.html}} />
+    <style>{`.rental-receipt-preview .wrap{max-width:420px;margin:auto}.rental-receipt-preview .box{padding:16px;border:1px solid #EAE2D4;border-radius:12px}.rental-receipt-preview .row{display:flex;justify-content:space-between;gap:16px;font-size:13px;margin:8px 0;overflow-wrap:anywhere}.rental-receipt-preview .center{text-align:center}.rental-receipt-preview .line{border-top:1px solid #EAE2D4;margin:12px 0}.rental-receipt-preview .muted{color:#776b62}`}</style>
+    <div className="flex gap-2 mt-4"><Btn icon={Printer} onClick={print}>พิมพ์</Btn><Btn icon={Download} variant="outline" onClick={print}>บันทึก PDF</Btn></div>
+    <p className="text-xs mt-2" style={{color:C.taupe}}>บันทึก PDF: เลือก “บันทึกเป็น PDF” ในหน้าต่างพิมพ์</p>
+  </Modal>;
 }
 
 function RentalCalendar({ rentals }) {
