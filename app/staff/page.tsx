@@ -1672,6 +1672,8 @@ function StockAdjustModal({ info, adjustStock, onClose }) {
 /* ============ 4. CUSTOMERS ============ */
 function Customers({ customers, orders, rentals=[], products=[], saveEntity, deleteEntity }) {
   const [sel, setSel] = useState(null);
+  const [receipt, setReceipt] = useState<Parameters<typeof RentalReceipt>[0]['rental'] | null>(null);
+  const [saleReceipt, setSaleReceipt] = useState<Parameters<typeof Receipt>[0]['o'] | null>(null);
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const openAdd = () => setForm({ mode: "add", data: { id: genId("C") } });
@@ -1703,6 +1705,7 @@ function Customers({ customers, orders, rentals=[], products=[], saveEntity, del
               <div className="flex-1 text-center"><div className="text-sm font-bold">{c.orders}</div><div className="text-[10px]" style={{ color: C.taupe }}>ออเดอร์</div></div>
               <div className="flex-1 text-center"><div className="text-sm font-bold" style={{ color: C.gold }}>{baht(c.spent)}</div><div className="text-[10px]" style={{ color: C.taupe }}>ยอดสะสม</div></div>
             </div>
+            <div className="mt-3"><Btn icon={Printer} variant="outline" onClick={() => setSel(c)}>ออกใบเสร็จ</Btn></div>
           </Card>
         ))}
       </div>
@@ -1714,21 +1717,25 @@ function Customers({ customers, orders, rentals=[], products=[], saveEntity, del
             <div className="flex justify-between"><span style={{ color: C.taupe }}>ที่อยู่</span><span className="font-medium">{sel.addr}</span></div>
             <div className="flex justify-between"><span style={{ color: C.taupe }}>ยอดใช้จ่ายสะสม</span><span className="font-bold" style={{ color: C.gold }}>{baht(sel.spent)}</span></div>
             <div className="pt-2 border-t" style={{ borderColor: C.line }}>
-              <div className="font-semibold mb-2">ประวัติล่าสุด</div>
+              <div className="font-semibold mb-2">รายการสำหรับออกใบเสร็จ</div>
+              <p className="text-xs mb-2" style={{color:C.taupe}}>เลือกรายการเพื่อดูใบเสร็จ พิมพ์ หรือบันทึก PDF</p>
               {customerRentals(sel).map(r => (
                 <div key={r.id} className="flex justify-between items-center gap-3 py-2">
                   <div className="text-xs"><div className="font-medium">{r.item} · {r.id}</div><div style={{color:C.taupe}}>รับ {r.start} · คืน {r.end}</div><div>ค่าเช่า {baht(r.fee)} · มัดจำ {baht(r.deposit)} · {r.paymentStatus}</div></div>
-                  <Badge s={r.status} />
+                  <div className="flex flex-col items-end gap-2 shrink-0"><Badge s={r.status} /><button type="button" className="flex items-center gap-1 text-xs underline" onClick={() => setReceipt(r)} aria-label={`ออกใบเสร็จรายการเช่า ${r.id}`}><Printer size={13} />{r.paymentStatus === 'ชำระแล้ว' || Number(r.paidAmount) > 0 ? 'ออกใบเสร็จ' : 'สรุป / รอชำระ'}</button></div>
                 </div>
               ))}
               {!customerRentals(sel).length&&<p className="text-xs mb-2" style={{color:C.taupe}}>ยังไม่มีรายการเช่า</p>}
               {orders.filter(o => o.cust === sel.name).map(o => (
-                <div key={o.id} className="flex justify-between items-center py-1.5"><span className="text-xs">{o.items}</span><Badge s={o.status} /></div>
+                <div key={o.id} className="flex justify-between items-center gap-3 py-2"><div className="text-xs"><div>{o.items} · {o.id}</div><div style={{color:C.taupe}}>{o.date} · {baht(o.total)}</div></div><div className="flex flex-col items-end gap-2 shrink-0"><Badge s={o.status} /><button type="button" className="flex items-center gap-1 text-xs underline" onClick={() => setSaleReceipt(o)} aria-label={`ออกใบเสร็จรายการขาย ${o.id}`}><Printer size={13} />ออกใบเสร็จ</button></div></div>
               ))}
+              {!orders.some(o => o.cust === sel.name) && <p className="text-xs" style={{color:C.taupe}}>ยังไม่มีรายการซื้อ</p>}
             </div>
           </div>
         </Modal>
       )}
+      {receipt && <RentalReceipt rental={receipt} onClose={() => setReceipt(null)} />}
+      {saleReceipt && <Receipt o={saleReceipt} onClose={() => setSaleReceipt(null)} />}
       {form && (
         <FormModal
           title={form.mode === "add" ? "เพิ่มลูกค้า" : "แก้ไขลูกค้า"}
