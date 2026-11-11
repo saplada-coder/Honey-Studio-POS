@@ -1239,15 +1239,8 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
   const [rentalDay,setRentalDay]=useState(()=>thaiToday());
   const [rentalMonth,setRentalMonth]=useState(()=>thaiToday().slice(0,7));
   const [rentalYear,setRentalYear]=useState(()=>thaiToday().slice(0,4));
-  const [showEmptyRentalMonths,setShowEmptyRentalMonths]=useState(false);
   const rentalPeriod=rentalView==='day'?rentalDay:rentalView==='month'?rentalMonth:rentalYear;
   const periodTotals=rentalPeriodTotals(rentals,thaiToday(),rentalPeriod);
-  const reportYear=(rentalPeriod||thaiToday()).slice(0,4);
-  const rentalMonths=Array.from({length:12},(_,i)=>{
-    const key=`${reportYear}-${String(i+1).padStart(2,'0')}`;
-    return {key,label:new Intl.DateTimeFormat('th-TH',{month:'long',timeZone:'UTC'}).format(new Date(`${key}-01T00:00:00Z`)),...rentalPeriodTotals(rentals,thaiToday(),key)};
-  });
-  // ยอดรายเดือนจากบัญชี — โชว์เฉพาะบทบาทที่มีสิทธิ์เห็นบัญชี (พนักงานขาย/ลูกค้าไม่เห็น)
   const canSeeMoney = pagesForRole(role).includes("accounting");
   const monthAsc = monthlyRows(txns);
   const totalIn = monthAsc.reduce((s, r) => s + r.in, 0);
@@ -1286,9 +1279,14 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
         <div className="font-bold">สรุปยอดการเช่า</div>
         <div className="flex flex-wrap items-end gap-3 my-3">
           <label className="text-xs">ดูยอดตาม<select value={rentalView} onChange={e=>setRentalView(e.target.value)} className="block border rounded-xl p-2 mt-1 bg-white" style={{borderColor:C.line}}><option value="day">รายวัน</option><option value="month">รายเดือน</option><option value="year">รายปี</option></select></label>
-          <label className="text-xs">{rentalView==='day'?'เลือกวันที่':rentalView==='month'?'เลือกเดือน':'เลือกปี (ค.ศ.)'}
-            {rentalView==='day'?<input aria-label="เลือกวันที่" type="date" value={rentalDay} onChange={e=>setRentalDay(e.target.value)} className="block border rounded-xl p-2 mt-1"/>:rentalView==='month'?<input aria-label="เลือกเดือน" type="month" value={rentalMonth} onChange={e=>setRentalMonth(e.target.value)} className="block border rounded-xl p-2 mt-1"/>:<input aria-label="เลือกปี ค.ศ." type="number" min="1900" max="9999" value={rentalYear} onChange={e=>setRentalYear(e.target.value)} className="block border rounded-xl p-2 mt-1 w-28"/>}
-          </label>
+          {rentalView==='month'?<div className="flex gap-2">
+            <label className="text-xs">เลือกเดือน<select aria-label="เลือกเดือน" value={rentalMonth.slice(5,7)} onChange={e=>setRentalMonth(`${rentalMonth.slice(0,4)}-${e.target.value}`)} className="block border rounded-xl p-2 mt-1 bg-white" style={{borderColor:C.line}}>
+              {['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'].map((month,index)=><option key={month} value={String(index+1).padStart(2,'0')}>{month}</option>)}
+            </select></label>
+            <label className="text-xs">ปี พ.ศ.<input aria-label="ปี พ.ศ. ของเดือน" type="number" min="2443" max="10542" value={Number(rentalMonth.slice(0,4))+543} onChange={e=>{const year=Number(e.target.value)-543;if(year>=1900&&year<=9999)setRentalMonth(`${year}-${rentalMonth.slice(5,7)}`);}} className="block border rounded-xl p-2 mt-1 w-24" style={{borderColor:C.line}}/></label>
+          </div>:<label className="text-xs">{rentalView==='day'?'เลือกวันที่':'เลือกปี พ.ศ.'}
+            {rentalView==='day'?<input aria-label="เลือกวันที่" lang="th-TH" type="date" value={rentalDay} onChange={e=>setRentalDay(e.target.value)} className="block border rounded-xl p-2 mt-1"/>:<input aria-label="เลือกปี พ.ศ." type="number" min="2443" max="10542" value={Number(rentalYear)+543} onChange={e=>{const year=Number(e.target.value)-543;if(year>=1900&&year<=9999)setRentalYear(String(year));}} className="block border rounded-xl p-2 mt-1 w-28"/>}
+          </label>}
           <button type="button" className="text-xs underline p-2" onClick={()=>{setRentalView('month');setRentalMonth(thaiToday().slice(0,7));}}>เดือนนี้</button>
         </div>
         <p className="text-xs mb-4" style={{color:C.taupe}}>{periodTotals.count} รายการ · ตามวันรับชุด</p>
@@ -1311,18 +1309,6 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
             ].map(row=><div key={row.label}><div className="font-medium">{row.label}</div><div style={{color:C.taupe}}>ชำระแล้ว {baht(row.paid)} · รอชำระ {baht(row.pending)}</div></div>)}
             <p style={{color:C.taupe}}>รวมชำระแล้วและรอชำระ ไม่นับรายการยกเลิก ค่าปรับและค่าเสียหาย เงินมัดจำรวมรายการที่คืนชุดแล้ว</p>
           </div>
-        </details>
-        <details className="mt-3 pt-3 border-t" style={{borderColor:C.line}}>
-        <summary className="cursor-pointer text-sm font-medium py-1">ดูยอดแต่ละเดือน · ปี {Number(reportYear)+543}</summary>
-        <label className="flex gap-2 items-center text-xs my-3" style={{color:C.taupe}}><input type="checkbox" checked={showEmptyRentalMonths} onChange={e=>setShowEmptyRentalMonths(e.target.checked)}/>แสดงเดือนที่ไม่มีรายการ</label>
-        <div className="overflow-x-auto"><table className="w-full text-xs whitespace-nowrap">
-          <thead><tr style={{background:C.cream}}>{['เดือน','ค่าเช่า','เงินมัดจำ','รวม'].map(label=><th key={label} className="p-2 text-right first:text-left">{label}</th>)}</tr></thead>
-          <tbody>{rentalMonths.filter(row=>showEmptyRentalMonths||row.count>0).map(row=><tr key={row.key} className="border-b" style={{borderColor:C.line}}>
-            <td className="p-2"><button type="button" className="underline" onClick={()=>{setRentalView('month');setRentalMonth(row.key);}}>{row.label}</button></td>
-            {[baht(row.fee),baht(row.deposit),baht(row.total)].map((value,i)=><td key={i} className="p-2 text-right">{value}</td>)}
-          </tr>)}</tbody>
-        </table></div>
-        {!rentalMonths.some(row=>row.count>0)&&!showEmptyRentalMonths&&<p className="text-xs py-3 text-center" style={{color:C.taupe}}>ไม่มีรายการเช่าในปีนี้</p>}
         </details>
       </Card>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5">
