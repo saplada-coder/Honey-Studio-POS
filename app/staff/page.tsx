@@ -359,8 +359,8 @@ function ComboField({ value, onChange, options = [], placeholder }) {
   );
 }
 
-function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], products = [] }) {
-  const [form, setForm] = useState(() => {
+function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], products = [] }: any) {
+  const [form, setForm] = useState<Record<string, any>>(() => {
     const base = {};
     fields.forEach((f) => { base[f.key] = initial?.[f.key] ?? f.default ?? (f.type === "number" ? 0 : f.type === "check" ? false : ""); });
     return base;
@@ -387,6 +387,7 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
     try {
       // ช่องตัวเลขเก็บเป็นข้อความระหว่างพิมพ์ (ลบให้ว่างได้) → แปลงเป็นตัวเลขตอนบันทึก
       const data = { ...form };
+      if(Array.isArray(data.additionalItems)&&data.promotion==='bogo'&&data.additionalItems.filter(row=>row.free).length!==1)throw new Error('กรุณาเลือกสินค้าแถม 1 ชิ้นสำหรับโปร 1 แถม 1');
       fields.forEach((f) => { if (f.type === "number") data[f.key] = Number(data[f.key]) || 0; });
       if ('rentPrices' in data) data.rentPrices=validateRentPrices(data.rentPrices);
       await onSubmit(data);
@@ -412,6 +413,17 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
             <label className="text-xs" style={{ color: C.taupe }}>{f.label}{f.required && " *"}</label>
             {f.type === "summary" ? (
               <div className="mt-1 p-3 rounded-xl font-semibold text-sm" style={{background:C.goldBg}}>{f.value(form)}</div>
+            ) : f.type === "rentalItems" ? (
+              <div className="space-y-3 mt-1">
+                {form.promotion==='bogo'&&<p className="text-xs" style={{color:C.taupe}}>เลือกสินค้าแถมคู่กับชุดหลัก ค่าเช่าสินค้าแถม 0 บาท เงินประกันแยกตามสินค้า</p>}
+                {(form[f.key]||[]).map((row,index)=><div key={index} className="p-3 border rounded-xl space-y-2" style={{borderColor:C.line}}>
+                  <div className="flex justify-between text-xs"><span>รายการเพิ่มเติม {index+1}</span><button type="button" onClick={()=>set(f.key,form[f.key].filter((_,i)=>i!==index))}>ลบรายการ</button></div>
+                  <ProductSelect value={row.code} required products={products} title="เลือกสินค้าเพิ่มเติม" onChange={code=>{const p=products.find(p=>p.id===code);set(f.key,form[f.key].map((r,i)=>i===index?{...r,code,fee:p?.rent||0,deposit:p?.rent||0}:r));}} />
+                  {form.promotion==='bogo'&&<label className="flex gap-2 text-sm"><input type="checkbox" checked={!!row.free} onChange={e=>set(f.key,form[f.key].map((r,i)=>i===index?{...r,free:e.target.checked}:r))}/>สินค้าแถมคู่กับ {form.item||'ชุดหลัก'} (ค่าเช่า 0 บาท)</label>}
+                  <div className="grid grid-cols-2 gap-2">{['fee','deposit'].map(key=><label key={key} className="text-xs">{key==='fee'?'ค่าเช่า (บาท)':'เงินประกัน (บาท)'}<input type="number" min="0" required disabled={key==='fee'&&form.promotion==='bogo'&&row.free} value={key==='fee'&&form.promotion==='bogo'&&row.free?0:row[key]} onChange={e=>set(f.key,form[f.key].map((r,i)=>i===index?{...r,[key]:e.target.value}:r))} className="w-full border rounded-xl p-2 mt-1" style={{borderColor:C.line}}/></label>)}</div>
+                </div>)}
+                <button type="button" className="w-full border rounded-xl py-2 text-sm" style={{borderColor:C.line,color:C.charcoal}} onClick={()=>set(f.key,[...(form[f.key]||[]),{code:'',fee:0,deposit:0,free:form.promotion==='bogo'}])}>+ เพิ่มรายการเช่า{form.promotion==='bogo'?' / สินค้าแถม':''}</button>
+              </div>
             ) : f.type === "rentPrices" ? (
               <RentPriceField value={form[f.key]} onChange={v=>set(f.key,v)} rent={form.rent} />
             ) : f.type === "image" ? (
@@ -637,6 +649,7 @@ const rentalFields = (isEdit) => [
   { key: "userId", label: "รหัสสมาชิก (เชื่อมอัตโนมัติเมื่อมีชื่อและเบอร์)", placeholder: "เว้นว่างได้ ระบบสมัคร/เชื่อมสมาชิกให้เมื่อบันทึก" },
   { key: "code", label: "เลือกชุดจากคลัง (ตัดสต็อกอัตโนมัติ + เติมชื่อ/ค่าเช่าให้)", type: "product", fill: { item: "name", fee: (p) => p.rent || 0, deposit: (p)=>p.rent||0 } },
   { key: "item", label: "รายการที่เช่า (แก้ไขได้)", required: true },
+  ...(!isEdit ? [{key:"additionalItems",label:"สินค้าเพิ่มเติม / สินค้าที่คู่กับโปร 1 แถม 1",type:"rentalItems",default:[]}] : []),
   { key: "start", label: "วันรับ", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "end", label: "วันคืน", type: isEdit ? "text" : "date", required: !isEdit, placeholder: "YYYY-MM-DD" },
   { key: "fee", label: "ค่าเช่าสุทธิ (บาท)", type: "number", numericText:true, required:true },
