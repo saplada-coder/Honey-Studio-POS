@@ -1239,6 +1239,7 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
   const [rentalDay,setRentalDay]=useState(()=>thaiToday());
   const [rentalMonth,setRentalMonth]=useState(()=>thaiToday().slice(0,7));
   const [rentalYear,setRentalYear]=useState(()=>thaiToday().slice(0,4));
+  const [showEmptyRentalMonths,setShowEmptyRentalMonths]=useState(false);
   const rentalPeriod=rentalView==='day'?rentalDay:rentalView==='month'?rentalMonth:rentalYear;
   const periodTotals=rentalPeriodTotals(rentals,thaiToday(),rentalPeriod);
   const reportYear=(rentalPeriod||thaiToday()).slice(0,4);
@@ -1290,27 +1291,39 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
           </label>
           <button type="button" className="text-xs underline p-2" onClick={()=>{setRentalView('month');setRentalMonth(thaiToday().slice(0,7));}}>เดือนนี้</button>
         </div>
-        <p className="text-xs mt-1 mb-3" style={{color:C.taupe}}>ตามวันรับชุด ช่วง {rentalPeriod||'ยังไม่ได้เลือก'} · {periodTotals.count} รายการ รวมชำระแล้วและรอชำระ ไม่นับรายการยกเลิก</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <p className="text-xs mb-4" style={{color:C.taupe}}>{periodTotals.count} รายการ · ตามวันรับชุด</p>
+        <div className="grid grid-cols-2 gap-4 py-2">
           {[
-            {label:'ค่าเช่ารวม',amount:periodTotals.fee,paid:periodTotals.paidFee},
-            {label:'เงินมัดจำ / เงินประกันรวม',amount:periodTotals.deposit,paid:periodTotals.paidDeposit},
-            {label:'ยอดรวมค่าเช่าและเงินมัดจำ',amount:periodTotals.total,paid:periodTotals.paidFee+periodTotals.paidDeposit},
-          ].map(k=><div key={k.label} className="rounded-xl p-3" style={{background:C.cream}}>
+            {label:'ค่าเช่า',amount:periodTotals.fee},
+            {label:'เงินมัดจำ',amount:periodTotals.deposit},
+          ].map(k=><div key={k.label} className="min-w-0">
             <div className="text-xs" style={{color:C.taupe}}>{k.label}</div>
-            <div className="text-xl font-bold mt-1">{baht(k.amount)}</div>
-            <div className="text-xs mt-1">ชำระแล้ว {baht(k.paid)} · รอชำระ {baht(k.amount-k.paid)}</div>
+            <div className="text-2xl font-bold mt-1" style={{color:C.charcoal}}>{baht(k.amount)}</div>
           </div>)}
         </div>
-        <p className="text-xs mt-3" style={{color:C.taupe}}>เงินมัดจำแสดงยอดตามรายการเช่า รวมรายการที่คืนชุดแล้ว ไม่ใช่รายได้ร้านหรือยอดมัดจำคงค้าง ไม่รวมค่าปรับและค่าเสียหาย</p>
-        <div className="font-semibold text-sm mt-5 mb-2">ยอดแต่ละเดือน ปี {Number(reportYear)+543}</div>
+        <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t" style={{borderColor:C.line}}><span style={{color:C.taupe}}>รวมทั้งหมด</span><span className="font-semibold">{baht(periodTotals.total)}</span></div>
+        <details className="mt-4 text-xs">
+          <summary className="cursor-pointer py-1" style={{color:C.taupe}}>รายละเอียดการชำระเงิน</summary>
+          <div className="space-y-2 mt-2 rounded-xl p-3" style={{background:C.cream}}>
+            {[
+              {label:'ค่าเช่า',paid:periodTotals.paidFee,pending:periodTotals.fee-periodTotals.paidFee},
+              {label:'เงินมัดจำ',paid:periodTotals.paidDeposit,pending:periodTotals.deposit-periodTotals.paidDeposit},
+            ].map(row=><div key={row.label}><div className="font-medium">{row.label}</div><div style={{color:C.taupe}}>ชำระแล้ว {baht(row.paid)} · รอชำระ {baht(row.pending)}</div></div>)}
+            <p style={{color:C.taupe}}>รวมชำระแล้วและรอชำระ ไม่นับรายการยกเลิก ค่าปรับและค่าเสียหาย เงินมัดจำรวมรายการที่คืนชุดแล้ว</p>
+          </div>
+        </details>
+        <details className="mt-3 pt-3 border-t" style={{borderColor:C.line}}>
+        <summary className="cursor-pointer text-sm font-medium py-1">ดูยอดแต่ละเดือน · ปี {Number(reportYear)+543}</summary>
+        <label className="flex gap-2 items-center text-xs my-3" style={{color:C.taupe}}><input type="checkbox" checked={showEmptyRentalMonths} onChange={e=>setShowEmptyRentalMonths(e.target.checked)}/>แสดงเดือนที่ไม่มีรายการ</label>
         <div className="overflow-x-auto"><table className="w-full text-xs whitespace-nowrap">
-          <thead><tr style={{background:C.cream}}>{['เดือน','รายการ','ค่าเช่า','เงินมัดจำ','รวม','ชำระแล้ว','รอชำระ'].map(label=><th key={label} className="p-2 text-right first:text-left">{label}</th>)}</tr></thead>
-          <tbody>{rentalMonths.map(row=><tr key={row.key} className="border-b" style={{borderColor:C.line}}>
+          <thead><tr style={{background:C.cream}}>{['เดือน','ค่าเช่า','เงินมัดจำ','รวม'].map(label=><th key={label} className="p-2 text-right first:text-left">{label}</th>)}</tr></thead>
+          <tbody>{rentalMonths.filter(row=>showEmptyRentalMonths||row.count>0).map(row=><tr key={row.key} className="border-b" style={{borderColor:C.line}}>
             <td className="p-2"><button type="button" className="underline" onClick={()=>{setRentalView('month');setRentalMonth(row.key);}}>{row.label}</button></td>
-            {[row.count,baht(row.fee),baht(row.deposit),baht(row.total),baht(row.paidFee+row.paidDeposit),baht(row.total-row.paidFee-row.paidDeposit)].map((value,i)=><td key={i} className="p-2 text-right">{value}</td>)}
+            {[baht(row.fee),baht(row.deposit),baht(row.total)].map((value,i)=><td key={i} className="p-2 text-right">{value}</td>)}
           </tr>)}</tbody>
         </table></div>
+        {!rentalMonths.some(row=>row.count>0)&&!showEmptyRentalMonths&&<p className="text-xs py-3 text-center" style={{color:C.taupe}}>ไม่มีรายการเช่าในปีนี้</p>}
+        </details>
       </Card>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5">
         {kpis.map(k => (
