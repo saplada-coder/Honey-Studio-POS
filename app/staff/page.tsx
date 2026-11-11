@@ -19,6 +19,7 @@ import * as XLSX from "xlsx";
 import QRCode from "qrcode";
 import RentPriceField from '../rent-price-field';
 import RentalLoyaltyManagement from '../rental-loyalty-management';
+import RentalCalendar from '../rental-calendar';
 import ShopManagement from '../shop-management';
 import StockTrash from '../stock-trash';
 import ProductSelect from '../product-select';
@@ -2052,7 +2053,7 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
         </div>
       )}
 
-      {view === "calendar" && <RentalCalendar rentals={rentals} />}
+      {view === "calendar" && <RentalCalendar rentals={visible} onEdit={canEdit ? openEdit : undefined} />}
 
       {view === "list" && (
         <Card className="overflow-hidden">
@@ -2103,38 +2104,6 @@ function RentalReceipt({ rental, onClose }) {
   </Modal>;
 }
 
-function RentalCalendar({ rentals }) {
-  const days = Array.from({ length: 30 }, (_, i) => i + 1);
-  const firstDow = 6;
-  const evMap = { 16: ["จองแล้ว"], 15: ["รับชุดแล้ว"], 13: ["กำลังเช่า"], 10: ["คืนแล้ว"], 8: ["เกินกำหนด"], 17: ["จองแล้ว"] };
-  return (
-    <Card className="p-4">
-      <div className="text-center font-bold mb-3" style={{ fontFamily: "Georgia,serif" }}>มิถุนายน 2568</div>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs mb-1" style={{ color: C.taupe }}>
-        {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map(d => <div key={d} className="py-1 font-medium">{d}</div>)}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {Array.from({ length: firstDow }).map((_, i) => <div key={"e" + i} />)}
-        {days.map(d => {
-          const evs = evMap[d];
-          return (
-            <div key={d} className="aspect-square rounded-lg p-1 text-xs flex flex-col" style={{ background: d === 16 ? C.goldBg : C.cream }}>
-              <span className="font-medium" style={{ color: d === 16 ? "#8a6d1f" : C.charcoal }}>{d}</span>
-              <div className="flex-1 flex flex-col gap-0.5 mt-0.5">
-                {evs && evs.map((e, i) => { const [fg] = statusColor(e); return <span key={i} className="h-1.5 rounded-full" style={{ background: fg }} />; })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex flex-wrap gap-3 mt-4 text-xs">
-        {RENTAL_STATUS.map(s => { const [fg] = statusColor(s); return <span key={s} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full" style={{ background: fg }} />{s}</span>; })}
-      </div>
-    </Card>
-  );
-}
-
-/* ============ ซัก & ซ่อม ============ */
 const LAUNDRY_FLOW = ["รอดำเนินการ", "กำลังดำเนินการ", "รอซ่อม", "เสร็จแล้ว"];
 function Laundry({ laundry = [], saveEntity, deleteEntity, products = [] }) {
   const [form, setForm] = useState(null);
