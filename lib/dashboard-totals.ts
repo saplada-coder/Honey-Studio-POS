@@ -13,6 +13,14 @@ export function dashboardDate(value: string, today: string): string {
 }
 type Rental={id:string;cust?:string;item?:string;start:string;end:string;fee:number;deposit:number;status:string;paymentStatus:string;stockReturned?:boolean};
 type Order={type:string;date:string;total:number;status:string};
+export function rentalPeriodTotals(rentals:Rental[],today:string,period:string){
+  const valid=/^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?)?$/.test(period);
+  const rows=rentals.filter(r=>valid&&r.status!=='ยกเลิก'&&!!dashboardDate(r.start,today)&&dashboardDate(r.start,today).startsWith(period));
+  const sum=(list:Rental[],key:'fee'|'deposit')=>list.reduce((total,r)=>total+(Number(r[key])||0),0);
+  const paid=rows.filter(r=>r.paymentStatus==='ชำระแล้ว');
+  const fee=sum(rows,'fee'),deposit=sum(rows,'deposit');
+  return {count:rows.length,fee,deposit,total:fee+deposit,paidFee:sum(paid,'fee'),paidDeposit:sum(paid,'deposit')};
+}
 export function dashboardTotals(rentals:Rental[],orders:Order[],today:string){
   const active=(r:Rental)=>!['คืนแล้ว','ยกเลิก'].includes(r.status)&&!r.stockReturned;
   const rentOn=(day:string)=>rentals.filter(r=>r.status!=='ยกเลิก'&&r.paymentStatus==='ชำระแล้ว'&&dashboardDate(r.start,today)===day);
@@ -22,6 +30,10 @@ export function dashboardTotals(rentals:Rental[],orders:Order[],today:string){
   const due=held.filter(r=>{const date=dashboardDate(r.end,today);return !!date&&date<=today;}).sort((a,b)=>dashboardDate(a.end,today).localeCompare(dashboardDate(b.end,today)));
   const rentToday=rentOn(today),sellToday=salesOn(today);
   const rentTotal=sum(rentToday,'fee'),sellTotal=sum(sellToday,'total');
-  return {rentToday,sellToday,rentTotal,sellTotal,total:rentTotal+sellTotal,held,due,depositTotal:sum(held,'deposit'),depositDue:sum(due,'deposit'),
+  const monthRentals=rentals.filter(r=>r.status!=='ยกเลิก'&&dashboardDate(r.start,today).slice(0,7)===today.slice(0,7));
+  const monthPaid=monthRentals.filter(r=>r.paymentStatus==='ชำระแล้ว');
+  const monthFee=sum(monthRentals,'fee'),monthDeposit=sum(monthRentals,'deposit');
+  const monthPaidFee=sum(monthPaid,'fee'),monthPaidDeposit=sum(monthPaid,'deposit');
+  return {monthRentals,monthFee,monthDeposit,monthTotal:monthFee+monthDeposit,monthPaidFee,monthPaidDeposit,rentToday,sellToday,rentTotal,sellTotal,total:rentTotal+sellTotal,held,due,depositTotal:sum(held,'deposit'),depositDue:sum(due,'deposit'),
     revenue:Array.from({length:7},(_,i)=>{const date=new Date(today+'T00:00:00Z');date.setUTCDate(date.getUTCDate()-(6-i));const day=date.toISOString().slice(0,10);return {d:['อา','จ','อ','พ','พฤ','ศ','ส'][date.getUTCDay()],เช่า:sum(rentOn(day),'fee'),ขาย:sum(salesOn(day),'total')};})};
 }

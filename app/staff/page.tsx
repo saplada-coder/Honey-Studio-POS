@@ -24,7 +24,7 @@ import StockTrash from '../stock-trash';
 import ProductSelect from '../product-select';
 import {memberName,memberPhone} from '@/lib/member-identity';
 import { productMeasurements, rentalPrice, validateRentPrices } from '@/lib/product-details';
-import { dashboardTotals } from '@/lib/dashboard-totals';
+import { dashboardTotals, rentalPeriodTotals } from '@/lib/dashboard-totals';
 import { thaiToday } from '@/lib/booking-availability';
 import { productSearch } from '@/lib/product-search';
 import { rentalReceipt } from '@/lib/rental-receipt';
@@ -419,10 +419,17 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
                 {(form[f.key]||[]).map((row,index)=><div key={index} className="p-3 border rounded-xl space-y-2" style={{borderColor:C.line}}>
                   <div className="flex justify-between text-xs"><span>รายการเพิ่มเติม {index+1}</span><button type="button" onClick={()=>set(f.key,form[f.key].filter((_,i)=>i!==index))}>ลบรายการ</button></div>
                   <ProductSelect value={row.code} required products={products} title="เลือกสินค้าเพิ่มเติม" onChange={code=>{const p=products.find(p=>p.id===code);set(f.key,form[f.key].map((r,i)=>i===index?{...r,code,fee:p?.rent||0,deposit:p?.rent||0}:r));}} />
-                  {form.promotion==='bogo'&&<label className="flex gap-2 text-sm"><input type="checkbox" checked={!!row.free} onChange={e=>set(f.key,form[f.key].map((r,i)=>i===index?{...r,free:e.target.checked}:r))}/>สินค้าแถมคู่กับ {form.item||'ชุดหลัก'} (ค่าเช่า 0 บาท)</label>}
+                  <fieldset className="space-y-2">
+                    <legend className="text-xs mb-1" style={{color:C.taupe}}>ประเภทของรายการ</legend>
+                    <div className="flex flex-wrap gap-3 text-sm">
+                      <label className="flex items-center gap-2"><input type="radio" name={`${f.key}-${index}-type`} checked={!row.free||form.promotion!=='bogo'} onChange={()=>set(f.key,form[f.key].map((r,i)=>i===index?{...r,free:false}:r))}/>เพิ่มรายการเช่า (คิดค่าเช่า)</label>
+                      {form.promotion==='bogo'&&<label className="flex items-center gap-2"><input type="radio" name={`${f.key}-${index}-type`} checked={!!row.free} onChange={()=>set(f.key,form[f.key].map((r,i)=>({...r,free:i===index})))}/>สินค้าแถม (ค่าเช่า 0 บาท)</label>}
+                    </div>
+                    {form.promotion==='bogo'&&row.free&&<p className="text-xs" style={{color:C.taupe}}>แถมคู่กับ {form.item||'ชุดหลัก'}</p>}
+                  </fieldset>
                   <div className="grid grid-cols-2 gap-2">{['fee','deposit'].map(key=><label key={key} className="text-xs">{key==='fee'?'ค่าเช่า (บาท)':'เงินประกัน (บาท)'}<input type="number" min="0" required disabled={key==='fee'&&form.promotion==='bogo'&&row.free} value={key==='fee'&&form.promotion==='bogo'&&row.free?0:row[key]} onChange={e=>set(f.key,form[f.key].map((r,i)=>i===index?{...r,[key]:e.target.value}:r))} className="w-full border rounded-xl p-2 mt-1" style={{borderColor:C.line}}/></label>)}</div>
                 </div>)}
-                <button type="button" className="w-full border rounded-xl py-2 text-sm" style={{borderColor:C.line,color:C.charcoal}} onClick={()=>set(f.key,[...(form[f.key]||[]),{code:'',fee:0,deposit:0,free:form.promotion==='bogo'}])}>+ เพิ่มรายการเช่า{form.promotion==='bogo'?' / สินค้าแถม':''}</button>
+                <button type="button" className="w-full border rounded-xl py-2 text-sm" style={{borderColor:C.line,color:C.charcoal}} onClick={()=>set(f.key,[...(form[f.key]||[]),{code:'',fee:0,deposit:0,free:form.promotion==='bogo'&&!(form[f.key]||[]).some(r=>r.free)}])}>+ เพิ่มรายการเช่า{form.promotion==='bogo'?' / สินค้าแถม':''}</button>
               </div>
             ) : f.type === "rentPrices" ? (
               <RentPriceField value={form[f.key]} onChange={v=>set(f.key,v)} rent={form.rent} />
@@ -1228,6 +1235,17 @@ function MonthlyChart({ rows, height = 240, onPick }) {
 
 /* ============ 1. DASHBOARD ============ */
 function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], role = "" }) {
+  const [rentalView,setRentalView]=useState('month');
+  const [rentalDay,setRentalDay]=useState(()=>thaiToday());
+  const [rentalMonth,setRentalMonth]=useState(()=>thaiToday().slice(0,7));
+  const [rentalYear,setRentalYear]=useState(()=>thaiToday().slice(0,4));
+  const rentalPeriod=rentalView==='day'?rentalDay:rentalView==='month'?rentalMonth:rentalYear;
+  const periodTotals=rentalPeriodTotals(rentals,thaiToday(),rentalPeriod);
+  const reportYear=(rentalPeriod||thaiToday()).slice(0,4);
+  const rentalMonths=Array.from({length:12},(_,i)=>{
+    const key=`${reportYear}-${String(i+1).padStart(2,'0')}`;
+    return {key,label:new Intl.DateTimeFormat('th-TH',{month:'long',timeZone:'UTC'}).format(new Date(`${key}-01T00:00:00Z`)),...rentalPeriodTotals(rentals,thaiToday(),key)};
+  });
   // ยอดรายเดือนจากบัญชี — โชว์เฉพาะบทบาทที่มีสิทธิ์เห็นบัญชี (พนักงานขาย/ลูกค้าไม่เห็น)
   const canSeeMoney = pagesForRole(role).includes("accounting");
   const monthAsc = monthlyRows(txns);
@@ -1263,6 +1281,37 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
   return (
     <div>
       <PageHead title="แดชบอร์ด" sub={`ภาพรวมร้าน ${todayFullTH()}`} action={<Btn icon={Plus} onClick={() => go("orders")}>สร้างออเดอร์</Btn>} />
+      <Card className="p-4 mb-5">
+        <div className="font-bold">สรุปยอดการเช่า</div>
+        <div className="flex flex-wrap items-end gap-3 my-3">
+          <label className="text-xs">ดูยอดตาม<select value={rentalView} onChange={e=>setRentalView(e.target.value)} className="block border rounded-xl p-2 mt-1 bg-white" style={{borderColor:C.line}}><option value="day">รายวัน</option><option value="month">รายเดือน</option><option value="year">รายปี</option></select></label>
+          <label className="text-xs">{rentalView==='day'?'เลือกวันที่':rentalView==='month'?'เลือกเดือน':'เลือกปี (ค.ศ.)'}
+            {rentalView==='day'?<input aria-label="เลือกวันที่" type="date" value={rentalDay} onChange={e=>setRentalDay(e.target.value)} className="block border rounded-xl p-2 mt-1"/>:rentalView==='month'?<input aria-label="เลือกเดือน" type="month" value={rentalMonth} onChange={e=>setRentalMonth(e.target.value)} className="block border rounded-xl p-2 mt-1"/>:<input aria-label="เลือกปี ค.ศ." type="number" min="1900" max="9999" value={rentalYear} onChange={e=>setRentalYear(e.target.value)} className="block border rounded-xl p-2 mt-1 w-28"/>}
+          </label>
+          <button type="button" className="text-xs underline p-2" onClick={()=>{setRentalView('month');setRentalMonth(thaiToday().slice(0,7));}}>เดือนนี้</button>
+        </div>
+        <p className="text-xs mt-1 mb-3" style={{color:C.taupe}}>ตามวันรับชุด ช่วง {rentalPeriod||'ยังไม่ได้เลือก'} · {periodTotals.count} รายการ รวมชำระแล้วและรอชำระ ไม่นับรายการยกเลิก</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            {label:'ค่าเช่ารวม',amount:periodTotals.fee,paid:periodTotals.paidFee},
+            {label:'เงินมัดจำ / เงินประกันรวม',amount:periodTotals.deposit,paid:periodTotals.paidDeposit},
+            {label:'ยอดรวมค่าเช่าและเงินมัดจำ',amount:periodTotals.total,paid:periodTotals.paidFee+periodTotals.paidDeposit},
+          ].map(k=><div key={k.label} className="rounded-xl p-3" style={{background:C.cream}}>
+            <div className="text-xs" style={{color:C.taupe}}>{k.label}</div>
+            <div className="text-xl font-bold mt-1">{baht(k.amount)}</div>
+            <div className="text-xs mt-1">ชำระแล้ว {baht(k.paid)} · รอชำระ {baht(k.amount-k.paid)}</div>
+          </div>)}
+        </div>
+        <p className="text-xs mt-3" style={{color:C.taupe}}>เงินมัดจำแสดงยอดตามรายการเช่า รวมรายการที่คืนชุดแล้ว ไม่ใช่รายได้ร้านหรือยอดมัดจำคงค้าง ไม่รวมค่าปรับและค่าเสียหาย</p>
+        <div className="font-semibold text-sm mt-5 mb-2">ยอดแต่ละเดือน ปี {Number(reportYear)+543}</div>
+        <div className="overflow-x-auto"><table className="w-full text-xs whitespace-nowrap">
+          <thead><tr style={{background:C.cream}}>{['เดือน','รายการ','ค่าเช่า','เงินมัดจำ','รวม','ชำระแล้ว','รอชำระ'].map(label=><th key={label} className="p-2 text-right first:text-left">{label}</th>)}</tr></thead>
+          <tbody>{rentalMonths.map(row=><tr key={row.key} className="border-b" style={{borderColor:C.line}}>
+            <td className="p-2"><button type="button" className="underline" onClick={()=>{setRentalView('month');setRentalMonth(row.key);}}>{row.label}</button></td>
+            {[row.count,baht(row.fee),baht(row.deposit),baht(row.total),baht(row.paidFee+row.paidDeposit),baht(row.total-row.paidFee-row.paidDeposit)].map((value,i)=><td key={i} className="p-2 text-right">{value}</td>)}
+          </tr>)}</tbody>
+        </table></div>
+      </Card>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5">
         {kpis.map(k => (
           <Card key={k.label} className="p-4">
