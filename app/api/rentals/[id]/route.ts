@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import {awardReturnPoint,refundUnusedReward} from '@/lib/customer-rewards';
 import {validateMember} from '@/lib/member-link';
-import {isDate} from '@/lib/booking-availability';
+import {isDate,remainingForDates} from '@/lib/booking-availability';
 export const dynamic='force-dynamic';
 export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
   const {id}=await params;
@@ -24,13 +24,28 @@ export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
       if(action==='settle'||clean.paymentStatus==='ชำระแล้ว'&&cur.paymentStatus!=='ชำระแล้ว'){
         clean.paymentStatus='ชำระแล้ว';clean.paidAmount=(clean.fee??cur.fee)+(clean.fine??cur.fine)+(clean.damage??cur.damage);
       }
-      if(clean.userId!==undefined&&clean.userId!==cur.userId||!cur.userId&&(clean.phone!==undefined||clean.cust!==undefined)){
+      if(clean.userId!==undefined&&clean.userId!==cur.userId||!cur.userId&&(clean.phone!==undefined&&clean.phone!==cur.phone||clean.cust!==undefined&&clean.cust!==cur.cust)){
         if(cur.online||cur.stockReturned||cur.rewardUsed)throw new Error('เปลี่ยนสมาชิกไม่ได้สำหรับรายการออนไลน์ คืนแล้ว หรือใช้สิทธิ์ฟรี');
         clean.userId=await validateMember(tx,clean.userId??'',!cur.userId?{name:clean.cust??cur.cust,phone:clean.phone??cur.phone}:undefined);
         if(clean.userId&&(!isDate(String(clean.start??cur.start))||!isDate(String(clean.end??cur.end))||(clean.end??cur.end)<=(clean.start??cur.start)))throw new Error('กรอกวันรับและวันคืนรูปแบบ YYYY-MM-DD เพื่อแจ้งเตือนสมาชิก');
       }
       if(cur.stockApplied&&clean.code!==undefined&&clean.code!==cur.code)throw new Error('เปลี่ยนรหัสชุดไม่ได้หลังตัดสต๊อก กรุณาคืนรายการเดิมก่อน');
-      if(cur.stockReturned&&clean.status&&clean.status!=='คืนแล้ว')throw new Error('รายการคืนแล้ว กรุณาสร้างการเช่าใหม่');
+      // Reopening a returned rental must claim its stock again in this transaction.
+      if(cur.stockReturned&&clean.status&&!['คืนแล้ว','ยกเลิก'].includes(clean.status)){
+        if(!['จองแล้ว','รับชุดแล้ว','กำลังเช่า','เกินกำหนด'].includes(clean.status))throw new Error('สถานะการเช่าไม่ถูกต้อง');
+        if(cur.code){
+          await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${cur.code} FOR UPDATE`;
+          const start=String(clean.start??cur.start),end=String(clean.end??cur.end);
+          if(isDate(start)&&isDate(end)){
+            const product=await tx.product.findUnique({where:{id:cur.code}});
+            const reservations=await tx.rental.findMany({where:{code:cur.code,id:{not:id},stockReturned:false,status:{notIn:['คืนแล้ว','ยกเลิก']}}});
+            if(!product||remainingForDates(product,reservations,start,end)<1)throw new Error('ชุดมีการจองทับช่วงวันที่เลือก');
+          }
+          const claimed=await tx.product.updateMany({where:{id:cur.code,type:{in:['เช่า','ทั้งคู่']},stockRent:{gt:0},status:{notIn:['ซัก','ซ่อม','ปลดสต็อก']}},data:{stockRent:{decrement:1}}});
+          if(!claimed.count)throw new Error('ชุดนี้ไม่มีสต๊อกพร้อมเช่า ไม่สามารถเปิดรายการเช่าอีกครั้งได้');
+        }
+        await tx.rental.update({where:{id},data:{stockApplied:!!cur.code,stockReturned:false}});
+      }
       if(cur.online&&['รับชุดแล้ว','กำลังเช่า'].includes(clean.status)&&!cur.stockApplied){
         if(cur.paymentStatus!=='ชำระแล้ว')throw new Error('ตรวจและยืนยันชำระเงินก่อนส่งชุด');
         if(cur.status==='ยกเลิก')throw new Error('รายการยกเลิกแล้ว');
