@@ -1291,24 +1291,22 @@ function Dashboard({ go, products = [], rentals = [], orders = [], txns = [], ro
           <button type="button" className="text-xs underline p-2" onClick={()=>{setRentalView('month');setRentalMonth(thaiToday().slice(0,7));}}>เดือนนี้</button>
         </div>
         <p className="text-xs mb-4" style={{color:C.taupe}}>{periodTotals.count} รายการ · ตามวันรับชุด</p>
-        <div className="grid grid-cols-2 gap-4 py-2">
+        <div className="py-2">
           {[
             {label:'ค่าเช่า',amount:periodTotals.fee},
-            {label:'เงินมัดจำ',amount:periodTotals.deposit},
           ].map(k=><div key={k.label} className="min-w-0">
             <div className="text-xs" style={{color:C.taupe}}>{k.label}</div>
             <div className="text-2xl font-bold mt-1" style={{color:C.charcoal}}>{baht(k.amount)}</div>
           </div>)}
         </div>
-        <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t" style={{borderColor:C.line}}><span style={{color:C.taupe}}>รวมทั้งหมด</span><span className="font-semibold">{baht(periodTotals.total)}</span></div>
+        <div className="flex justify-between items-center text-sm mt-3 pt-3 border-t" style={{borderColor:C.line}}><span style={{color:C.taupe}}>รวมทั้งหมด</span><span className="font-semibold">{baht(periodTotals.fee)}</span></div>
         <details className="mt-4 text-xs">
           <summary className="cursor-pointer py-1" style={{color:C.taupe}}>รายละเอียดการชำระเงิน</summary>
           <div className="space-y-2 mt-2 rounded-xl p-3" style={{background:C.cream}}>
             {[
               {label:'ค่าเช่า',paid:periodTotals.paidFee,pending:periodTotals.fee-periodTotals.paidFee},
-              {label:'เงินมัดจำ',paid:periodTotals.paidDeposit,pending:periodTotals.deposit-periodTotals.paidDeposit},
             ].map(row=><div key={row.label}><div className="font-medium">{row.label}</div><div style={{color:C.taupe}}>ชำระแล้ว {baht(row.paid)} · รอชำระ {baht(row.pending)}</div></div>)}
-            <p style={{color:C.taupe}}>รวมชำระแล้วและรอชำระ ไม่นับรายการยกเลิก ค่าปรับและค่าเสียหาย เงินมัดจำรวมรายการที่คืนชุดแล้ว</p>
+            <p style={{color:C.taupe}}>รวมค่าเช่าที่ชำระแล้วและรอชำระ ไม่นับรายการยกเลิก เงินมัดจำ ค่าปรับและค่าเสียหาย</p>
           </div>
         </details>
       </Card>
