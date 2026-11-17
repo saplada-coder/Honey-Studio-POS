@@ -8,6 +8,7 @@ export async function PATCH(req:Request,{params}:{params:Promise<{id:string}>}){
   const {id}=await params;
   const {stockApplied:_a,stockReturned:_b,id:_id,rewardUsed:_r,rewardValue:_v,paidAmount:_p,action,...clean}=await req.json();
   try{
+    if(clean.paymentMethod!==undefined&&!['','เงินสด','โอน'].includes(clean.paymentMethod))throw new Error('กรุณาเลือกวิธีชำระเงินเป็นเงินสดหรือโอน');
     const updated=await prisma.$transaction(async tx=>{
       await tx.$queryRaw`SELECT id FROM "Rental" WHERE id = ${id} FOR UPDATE`;
       const cur=await tx.rental.findUniqueOrThrow({where:{id}});

@@ -108,6 +108,7 @@ model Rental {
   userId      String   @default("") // เจ้าของการจองออนไลน์ ใช้ตรวจสิทธิ์ตรง ID
   online      Boolean  @default(false)
   paymentStatus String @default("รอชำระ")
+  paymentMethod String @default("")
   paymentSlip String   @default("")
   status      String   @default("จองแล้ว")
   stockApplied  Boolean @default(false) // ตัดสต็อกเช่าไปแล้วหรือยัง (กันตัดซ้ำ)

@@ -1,7 +1,7 @@
 export type ReceiptRental = {
  id:string;cust:string;phone?:string;item:string;code?:string;start:string;end:string;
  fee:number;fine?:number;damage?:number;deposit?:number;discount?:number;
- paidAmount?:number;paymentStatus?:string;status?:string;
+ paidAmount?:number;paymentStatus?:string;paymentMethod?:string;status?:string;
 };
 const escapeHtml=(value:unknown)=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const money=(n:number)=>`${n.toLocaleString('th-TH')} บาท`;
@@ -17,6 +17,7 @@ export function rentalReceipt(r:ReceiptRental,issuedOn:string){
  ${row('เลขที่อ้างอิง',r.id)}${row('วันที่ออกเอกสาร',issuedOn)}${row('ลูกค้า',r.cust)}${r.phone?row('โทรศัพท์',r.phone):''}
  <div class="line"></div><p style="overflow-wrap:anywhere">${escapeHtml(r.item)}</p>${r.code?row('รหัสชุด',r.code):''}
  ${row('วันรับชุด',r.start)}${row('กำหนดคืน',r.end)}${row('สถานะการเช่า',r.status||'—')}
+ ${r.paymentMethod?row('วิธีชำระเงิน',r.paymentMethod):''}
  <div class="line"></div>${row('ค่าเช่าสุทธิ',money(amount(r.fee)))}
  ${amount(r.discount)?row('ส่วนลดที่รวมในค่าเช่าสุทธิแล้ว',money(amount(r.discount))):''}
  ${row('ค่าปรับ',money(amount(r.fine)))}${row('ค่าเสียหาย',money(amount(r.damage)))}

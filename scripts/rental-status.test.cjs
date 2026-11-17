@@ -59,3 +59,9 @@ test('unknown status is rejected',async()=>{
 test('reopen online rental claims stock once',async()=>{
   const f=fixture({row:{online:true,userId:'U1',paymentStatus:'ชำระแล้ว'}});assert.equal((await f.patch({status:'กำลังเช่า'})).status,200);assert.equal(f.stock(),0);
 });
+for(const paymentMethod of ['เงินสด','โอน',''])test('save payment method '+paymentMethod,async()=>{
+  const f=fixture();assert.equal((await f.patch({paymentMethod})).status,200);assert.equal(f.row().paymentMethod,paymentMethod);assert.equal(f.stock(),1);
+});
+test('reject unsupported payment method',async()=>{
+  const f=fixture();assert.equal((await f.patch({paymentMethod:'other'})).status,409);assert.equal(f.row().paymentMethod,undefined);
+});

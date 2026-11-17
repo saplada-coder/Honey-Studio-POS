@@ -650,6 +650,7 @@ const rentalFields = (isEdit) => [
   { key: "id", label: "เลขที่การเช่า", required: true, readOnly: isEdit, placeholder: "เช่น R-501" },
   { key: "cust", label: "ลูกค้า", type: "customer", required: true },
   { key: "paymentStatus", label: "สถานะรับชำระค่าใช้จ่าย", type: "select", options: ["รอชำระ", "ชำระแล้ว"] },
+  { key: "paymentMethod", label: "วิธีชำระเงิน", type: "select", options: ["เงินสด", "โอน"] },
   { key: "paymentSlip", label: "แนบรูปใบบิล / สลิปลูกค้า", type: "image" },
   { key: "loyaltyGroup", label: "เลขที่รายการเช่ารวม (กรณีหลายชุด)", placeholder: "ชุดในรายการเดียวกันใช้เลขเดียวกัน เพื่อรับรวม 1 แต้ม" },
   { key: "promotion", label: "โปรโมชั่นที่ใช้", type: "select", options: [{value:"",label:"ไม่ใช้โปรโมชั่น"},{value:"bogo",label:"เช่า 1 แถม 1"},{value:"discount10",label:"ส่วนลดค่าเช่า 10%"},{value:"manual-discount",label:"ส่วนลดจากฟอร์มลูกค้า",disabled:true},{value:"loyalty",label:"ใช้สิทธิ์ 10 แต้ม (ระบบบันทึก)",disabled:true}] },

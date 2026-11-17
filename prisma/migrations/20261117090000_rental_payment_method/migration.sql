@@ -1,0 +1,1 @@
+ALTER TABLE "Rental" ADD COLUMN "paymentMethod" TEXT NOT NULL DEFAULT '';

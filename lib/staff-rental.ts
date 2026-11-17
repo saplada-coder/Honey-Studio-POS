@@ -5,6 +5,7 @@ import {memberName,memberPhone} from './member-identity';
 import {randomUUID} from 'node:crypto';
 
 export async function createStaffRental(tx:Prisma.TransactionClient,body:Record<string,any>){
+  if(body.paymentMethod!==undefined&&!['','เงินสด','โอน'].includes(body.paymentMethod))throw new Error('กรุณาเลือกวิธีชำระเงินเป็นเงินสดหรือโอน');
   const code=String(body.code||'').trim();
   const {stockApplied:_a,stockReturned:_b,rewardUsed:_r,rewardValue:_v,paidAmount:_p,...clean}=body;
   const userId=await validateMember(tx,body.userId,{name:body.cust,phone:body.phone});
