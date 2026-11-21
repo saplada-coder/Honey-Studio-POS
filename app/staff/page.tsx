@@ -1995,6 +1995,7 @@ function Shipping({ shipments, makeTrack, saveEntity, deleteEntity, canEdit }) {
 /* ============ 7. RENTALS ============ */
 function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, canEdit, me, customers, products = [], title="จองชุดเช่า", addLabel="จองชุด" }) {
   const [view, setView] = useState("board");
+  const [statusDialog, setStatusDialog] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
@@ -2004,6 +2005,24 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
   const visible = canEdit ? rentals : rentals.filter(r => me && (r.cust.includes(me.name) || me.name.includes(r.cust)));
   const openAdd = () => setForm({ mode: "add", data: { id: genId("R-"), status: "จองแล้ว" } });
   const openEdit = (r) => setForm({ mode: "edit", data: r });
+  const renderRentalCard = (r) => (
+    <Card key={r.id} className="p-3">
+      <div className="flex items-start justify-between gap-1">
+        <div className="text-sm font-medium leading-snug break-words min-w-0">{r.item}</div>
+        {canEdit && <div className="flex gap-1 shrink-0">
+          <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
+          <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
+        </div>}
+      </div>
+      <div className="text-xs mt-1" style={{ color: C.taupe }}>{r.cust}</div>
+      {canEdit && <button onClick={() => setReceipt(r)} className="flex items-center gap-1 text-xs mt-2 underline"><Printer size={13} />ใบเสร็จ / สรุปค่าเช่า</button>}
+      {r.paymentSlip && <a href={r.paymentSlip} target="_blank" rel="noreferrer" className="inline-block text-xs underline mt-2" style={{ color: C.gold }}>ดูใบบิล / สลิปลูกค้า</a>}
+      <div className="flex items-center gap-1 text-xs mt-1.5" style={{ color: C.taupe }}><Clock size={11} />{r.start} → {r.end}</div>
+      {canEdit && !["คืนแล้ว", "เกินกำหนด"].includes(r.status) && <button onClick={async () => {
+        await advanceRental(r.id);
+      }} className="mt-2 w-full text-xs py-1.5 rounded-lg font-medium" style={{ background: C.cream, color: C.charcoal }}>เลื่อนสถานะถัดไป →</button>}
+    </Card>
+  );
   return (
     <div>
       <PageHead title={title} sub={`${visible.length} รายการเช่า`} action={canEdit ? <Btn icon={Plus} onClick={openAdd}>{addLabel}</Btn> : null} />
@@ -2029,26 +2048,12 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
                   <span className="text-xs ml-auto px-1.5 rounded" style={{ background: bg, color: fg }}>{items.length}</span>
                 </div>
                 <div className="space-y-2">
-                  {items.map(r => (
-                    <Card key={r.id} className="p-3">
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="text-sm font-medium leading-snug">{r.item}</div>
-                        {canEdit && (
-                          <div className="flex gap-1 shrink-0">
-                            <IconBtn icon={Pencil} onClick={() => openEdit(r)} />
-                            <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(r)} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-xs mt-1" style={{ color: C.taupe }}>{r.cust}</div>
-                      {canEdit && <button onClick={() => setReceipt(r)} className="flex items-center gap-1 text-xs mt-2 underline"><Printer size={13} />ใบเสร็จ / สรุปค่าเช่า</button>}
-                      {r.paymentSlip&&<a href={r.paymentSlip} target="_blank" rel="noreferrer" className="inline-block text-xs underline mt-2" style={{color:C.gold}}>ดูใบบิล / สลิปลูกค้า</a>}
-                      <div className="flex items-center gap-1 text-xs mt-1.5" style={{ color: C.taupe }}><Clock size={11} />{r.start} → {r.end}</div>
-                      {canEdit && !["คืนแล้ว", "เกินกำหนด"].includes(r.status) && (
-                        <button onClick={() => advanceRental(r.id)} className="mt-2 w-full text-xs py-1.5 rounded-lg font-medium" style={{ background: C.cream, color: C.charcoal }}>เลื่อนสถานะถัดไป →</button>
-                      )}
-                    </Card>
-                  ))}
+                  {items.slice(0, 3).map(renderRentalCard)}
+                  {items.length > 3 && <button type="button" onClick={() => setStatusDialog(st)}
+                    className="w-full rounded-xl border p-3 text-sm font-medium"
+                    style={{ borderColor: fg, background: bg, color: fg }}>
+                    ดูทั้งหมด {items.length} รายการ · อีก {items.length - 3} รายการ
+                  </button>}
                   {items.length === 0 && <div className="text-xs text-center py-4 rounded-xl border border-dashed" style={{ color: C.taupe, borderColor: C.line }}>ว่าง</div>}
                 </div>
               </div>
@@ -2056,6 +2061,11 @@ function Rentals({ rentals, advanceRental, saveEntity, deleteEntity, loadAll, ca
           })}
         </div>
       )}
+
+      {statusDialog && <Modal title={`${statusDialog} · ${visible.filter(r => r.status === statusDialog).length} รายการ`} wide onClose={() => setStatusDialog(null)}>
+        <div className="space-y-3">{visible.filter(r => r.status === statusDialog).map(renderRentalCard)}</div>
+        {visible.every(r => r.status !== statusDialog) && <p className="text-sm text-center py-4" style={{ color: C.taupe }}>ไม่มีรายการในสถานะนี้</p>}
+      </Modal>}
 
       {view === "calendar" && <RentalCalendar rentals={visible} onEdit={canEdit ? openEdit : undefined} />}
 
