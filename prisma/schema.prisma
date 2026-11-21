@@ -132,6 +132,15 @@ model LaundryRepair {
 }
 
 // ===== บัญชีรับจ่าย =====
+model CashEntry {
+  id        String @id @default(cuid())
+  date      String
+  desc      String
+  type      String
+  amt       Float
+  createdAt DateTime @default(now())
+}
+
 model Transaction {
   id        String   @id // เช่น T-9001
   date      String
@@ -144,6 +153,7 @@ model Transaction {
   payee     String   @default("") // ชื่อบัญชี/ร้านที่รับเงินปลายทาง
   account   String   @default("") // เลขบัญชี/พร้อมเพย์ ปลายทาง
   advance     Boolean @default(false) // จ่ายด้วย "เงินส่วนบุคคล" (พนักงานสำรองจ่าย → บริษัทต้องโอนคืน)
+  cashAtShop  Boolean @default(false) // เงินสดที่ร้าน
   transferred Boolean @default(false) // จ่ายด้วย "เงินส่วนกลางบริษัท" (ไม่ต้องโอนคืนใคร)
   slipsAdvance String @default("") // รูปบิล/สลิปของรายการที่จ่ายด้วยเงินส่วนบุคคล (JSON array ของ URL)
   slipsTransfer String @default("") // รูปบิล/สลิปของรายการที่จ่ายด้วยเงินส่วนกลาง (JSON array ของ URL)

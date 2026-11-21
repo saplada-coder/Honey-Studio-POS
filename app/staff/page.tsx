@@ -11,6 +11,7 @@ import {
   Droplets, Wrench
 } from "lucide-react";
 import InstallApp from "../install-app";
+import CashBook from './cash-book';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList
@@ -370,6 +371,9 @@ function FormModal({ title, fields, initial, onClose, onSubmit, customers = [], 
   const [err, setErr] = useState("");
   const set = (k, v) => setForm((s) => {
     const next={...s,[k]:v};
+    if (['advance', 'transferred', 'cashAtShop'].includes(k) && v) {
+      for (const source of ['advance', 'transferred', 'cashAtShop']) next[source] = source === k;
+    }
     if(k==='importedAustralia'&&v)next.type='ขาย';
     if(['rentalCode','rentalStart','rentalEnd'].includes(k)){
       const product=products.find(p=>p.id===next.rentalCode);
@@ -702,6 +706,7 @@ const txnFields = (isEdit, names = [], cats = TXN_CATS) => [
   // ===== จ่ายด้วยเงินก้อนไหน =====
   // สำรองจ่าย = พนักงานควักเงินตัวเอง → บริษัทต้องโอนคืน (ไปโผล่ในยอด "คงเหลือต้องจ่ายคืน")
   // เงินส่วนกลาง = เงินกองกลางของร้าน → จบในตัว ไม่ต้องคืนใคร
+  { key: "cashAtShop", label: "เงินสดที่ร้าน", type: "check", hint: "รับหรือจ่ายด้วยเงินสดของร้าน · ไม่ต้องโอนคืนพนักงาน" },
   { key: "advance", label: "สำรองจ่าย — ใช้เงินส่วนบุคคล", type: "check", hint: "พนักงานออกเงินตัวเองไปก่อน · บริษัทต้องโอนคืน" },
   // ติ๊กแล้วถึงจะโผล่ช่องแนบรูป (กันฟอร์มรก)
   { key: "slipsAdvance", label: "แนบบิล/สลิป — รายการที่ใช้เงินส่วนบุคคล (สูงสุด 5 รูป)", type: "images", max: 5, showIf: (f) => !!f.advance },
@@ -2262,7 +2267,7 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
       "ประเภท": t.type === "in" ? "รายรับ" : "รายจ่าย",
       "รายรับ": t.type === "in" ? t.amt : "", "รายจ่าย": t.type === "out" ? t.amt : "",
       "ผู้เบิก": t.payer || "", "ผู้โอน": t.sender || "", "ชื่อบัญชี/ผู้รับเงิน": t.payee || "", "เลขบัญชี/พร้อมเพย์": t.account || "",
-      "แหล่งเงิน": t.advance ? "เงินส่วนบุคคล (สำรองจ่าย)" : t.transferred ? "เงินส่วนกลางบริษัท" : "",
+      "แหล่งเงิน": t.advance ? "เงินส่วนบุคคล (สำรองจ่าย)" : t.transferred ? "เงินส่วนกลางบริษัท" : t.cashAtShop ? "เงินสดที่ร้าน" : "",
       "สลิป-เงินส่วนบุคคล (ลิงก์)": parseUrls(t.slipsAdvance).join("\n"),
       "สลิป-เงินส่วนกลาง (ลิงก์)": parseUrls(t.slipsTransfer).join("\n"),
       "สลิปอื่นๆ (ลิงก์)": parseUrls(t.slips).join("\n"),
@@ -2287,6 +2292,7 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
   return (
     <div>
       <PageHead title="บัญชีรับจ่าย" sub="รวมรายรับค่าเช่าที่ชำระแล้วอัตโนมัติ · ไม่รวมเงินมัดจำ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
+      <CashBook />
 
       {/* เลือกเดือน + ส่งออก */}
       <Card className="p-3 mb-5">
@@ -2472,9 +2478,9 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
           // ยอดเงิน + ปุ่มต่างๆ ใช้ซ้ำ 2 ที่ (จอใหญ่อยู่ขวาของแถว · มือถือลงมาอยู่บรรทัดล่าง)
           const amount = <span style={{ color: t.type === "in" ? C.green : C.red }}>{t.type === "in" ? "+" : "-"}{baht(t.amt)}</span>;
           // สลับ "แหล่งเงิน" ได้จากด้านนอกเลย ไม่ต้องเปิดฟอร์ม — เลือกได้อย่างเดียว ติ๊กอันหนึ่งอีกอันหลุดเอง
-          const setSource = (src) => saveEntity("transactions", { advance: src === "person", transferred: src === "company" }, t.id);
+          const setSource = (src) => saveEntity("transactions", { advance: src === "person", transferred: src === "company", cashAtShop: src === "cash" }, t.id);
           const srcBtn = (src, label, on, color, bg) => (
-            <button type="button" title={src === "person" ? "จ่ายด้วยเงินส่วนบุคคล (บริษัทต้องโอนคืน)" : "จ่ายด้วยเงินส่วนกลางบริษัท (ไม่ต้องโอนคืน)"}
+            <button type="button" title={src === "cash" ? "เงินสดที่ร้าน" : src === "person" ? "จ่ายด้วยเงินส่วนบุคคล (บริษัทต้องโอนคืน)" : "จ่ายด้วยเงินส่วนกลางบริษัท (ไม่ต้องโอนคืน)"}
               onClick={() => setSource(on ? "" : src)} className="px-2 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap shrink-0"
               style={{ background: on ? bg : C.cream, color: on ? color : C.taupe, border: "1px solid " + (on ? color : "transparent") }}>
               {label}
@@ -2484,6 +2490,7 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
             <div className="flex items-center gap-1 shrink-0">
               {srcBtn("person", "ส่วนบุคคล", !!t.advance, C.red, "#FDECEC")}
               {srcBtn("company", "เงินบริษัท", !!t.transferred, C.green, C.greenBg)}
+              {srcBtn("cash", "เงินสดที่ร้าน", !!t.cashAtShop, C.charcoal, C.goldBg)}
             </div>
           );
           return (
@@ -2507,6 +2514,7 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
                       <AlertTriangle size={12} />สำรองจ่าย · เงินส่วนบุคคล
                     </span>
                   )}
+                  {t.cashAtShop && <span className="text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1" style={{ background: C.goldBg, color: C.charcoal }}><Wallet size={12} />เงินสดที่ร้าน</span>}
                   {t.transferred && (
                     <span className="text-[11px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap" style={{ background: C.greenBg, color: C.green }}>
                       <CheckCircle2 size={12} />เงินส่วนกลางบริษัท

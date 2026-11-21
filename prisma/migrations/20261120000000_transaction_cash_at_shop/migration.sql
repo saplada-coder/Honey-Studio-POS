@@ -1,0 +1,1 @@
+ALTER TABLE "Transaction" ADD COLUMN "cashAtShop" BOOLEAN NOT NULL DEFAULT false;
