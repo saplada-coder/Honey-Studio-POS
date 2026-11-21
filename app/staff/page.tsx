@@ -1752,29 +1752,43 @@ function Customers({ customers, orders, rentals=[], products=[], saveEntity, del
     <div>
       <PageHead title="ลูกค้า" sub={`${customers.length} รายชื่อ`} action={<Btn icon={Plus} onClick={openAdd}>เพิ่มลูกค้า</Btn>} />
       <p className="text-sm mb-4" style={{color:C.taupe}}>พนักงานบันทึกชื่อและเบอร์โทรให้ลูกค้าก่อน ระบบสร้างสมาชิกและเชื่อมรายการเช่าอัตโนมัติ ลูกค้าใช้ชื่อและเบอร์เดียวกันเข้าสู่ระบบเพื่อดูรายการจองและแต้มสะสม</p>
-      <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
-        {customers.map(c => (
-          <Card key={c.id} className="p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: C.rose }}>{(c.name.replace("คุณ", "") || "?")[0]}</div>
-              <div className="flex-1 min-w-0"><div className="font-semibold text-sm">{c.name}</div><div className="text-xs" style={{ color: C.taupe }}>{c.id}</div></div>
-              <IconBtn icon={Eye} onClick={() => setSel(c)} />
-              <IconBtn icon={Pencil} onClick={() => openEdit(c)} />
-              <IconBtn icon={Trash2} color={C.red} onClick={() => setDel(c)} />
-            </div>
-            <div className="space-y-1.5 text-xs" style={{ color: C.charcoal }}>
-              <div className="flex items-center gap-2"><Phone size={13} style={{ color: C.taupe }} />{c.phone}</div>
-              <div className="flex items-center gap-2"><MapPin size={13} style={{ color: C.taupe }} />{c.addr}</div>
-            </div>
-            <div className="flex gap-2 mt-3 pt-3 border-t" style={{ borderColor: C.line }}>
-              <div className="flex-1 text-center"><div className="text-sm font-bold">{customerRentals(c).length}</div><div className="text-[10px]" style={{ color: C.taupe }}>รายการเช่า</div></div>
-              <div className="flex-1 text-center"><div className="text-sm font-bold">{c.orders}</div><div className="text-[10px]" style={{ color: C.taupe }}>ออเดอร์</div></div>
-              <div className="flex-1 text-center"><div className="text-sm font-bold" style={{ color: C.gold }}>{baht(c.spent)}</div><div className="text-[10px]" style={{ color: C.taupe }}>ยอดสะสม</div></div>
-            </div>
-            <div className="mt-3"><Btn icon={Printer} variant="outline" onClick={() => setSel(c)}>ออกใบเสร็จ</Btn></div>
-          </Card>
-        ))}
-      </div>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto" role="region" aria-label="ตารางรายชื่อลูกค้า" tabIndex={0}>
+          <table className="w-full min-w-[760px] text-sm text-left">
+            <caption className="sr-only">รายชื่อลูกค้าและข้อมูลการใช้บริการ</caption>
+            <thead style={{ background: C.cream, color: C.charcoal }}>
+              <tr>
+                <th scope="col" className="px-4 py-3 font-semibold">ลูกค้า</th>
+                <th scope="col" className="px-4 py-3 font-semibold">เบอร์โทร</th>
+                <th scope="col" className="px-4 py-3 font-semibold text-right whitespace-nowrap">รายการเช่า</th>
+                <th scope="col" className="px-4 py-3 font-semibold text-right">ออเดอร์</th>
+                <th scope="col" className="px-4 py-3 font-semibold text-right whitespace-nowrap">ยอดสะสม (บาท)</th>
+                <th scope="col" className="px-4 py-3 font-semibold text-right">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customers.map(c => <tr key={c.id} className="border-t hover:bg-stone-50" style={{ borderColor: C.line }}>
+                <th scope="row" className="px-4 py-3 font-normal">
+                  <button type="button" onClick={() => setSel(c)} className="text-left font-semibold hover:underline">{c.name}</button>
+                  <div className="text-xs mt-1" style={{ color: C.taupe }}>{c.id}</div>
+                </th>
+                <td className="px-4 py-3 whitespace-nowrap">{c.phone || '—'}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{customerRentals(c).length}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{c.orders || 0}</td>
+                <td className="px-4 py-3 text-right font-semibold tabular-nums whitespace-nowrap" style={{ color: C.gold }}>{baht(c.spent)}</td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-end items-center gap-1 whitespace-nowrap">
+                    <button type="button" onClick={() => setSel(c)} className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-sm mr-1" style={{ borderColor: C.line }} aria-label={`ดูข้อมูลและออกใบเสร็จ ${c.name}`}><Eye size={15} />ดูข้อมูล / ใบเสร็จ</button>
+                    <button type="button" onClick={() => openEdit(c)} className="p-2 rounded-lg hover:bg-stone-100" aria-label={`แก้ไขลูกค้า ${c.name}`}><Pencil size={16} /></button>
+                    <button type="button" onClick={() => setDel(c)} className="p-2 rounded-lg hover:bg-red-50" style={{ color: C.red }} aria-label={`ลบลูกค้า ${c.name}`}><Trash2 size={16} /></button>
+                  </div>
+                </td>
+              </tr>)}
+              {customers.length === 0 && <tr><td colSpan={6} className="text-center py-10" style={{ color: C.taupe }}>ยังไม่มีรายชื่อลูกค้า</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </Card>
       {sel && (
         <Modal onClose={() => setSel(null)} title={sel.name} wide>
           <div className="space-y-3 text-sm">
