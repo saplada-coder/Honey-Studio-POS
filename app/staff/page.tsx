@@ -2200,6 +2200,7 @@ const repayFields = (isEdit, names = []) => [
 ];
 
 function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
+  const [accountSection, setAccountSection] = useState('ledger');
   const [form, setForm] = useState(null);
   const [del, setDel] = useState(null);
   const [month, setMonth] = useState(""); // "" = ทุกเดือน
@@ -2291,9 +2292,26 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
 
   return (
     <div>
-      <PageHead title="บัญชีรับจ่าย" sub="รวมรายรับค่าเช่าที่ชำระแล้วอัตโนมัติ · ไม่รวมเงินมัดจำ" action={<Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn>} />
-      <CashBook />
+      <PageHead title="บัญชีรับจ่าย" sub="เลือกบัญชีที่ต้องการดูหรือบันทึก" action={accountSection === 'ledger' ? <Btn icon={Plus} onClick={openAdd}>เพิ่มรายการ</Btn> : null} />
+      <nav aria-label="เลือกส่วนบัญชี" className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-5">
+        {[
+          ['ledger', 'รายรับ–รายจ่าย', 'รายการรับจ่ายของร้าน', BarChart3],
+          ['cash', 'เงินสดที่ร้าน', 'เงินเข้า ออก และยอดเงินสด', Wallet],
+          ['advances', 'เงินสำรองจ่าย', 'ยอดค้างคืนและประวัติโอนคืน', Users],
+          ['monthly', 'สรุปรายเดือน', 'กราฟและยอดรวมแต่ละเดือน', CalIcon],
+        ].map(([key, label, description, Icon]) => (
+          <button key={key} type="button" aria-current={accountSection === key ? 'page' : undefined}
+            onClick={() => { setAccountSection(key); setDetailMonth(null); }}
+            className="text-left rounded-xl border p-3 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{ background: accountSection === key ? C.goldBg : 'white', borderColor: accountSection === key ? C.gold : C.line, color: C.charcoal }}>
+            <span className="flex items-center gap-2 text-sm font-bold"><Icon size={18} />{label}</span>
+            <span className="block text-sm mt-1" style={{ color: C.taupe }}>{description}</span>
+          </button>
+        ))}
+      </nav>
+      {accountSection === 'cash' && <CashBook />}
 
+      {accountSection === 'ledger' && <>
       {/* เลือกเดือน + ส่งออก */}
       <Card className="p-3 mb-5">
         <div className="flex flex-wrap items-center gap-2">
@@ -2314,6 +2332,9 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
         <Card className="p-4"><div className="flex items-center gap-2 text-xs" style={{ color: C.taupe }}><TrendingUp size={14} style={{ color: C.gold }} />คงเหลือ</div><div className="text-[15px] sm:text-lg md:text-xl font-bold mt-1 break-words" style={{ color: C.gold }}>{baht(inSum - outSum)}</div></Card>
       </div>
 
+      </>}
+
+      {accountSection === 'advances' && <>
       {/* เตือนรายการที่ยังติ๊กค้างไว้ทั้งสองช่อง — ยอดสำรองจ่ายจะเพี้ยนจนกว่าจะเลือกอย่างใดอย่างหนึ่ง */}
       {conflictTxns.length > 0 && (
         <Card className="p-3 mb-3" style={{ borderColor: C.gold, background: C.goldBg }}>
@@ -2413,6 +2434,9 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
         )}
       </Card>
 
+      </>}
+
+      {accountSection === 'monthly' && <>
       {/* สรุปเดือนต่อเดือน */}
       <div className="mb-5">
         <Card className="p-4">
@@ -2468,7 +2492,9 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
         </Card>
       </div>
 
-      <Card className="overflow-hidden">
+      </>}
+
+      {accountSection === 'ledger' && <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b font-bold text-sm flex items-center justify-between gap-2" style={{ borderColor: C.line }}>
           <span>รายการล่าสุด</span>
           <span className="text-xs font-normal" style={{ color: C.taupe }}>{visible.length} รายการ</span>
@@ -2564,7 +2590,7 @@ function Accounting({ txns = [], repays = [], saveEntity, deleteEntity }) {
           </div>
           );
         })}
-      </Card>
+      </Card>}
       {form && (
         <FormModal title={form.mode === "add" ? "เพิ่มรายการบัญชี" : "แก้ไขรายการบัญชี"} fields={txnFields(form.mode === "edit", nameOptions, catOptions)} initial={form.data} onClose={() => setForm(null)}
           onSubmit={async (data) => { await saveEntity("transactions", data, form.mode === "edit" ? form.data.id : null); setForm(null); }} />
